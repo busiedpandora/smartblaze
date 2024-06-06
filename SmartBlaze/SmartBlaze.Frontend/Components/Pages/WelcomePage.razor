@@ -1,0 +1,24 @@
+﻿@page "/"
+
+@inject NavigationManager navigationManager
+@inject ChatController chatController
+
+<PageTitle>Home</PageTitle>
+
+<h1>Welcome to SmartBlaze!</h1>
+
+<h5>Start a new chat by pressing 'New chat' in the bottom left corner.</h5>
+
+@code
+{
+    private List<Chat> chats;
+
+    protected override void OnInitialized()
+    {
+        chats = chatController.GetAllChats();
+        if (chats.Count > 0)
+        {
+            navigationManager.NavigateTo($"/chat/{chats.ElementAt(0).Id}");
+        }
+    }
+}

@@ -1,0 +1,37 @@
+@page "/chat/{chatId:long}"
+@inject ChatController chatController
+
+<PageTitle>Chat</PageTitle>
+
+@if (chat is not null)
+{
+    <h2>@chat.Title</h2>
+}
+
+@if (chat is not null && chat.Messages is not null)
+{
+    foreach (var message in chat.Messages)
+    {
+        <div class="border border-1">
+            <span>@message.Content</span>
+            <br/>
+            <span>@message.Role</span>
+            <br/>
+        </div>
+    }
+}
+
+@code {
+    [Parameter]
+    public long? ChatId { get; set; }
+
+    private Chat? chat;
+
+    protected override void OnInitialized()
+    {
+        if (ChatId.HasValue)
+        {
+            chat = chatController.GetChatById(ChatId.Value);
+        }
+    }
+}

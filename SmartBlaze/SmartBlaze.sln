@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartBlaze.Frontend", "SmartBlaze.Frontend\SmartBlaze.Frontend.csproj", "{6A45A232-7082-4A54-BA7B-449BA1732558}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartBlaze.Backend", "SmartBlaze.Backend\SmartBlaze.Backend.csproj", "{EBF33BEE-9A88-489A-BB06-3C5B36B106CD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{6A45A232-7082-4A54-BA7B-449BA1732558}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A45A232-7082-4A54-BA7B-449BA1732558}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6A45A232-7082-4A54-BA7B-449BA1732558}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBF33BEE-9A88-489A-BB06-3C5B36B106CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBF33BEE-9A88-489A-BB06-3C5B36B106CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBF33BEE-9A88-489A-BB06-3C5B36B106CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBF33BEE-9A88-489A-BB06-3C5B36B106CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

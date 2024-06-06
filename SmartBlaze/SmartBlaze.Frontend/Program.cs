@@ -1,3 +1,4 @@
+using SmartBlaze.Backend.Controllers;
 using SmartBlaze.Frontend.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5,6 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddSingleton<ChatController>();
 
 var app = builder.Build();
 

@@ -1,4 +1,10 @@
-﻿@inject ChatController chatController
+﻿@using SmartBlaze.Frontend.Models
+@using SmartBlaze.Frontend.Services
+
+@rendermode InteractiveServer
+
+@inject NavigationManager navigationManager
+@inject ChatStateService chatStateService
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -10,7 +16,7 @@
 
 <div class="nav-scrollable h-75" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
-        @if (chats is null)
+        @if (_chats is null)
         {
             <div class="nav-item px-3">
                 <NavLink class="nav-link">
@@ -20,11 +26,14 @@
         }
         else
         {
-            @foreach (var chat in chats)
+            @foreach (var chat in _chats)
             {
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href=@($"chat/{chat.Id}")>
-                        <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/> @chat.Title
+                    
+                    <NavLink class="@(chat.Selected ? "nav-link active" : "nav-link")"
+                             @onclick="() => OnChatClicked(chat)">
+                        <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/>
+                        <span class="user-select-none">@chat.Title</span>
                     </NavLink>
                 </div>
             }
@@ -43,10 +52,40 @@
 
 @code
 {
-    private List<Chat>? chats;
-
-    protected override void OnInitialized()
+    private List<Chat>? _chats;
+    
+    
+    protected override async Task OnInitializedAsync()
     {
-        chats = chatController.GetAllChats();
+        if (_chats is null)
+        {
+            _chats = chatStateService.Chats;
+        }
+        
+        await Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (chatStateService.SelectedChat is null)
+            {
+                navigationManager.NavigateTo("/welcome");
+            }
+            else
+            {
+                navigationManager.NavigateTo($"/");
+            }
+        }
+        
+        await Task.CompletedTask;
+    }
+
+    private void OnChatClicked(Chat chat)
+    {
+        chatStateService.SelectChat(chat);
+        
+        navigationManager.NavigateTo($"/");
     }
 }

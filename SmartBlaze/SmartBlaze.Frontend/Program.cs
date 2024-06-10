@@ -1,5 +1,8 @@
-using SmartBlaze.Backend.Controllers;
+using System.Collections.Immutable;
+using Microsoft.AspNetCore.Components;
+using SmartBlaze.Backend.Services;
 using SmartBlaze.Frontend.Components;
+using SmartBlaze.Frontend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddSingleton<ChatController>();
+builder.Services.AddSingleton<ChatSessionService>();
+
+builder.Services.AddSingleton<ChatStateService>();
 
 var app = builder.Build();
 

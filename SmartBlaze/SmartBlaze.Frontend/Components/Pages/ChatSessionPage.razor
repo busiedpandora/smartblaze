@@ -1,0 +1,26 @@
+@page "/"
+
+@using SmartBlaze.Frontend.Models
+@using SmartBlaze.Frontend.Services
+
+@inject ChatStateService chatStateService
+
+<PageTitle>SmartBlaze</PageTitle>
+
+@if (_chat is not null)
+{
+    <h2>@_chat.Title</h2>
+}
+
+
+@code {
+
+    private Chat? _chat;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _chat = chatStateService.SelectedChat;
+
+        await Task.CompletedTask;
+    }
+}

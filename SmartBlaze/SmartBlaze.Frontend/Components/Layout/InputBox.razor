@@ -1,8 +1,25 @@
+@rendermode InteractiveServer
+
 <div class="d-flex">
     <div class="col-11">
-        <textarea class="form-control" rows="3"></textarea>
+        <textarea class="form-control" rows="3" @bind="inputText"></textarea>
     </div>
     <div class="col-1">
-        <button class="btn btn-dark">Send</button>
+        <button class="btn btn-dark" @onclick="OnSendMessageClicked">Send</button>
     </div>
 </div>
+
+@code {
+    private string inputText = "";
+    
+    private void OnSendMessageClicked()
+    {
+        inputText = inputText.Trim();
+        if (inputText != "")
+        {
+            Message message = new Message(inputText, "user");
+            
+            //chatController.SendMessage(inputText);
+        }
+    }
+}

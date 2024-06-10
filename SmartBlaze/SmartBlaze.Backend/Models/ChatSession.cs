@@ -1,6 +1,6 @@
 namespace SmartBlaze.Backend.Models;
 
-public class Chat
+public class ChatSession
 {
     private long _id;
     private string _title;
@@ -8,7 +8,7 @@ public class Chat
     private List<Message>? _messages;
 
     
-    public Chat(long id, string title)
+    public ChatSession(long id, string title)
     {
         this._id = id;
         this._title = title;
@@ -20,7 +20,7 @@ public class Chat
         get => _id;
     }
     
-    public string? Title
+    public string Title
     {
         get => _title;
     }

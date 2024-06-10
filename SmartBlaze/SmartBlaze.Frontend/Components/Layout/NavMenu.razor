@@ -1,5 +1,4 @@
 ﻿@using SmartBlaze.Frontend.Models
-@using SmartBlaze.Frontend.Services
 
 @rendermode InteractiveServer
 
@@ -69,7 +68,7 @@
     {
         if (firstRender)
         {
-            if (chatStateService.SelectedChat is null)
+            if (chatStateService.CurrentChatSession is null)
             {
                 navigationManager.NavigateTo("/welcome");
             }

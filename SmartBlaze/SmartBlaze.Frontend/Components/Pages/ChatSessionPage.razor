@@ -1,25 +1,26 @@
 @page "/"
 
-@using SmartBlaze.Frontend.Models
-@using SmartBlaze.Frontend.Services
-
 @inject ChatStateService chatStateService
 
 <PageTitle>SmartBlaze</PageTitle>
 
-@if (_chat is not null)
+@if (_selectedChatSession is not null)
 {
-    <h2>@_chat.Title</h2>
+    <h2>@_selectedChatSession.Title</h2>
+    
+    @foreach(var message in _selectedChatSession.Messages)
+    {
+        <p>@message.Content</p>
+    }
 }
 
 
 @code {
-
-    private Chat? _chat;
+    private ChatSession? _selectedChatSession;
 
     protected override async Task OnInitializedAsync()
     {
-        _chat = chatStateService.SelectedChat;
+        _selectedChatSession = chatStateService.CurrentChatSession;
 
         await Task.CompletedTask;
     }

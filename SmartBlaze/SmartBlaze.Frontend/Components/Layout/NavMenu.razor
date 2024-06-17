@@ -61,7 +61,7 @@
             _chats = chatStateService.Chats;
         }
         
-        await Task.CompletedTask;
+        await base.OnInitializedAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -78,7 +78,7 @@
             }
         }
         
-        await Task.CompletedTask;
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     private void OnChatClicked(Chat chat)

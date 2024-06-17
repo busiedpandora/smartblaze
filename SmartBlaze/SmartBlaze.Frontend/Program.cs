@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Microsoft.AspNetCore.Components;
+using SmartBlaze.Backend.Controllers;
 using SmartBlaze.Backend.Services;
 using SmartBlaze.Frontend.Components;
 using SmartBlaze.Frontend.Services;
@@ -11,6 +12,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<ChatSessionService>();
+builder.Services.AddSingleton<MessageService>();
+builder.Services.AddSingleton<ChatSessionController>();
 
 builder.Services.AddSingleton<ChatStateService>();
 

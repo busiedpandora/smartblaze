@@ -1,14 +1,16 @@
 @page "/"
 
+@rendermode InteractiveServer
+
 @inject ChatStateService chatStateService
 
 <PageTitle>SmartBlaze</PageTitle>
 
-@if (_selectedChatSession is not null)
+@if (chatStateService.CurrentChatSession is not null)
 {
-    <h2>@_selectedChatSession.Title</h2>
+    <h2>@chatStateService.CurrentChatSession.Title</h2>
     
-    @foreach(var message in _selectedChatSession.Messages)
+    @foreach(var message in chatStateService.CurrentChatSession.Messages)
     {
         <p>@message.Content</p>
     }
@@ -16,12 +18,15 @@
 
 
 @code {
-    private ChatSession? _selectedChatSession;
-
     protected override async Task OnInitializedAsync()
     {
-        _selectedChatSession = chatStateService.CurrentChatSession;
+        chatStateService.OnChange += RefreshView;
 
-        await Task.CompletedTask;
+        await base.OnInitializedAsync();
+    }
+
+    private void RefreshView()
+    {
+        InvokeAsync(StateHasChanged);
     }
 }

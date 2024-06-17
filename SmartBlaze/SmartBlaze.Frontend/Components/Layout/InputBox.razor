@@ -1,8 +1,10 @@
 @rendermode InteractiveServer
 
+@inject ChatStateService chatStateService
+
 <div class="d-flex">
     <div class="col-11">
-        <textarea class="form-control" rows="3" @bind="inputText"></textarea>
+        <textarea class="form-control" rows="3" @bind="_inputText"></textarea>
     </div>
     <div class="col-1">
         <button class="btn btn-dark" @onclick="OnSendMessageClicked">Send</button>
@@ -10,16 +12,11 @@
 </div>
 
 @code {
-    private string inputText = "";
+    private string _inputText = "";
     
     private void OnSendMessageClicked()
     {
-        inputText = inputText.Trim();
-        if (inputText != "")
-        {
-            Message message = new Message(inputText, "user");
-            
-            //chatController.SendMessage(inputText);
-        }
+        chatStateService.SendUserMessage(_inputText);
+        _inputText = "";
     }
 }

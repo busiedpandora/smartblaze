@@ -7,26 +7,15 @@ namespace SmartBlaze.Backend.Services;
 
 public class ChatSessionService
 {
+    private static long _counter = 0L;
+    
     private List<ChatSession> _chatSessions;
 
     private HttpClient _httpClient;
 
     public ChatSessionService()
     {
-        //_chatSessions = new List<ChatSession>();
-        
-        ChatSession cs1 = new ChatSession(1L, "chat1");
-        cs1.Messages.Add(new Message("Hello. I'm here to assist you!", "system", DateTime.Now));
-        cs1.Messages.Add(new Message("What is the capital of Germany?", "user", DateTime.Now));
-        cs1.Messages.Add(new Message("The capital of Germany is Berlin", "assistant", DateTime.Now));
-        
-        ChatSession cs2 = new ChatSession(2L, "chat2");
-        cs2.Messages.Add(new Message("Hello. I'm here to assist you!", "system", DateTime.Now));
-        cs2.Messages.Add(new Message("What time is it?", "user", DateTime.Now));
-        cs2.Messages.Add(new Message("It is 3.00 pm.", "assistant", DateTime.Now));
-        
-        _chatSessions = new List<ChatSession>() {cs1, cs2};
-
+        _chatSessions = new List<ChatSession>();
         _httpClient = new HttpClient();
     }
     
@@ -85,5 +74,15 @@ public class ChatSessionService
         }
 
         return null;
+    }
+
+    public ChatSession CreateNewChatSession(string title)
+    {
+        return new ChatSession(++_counter, title, DateTime.Now);
+    }
+
+    public void AddChatSession(ChatSession chatSession)
+    {
+        _chatSessions.Add(chatSession);
     }
 }

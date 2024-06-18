@@ -15,7 +15,7 @@
 
 <div class="nav-scrollable h-75" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
-        @if (_chats is null)
+        @if (chatStateService.Chats is null)
         {
             <div class="nav-item px-3">
                 <NavLink class="nav-link">
@@ -25,7 +25,7 @@
         }
         else
         {
-            @foreach (var chat in _chats)
+            @foreach (var chat in chatStateService.Chats)
             {
                 <div class="nav-item px-3">
                     
@@ -42,7 +42,8 @@
 
 <div class="border-top border-1 border-white">
     <div class="nav-item px-3">
-        <NavLink class="nav-link user-select-none">
+        <NavLink class="nav-link user-select-none"
+                 @onclick="() => OnNewChatClicked()">
             New chat
         </NavLink>
     </div>
@@ -51,19 +52,6 @@
 
 @code
 {
-    private List<Chat>? _chats;
-    
-    
-    protected override async Task OnInitializedAsync()
-    {
-        if (_chats is null)
-        {
-            _chats = chatStateService.Chats;
-        }
-        
-        await base.OnInitializedAsync();
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -77,6 +65,14 @@
                 navigationManager.NavigateTo($"/");
             }
         }
+        else
+        {
+            if (navigationManager.Uri.EndsWith("/welcome") 
+                && chatStateService.CurrentChatSession is not null)
+            {
+                navigationManager.NavigateTo($"/");
+            }
+        }
         
         await base.OnAfterRenderAsync(firstRender);
     }
@@ -84,7 +80,10 @@
     private void OnChatClicked(Chat chat)
     {
         chatStateService.SelectChat(chat);
-        
-        navigationManager.NavigateTo($"/");
+    }
+
+    private void OnNewChatClicked()
+    {
+        chatStateService.CreateNewChatSession();
     }
 }

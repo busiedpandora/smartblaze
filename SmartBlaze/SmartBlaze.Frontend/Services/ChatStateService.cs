@@ -14,7 +14,7 @@ public class ChatStateService
     public ChatStateService(ChatSessionController chatSessionController)
     {
         _chatSessionController = chatSessionController;
-
+        
         if (_chats is null)
         {
             LoadChats();
@@ -90,9 +90,35 @@ public class ChatStateService
         }
     }
 
+    public async void CreateNewChatSession()
+    {
+        ChatSession chatSession = _chatSessionController.CreateNewChatSession("undefined");
+        _chatSessionController.AddChatSession(chatSession);
+
+        Chat chat = new Chat(chatSession.Id, chatSession.Title);
+        if (_chats is null)
+        {
+            _chats = new List<Chat>();
+        }
+        _chats.Insert(0, chat);
+        
+        SelectChat(chat);
+
+        if (_currentChatSession is not null)
+        {
+            Message systemMessage = _chatSessionController.CreateNewSystemMessage(
+                "You are a helpful assistant. You can help me by answering my questions. " +
+                "You can also ask me questions.");
+            _chatSessionController.AddNewMessageToChatSession(systemMessage, _currentChatSession);
+        }
+        
+        NotifyStateChanged();
+    }
+
     private void LoadChats()
     {
-        _chats = _chatSessionController.GetAllChatSessions().Select(cs => new Chat(cs.Id, cs.Title)).ToList();
+        _chats = _chatSessionController.GetAllChatSessions()
+            .Select(cs => new Chat(cs.Id, cs.Title)).ToList();
         
         if (_chats.Count > 0)
         {

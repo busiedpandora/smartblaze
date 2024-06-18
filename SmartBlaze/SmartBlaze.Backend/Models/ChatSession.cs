@@ -8,11 +8,11 @@ public class ChatSession
     private List<Message> _messages;
 
     
-    public ChatSession(long id, string title)
+    public ChatSession(long id, string title, DateTime creationDate)
     {
         this._id = id;
         this._title = title;
-        this._creationDate = DateTime.Now;
+        this._creationDate = creationDate;
         this._messages = new List<Message>();
     }
     

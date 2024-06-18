@@ -18,7 +18,9 @@ public class ChatSessionController
     
     public List<ChatSession> GetAllChatSessions()
     {
-        return _chatSessionService.GetAllChatSessions();
+        return _chatSessionService.GetAllChatSessions()
+            .OrderByDescending(cs => cs.CreationDate)
+            .ToList();
     }
     
     public ChatSession? GetChatSessionById(long id)
@@ -29,6 +31,13 @@ public class ChatSessionController
     public Message CreateNewUserMessage(string content)
     {
         Message message = _messageService.CreateNewUserMessage(content);
+
+        return message;
+    }
+
+    public Message CreateNewSystemMessage(string content)
+    {
+        Message message = _messageService.CreateNewSystemMessage(content);
 
         return message;
     }
@@ -50,6 +59,18 @@ public class ChatSessionController
     public void AddNewMessageToChatSession(Message message, ChatSession chatSession)
     {
         _chatSessionService.AddNewMessageToChatSession(message, chatSession);
+    }
+
+    public ChatSession CreateNewChatSession(string title)
+    {
+        ChatSession chatSession = _chatSessionService.CreateNewChatSession(title);
+
+        return chatSession;
+    }
+
+    public void AddChatSession(ChatSession chatSession)
+    {
+        _chatSessionService.AddChatSession(chatSession);
     }
 
     private async Task<string?> UpdateChatSession(ChatSession chatSession)

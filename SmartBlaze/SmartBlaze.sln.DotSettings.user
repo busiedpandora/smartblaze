@@ -1,4 +1,5 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestProjectMapping/=6A45A232_002D7082_002D4A54_002DBA7B_002D449BA1732558/@EntryIndexedValue">F2638CDC-229F-4DBF-9520-FE7ED396BDF1</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestProjectMapping/=EBF33BEE_002D9A88_002D489A_002DBB06_002D3C5B36B106CD/@EntryIndexedValue">88730A1C-881B-4A91-AE73-7C14702D806F</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/CreateUnitTestDialog/TestTemplateMapping/=xUnit/@EntryIndexedValue">33ff99d8-b1ad-4ed5-a4fd-376b97c2c841</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d427e8e8_002D0a48_002D4075_002D8e4b_002Dd50d64e65ac1/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="UnitTest1" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
@@ -7,5 +8,6 @@
     &lt;TestId&gt;xUnit::88730A1C-881B-4A91-AE73-7C14702D806F::net8.0::SmartBlaze.Backend.Tests.Controllers.ChatSessionControllerTest.METHOD&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::88730A1C-881B-4A91-AE73-7C14702D806F::net8.0::SmartBlaze.Backend.Tests.Services.MessageServiceTest.CreateNewUserMessage&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;xUnit::88730A1C-881B-4A91-AE73-7C14702D806F::net8.0::SmartBlaze.Backend.Tests.Services.MessageServiceTest&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::F2638CDC-229F-4DBF-9520-FE7ED396BDF1::net8.0::SmartBlaze.Frontend.Tests.UnitTest1.Test1&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

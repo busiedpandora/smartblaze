@@ -52,8 +52,16 @@
 
 @code
 {
+    protected override async Task OnInitializedAsync()
+    {
+        chatStateService.OnChange += RefreshView;
+
+        await base.OnInitializedAsync();
+    }
+    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        
         if (firstRender)
         {
             if (chatStateService.CurrentChatSession is null)
@@ -75,15 +83,23 @@
         }
         
         await base.OnAfterRenderAsync(firstRender);
+        
+    }
+    
+    private void RefreshView()
+    {
+        InvokeAsync(StateHasChanged);
     }
 
-    private void OnChatClicked(Chat chat)
+    private async void OnChatClicked(ChatSession chat)
     {
-        chatStateService.SelectChat(chat);
+        await chatStateService.SelectChat(chat);
     }
 
     private void OnNewChatClicked()
     {
         chatStateService.CreateNewChatSession();
     }
+    
+    
 }

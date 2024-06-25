@@ -14,9 +14,10 @@
 @code {
     private string _inputText = "";
     
-    private void OnSendMessageClicked()
+    private async void OnSendMessageClicked()
     {
-        chatStateService.SendUserMessage(_inputText);
+        string text = _inputText;
         _inputText = "";
+        await chatStateService.SendUserMessage(text);
     }
 }

@@ -1,29 +1,29 @@
-using SmartBlaze.Backend.Models;
-using SmartBlaze.Backend.Controllers;
+using System.Text.Json;
+using SmartBlaze.Frontend.Dtos;
 using SmartBlaze.Frontend.Models;
 
 namespace SmartBlaze.Frontend.Services;
 
 public class ChatStateService
 {
-    private ChatSessionController _chatSessionController;
+    private HttpClient _httpClient;
     
-    private List<Chat>? _chats;
+    private List<ChatSession>? _chatSessions;
     private ChatSession? _currentChatSession;
 
-    public ChatStateService(ChatSessionController chatSessionController)
+    public ChatStateService(HttpClient httpClient)
     {
-        _chatSessionController = chatSessionController;
+        _httpClient = httpClient;
         
-        if (_chats is null)
+        if (_chatSessions is null)
         {
             LoadChats();
         }
     }
 
-    public List<Chat>? Chats
+    public List<ChatSession>? Chats
     {
-        get => _chats;
+        get => _chatSessions;
     }
 
     public ChatSession? CurrentChatSession
@@ -33,16 +33,16 @@ public class ChatStateService
     
     public event Action? OnChange;
     
-    public void SelectChat(Chat chat)
+    public async Task SelectChat(ChatSession chatSession)
     {
-        if (_chats is null)
+        if (_chatSessions is null)
         {
             return;
         }
         
         if (_currentChatSession is not null)
         {
-            Chat? selectedChat = _chats.Find(c => c.Id == _currentChatSession.Id);
+            ChatSession? selectedChat = _chatSessions.Find(c => c.Id == _currentChatSession.Id);
 
             if (selectedChat is not null)
             {
@@ -50,19 +50,36 @@ public class ChatStateService
             }
         }
         
-        Chat? newSelectedChat = _chats.Find(c => c.Id == chat.Id);
+        ChatSession? newSelectedChat = _chatSessions.Find(c => c.Id == chatSession.Id);
 
         if (newSelectedChat is not null)
         {
             newSelectedChat.Selected = true;
-        }
+            
+            var response = await _httpClient.GetAsync($"http://localhost:15058/chatsessions/{chatSession.Id}/messages");
 
-        _currentChatSession = _chatSessionController.GetChatSessionById(chat.Id);
-        
-        NotifyStateChanged();
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var messagesDto = JsonSerializer.Deserialize<List<MessageDto>>(responseContent);
+
+                if (messagesDto is not null)
+                {
+                    var messages = messagesDto
+                        .Select(m => new Message(m.Content, m.Role, m.CreationDate.Value))
+                        .ToList();
+
+                    newSelectedChat.Messages = messages;
+
+                    _currentChatSession = newSelectedChat;
+
+                    NotifyStateChanged();
+                }
+            }
+        }
     }
 
-    public async void SendUserMessage(string content)
+    public async Task SendUserMessage(string content)
     {
         content = content.Trim();
 
@@ -73,57 +90,120 @@ public class ChatStateService
 
         if (_currentChatSession is not null)
         {
-            Message userMessage = _chatSessionController.CreateNewUserMessage(content);
-            _chatSessionController.AddNewMessageToChatSession(userMessage, _currentChatSession);
-            NotifyStateChanged();
+            MessageDto? userMessageDto = new MessageDto();
+            userMessageDto.Content = content;
+            
+            var response = await _httpClient
+                .PostAsJsonAsync($"http://localhost:15058/chatsessions/{_currentChatSession.Id}/new-user-message", 
+                    userMessageDto);
 
-            Message? assistantMessage = await _chatSessionController.GenerateNewAssistantMessage(_currentChatSession);
-            if (assistantMessage is not null)
+            if (response.IsSuccessStatusCode)
             {
-                _chatSessionController.AddNewMessageToChatSession(assistantMessage, _currentChatSession);
-                NotifyStateChanged();
-            }
-            else
-            {
-                //done sth else
+                var responseContent = await response.Content.ReadAsStringAsync();
+                userMessageDto = JsonSerializer.Deserialize<MessageDto>(responseContent);
+
+                if (userMessageDto is not null
+                    && userMessageDto.Content is not null
+                    && userMessageDto.Role is not null
+                    && userMessageDto.CreationDate is not null)
+                {
+                    Message userMessage = new Message(userMessageDto.Content, userMessageDto.Role, userMessageDto.CreationDate.Value);
+                    _currentChatSession.Messages.Add(userMessage);
+                    NotifyStateChanged();
+
+                    response = await 
+                        _httpClient.PostAsJsonAsync(
+                            $"http://localhost:15058/chatsessions/{_currentChatSession.Id}/new-assistant-message", 
+                            "");
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        responseContent = await response.Content.ReadAsStringAsync();
+                        MessageDto? assistantMessageDto = JsonSerializer.Deserialize<MessageDto>(responseContent);
+
+                        if (assistantMessageDto is not null
+                            && assistantMessageDto.Content is not null
+                            && assistantMessageDto.Role is not null
+                            && assistantMessageDto.CreationDate is not null)
+                        {
+                            Message assistantMessage = new Message(assistantMessageDto.Content,
+                                assistantMessageDto.Role, assistantMessageDto.CreationDate.Value);
+                            _currentChatSession.Messages.Add(assistantMessage);
+                            NotifyStateChanged();
+                        }
+                    }
+                }
             }
         }
     }
 
     public async void CreateNewChatSession()
     {
-        ChatSession chatSession = _chatSessionController.CreateNewChatSession("undefined");
-        _chatSessionController.AddChatSession(chatSession);
+        ChatSessionDto? chatSessionDto = new ChatSessionDto();
+        chatSessionDto.Title = "Undefined";
 
-        Chat chat = new Chat(chatSession.Id, chatSession.Title);
-        if (_chats is null)
+        var response = await _httpClient.PostAsJsonAsync("http://localhost:15058/chatsessions/new", chatSessionDto);
+
+        if (response.IsSuccessStatusCode)
         {
-            _chats = new List<Chat>();
+            var responseContent = await response.Content.ReadAsStringAsync();
+            chatSessionDto = JsonSerializer.Deserialize<ChatSessionDto>(responseContent);
+            
+            if (chatSessionDto is not null 
+                && chatSessionDto.Id is not null 
+                && chatSessionDto.Title is not null 
+                && chatSessionDto.CreationDate is not null)
+            {
+                ChatSession chatSession = 
+                    new ChatSession(chatSessionDto.Id.Value, chatSessionDto.Title, chatSessionDto.CreationDate.Value);
+
+                if (_chatSessions is null)
+                {
+                    _chatSessions = new List<ChatSession>();
+                }
+                _chatSessions.Insert(0, chatSession);
+                await SelectChat(chatSession);
+                
+                NotifyStateChanged();
+            }
         }
-        _chats.Insert(0, chat);
-        
-        SelectChat(chat);
+    }
 
-        if (_currentChatSession is not null)
+    private async void LoadChats()
+    {
+        _chatSessions = new List<ChatSession>();
+        
+        var response = await _httpClient.GetAsync($"http://localhost:15058/chatsessions");
+
+        if (response.IsSuccessStatusCode)
         {
-            Message systemMessage = _chatSessionController.CreateNewSystemMessage(
-                "You are a helpful assistant. You can help me by answering my questions. " +
-                "You can also ask me questions.");
-            _chatSessionController.AddNewMessageToChatSession(systemMessage, _currentChatSession);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var chatSessionsDto = JsonSerializer.Deserialize<List<ChatSessionDto>>(responseContent);
+
+            if (chatSessionsDto is not null)
+            {
+                foreach (var chatSessionDto in chatSessionsDto)
+                {
+                    if (chatSessionDto.Id is not null
+                        && chatSessionDto.Title is not null
+                        && chatSessionDto.CreationDate is not null)
+                    {
+                        _chatSessions.Add(
+                            new ChatSession(chatSessionDto.Id.Value, chatSessionDto.Title, 
+                                chatSessionDto.CreationDate.Value));
+                        
+                        NotifyStateChanged();
+                    }
+                }
+                
+                if (_chatSessions is not null && _chatSessions.Count > 0)
+                {
+                    await SelectChat(_chatSessions.ElementAt(0));
+                }
+            }
         }
         
         NotifyStateChanged();
-    }
-
-    private void LoadChats()
-    {
-        _chats = _chatSessionController.GetAllChatSessions()
-            .Select(cs => new Chat(cs.Id, cs.Title)).ToList();
-        
-        if (_chats.Count > 0)
-        {
-            SelectChat(_chats.ElementAt(0));
-        }
     }
     
     private void NotifyStateChanged() => OnChange?.Invoke();

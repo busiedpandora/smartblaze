@@ -93,7 +93,7 @@ public class ChatSessionController : ControllerBase
         ChatSession? chatSession = _chatSessionService.GetChatSessionById(id);
         if (chatSession is null)
         {
-            return BadRequest();
+            return NotFound();
         }
 
         Message message = _messageService.CreateNewUserMessage(messageDto.Content);
@@ -115,7 +115,7 @@ public class ChatSessionController : ControllerBase
 
         if (content is null)
         {
-            return BadRequest();
+            return Problem();
         }
 
         Message assistantMessage = _messageService.CreateNewAssistantMessage(content);
@@ -135,7 +135,7 @@ public class ChatSessionController : ControllerBase
         ChatSession? chatSession = _chatSessionService.GetChatSessionById(id);
         if (chatSession is null)
         {
-            return BadRequest();
+            return NotFound();
         }
 
         Message systemMessage = _messageService.CreateNewSystemMessage(messageDto.Content);

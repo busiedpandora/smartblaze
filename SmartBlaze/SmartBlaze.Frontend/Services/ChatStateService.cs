@@ -11,9 +11,9 @@ public class ChatStateService
     private List<ChatSession>? _chatSessions;
     private ChatSession? _currentChatSession;
 
-    public ChatStateService(HttpClient httpClient)
+    public ChatStateService(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient;
+        _httpClient = httpClientFactory.CreateClient("_httpClient");
         
         if (_chatSessions is null)
         {
@@ -52,7 +52,7 @@ public class ChatStateService
             return;
         }
         
-        var response = await _httpClient.GetAsync($"http://localhost:15058/chatsessions/{newSelectedChat.Id}/messages");
+        var response = await _httpClient.GetAsync($"chatsessions/{newSelectedChat.Id}/messages");
 
         if (!response.IsSuccessStatusCode)
         {
@@ -110,7 +110,7 @@ public class ChatStateService
         userMessageDto.Content = content;
             
         var response = await _httpClient
-            .PostAsJsonAsync($"http://localhost:15058/chatsessions/{_currentChatSession.Id}/new-user-message", 
+            .PostAsJsonAsync($"chatsessions/{_currentChatSession.Id}/new-user-message", 
                 userMessageDto);
 
         if (!response.IsSuccessStatusCode)
@@ -132,7 +132,7 @@ public class ChatStateService
         
         response = await 
             _httpClient.PostAsJsonAsync(
-                $"http://localhost:15058/chatsessions/{_currentChatSession.Id}/new-assistant-message", 
+                $"chatsessions/{_currentChatSession.Id}/new-assistant-message", 
                 "");
 
         if (!response.IsSuccessStatusCode)
@@ -164,7 +164,7 @@ public class ChatStateService
         ChatSessionDto? chatSessionDto = new ChatSessionDto();
         chatSessionDto.Title = "Undefined";
         
-        var response = await _httpClient.PostAsJsonAsync("http://localhost:15058/chatsessions/new", chatSessionDto);
+        var response = await _httpClient.PostAsJsonAsync("chatsessions/new", chatSessionDto);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -191,7 +191,7 @@ public class ChatStateService
                                    "You can also ask me questions.";
         
         response = await _httpClient.PostAsJsonAsync(
-            $"http://localhost:15058/chatsessions/{chatSession.Id}/new-system-message", 
+            $"chatsessions/{chatSession.Id}/new-system-message", 
             systemMessageDto);
 
         if (!response.IsSuccessStatusCode)
@@ -217,7 +217,7 @@ public class ChatStateService
     {
         _chatSessions = new List<ChatSession>();
         
-        var response = await _httpClient.GetAsync($"http://localhost:15058/chatsessions");
+        var response = await _httpClient.GetAsync($"chatsessions");
 
         if (!response.IsSuccessStatusCode)
         {

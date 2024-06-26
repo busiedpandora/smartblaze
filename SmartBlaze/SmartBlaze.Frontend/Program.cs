@@ -7,7 +7,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddHttpClient();
+var backendUrl = builder.Configuration["BackendUrl"] ?? throw new Exception("BackendUrl is not set");
+
+builder.Services.AddHttpClient("_httpClient", client =>
+{
+    client.BaseAddress = new Uri(backendUrl);
+});
 
 builder.Services.AddSingleton<ChatStateService>();
 

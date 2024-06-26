@@ -2,22 +2,38 @@
 
 @inject ChatStateService chatStateService
 
-<div class="d-flex">
-    <div class="col-11">
-        <textarea class="form-control" rows="3" @bind="_inputText"></textarea>
+
+@if(chatStateService.CurrentChatSession is not null)
+{
+    <div class="d-flex">
+        <div class="col-11">
+            <textarea class="form-control" rows="3" @bind="_inputText"></textarea>
+        </div>
+        <div class="col-1">
+            <button class="btn btn-dark" @onclick="OnSendMessageClicked">Send</button>
+        </div>
     </div>
-    <div class="col-1">
-        <button class="btn btn-dark" @onclick="OnSendMessageClicked">Send</button>
-    </div>
-</div>
+}
 
 @code {
     private string _inputText = "";
+    
+    protected override async Task OnInitializedAsync()
+    {
+        chatStateService.OnChange += RefreshView;
+
+        await base.OnInitializedAsync();
+    }
     
     private async void OnSendMessageClicked()
     {
         string text = _inputText;
         _inputText = "";
         await chatStateService.SendUserMessage(text);
+    }
+    
+    private void RefreshView()
+    {
+        InvokeAsync(StateHasChanged);
     }
 }

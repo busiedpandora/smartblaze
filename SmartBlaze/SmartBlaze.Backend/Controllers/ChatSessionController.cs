@@ -119,9 +119,28 @@ public class ChatSessionController : ControllerBase
         }
 
         Message assistantMessage = _messageService.CreateNewAssistantMessage(content);
-
         _chatSessionService.AddNewMessageToChatSession(assistantMessage, chatSession);
 
         return Ok(MessageDto.ToMessageDto(assistantMessage.Content, assistantMessage.Role, assistantMessage.CreationDate));
+    }
+
+    [HttpPost("{id}/new-system-message")]
+    public ActionResult<MessageDto> AddNewSystemMessageToChatSession(long id, [FromBody] MessageDto messageDto)
+    {
+        if (messageDto is null || messageDto.Content is null)
+        {
+            return BadRequest();
+        }
+        
+        ChatSession? chatSession = _chatSessionService.GetChatSessionById(id);
+        if (chatSession is null)
+        {
+            return BadRequest();
+        }
+
+        Message systemMessage = _messageService.CreateNewSystemMessage(messageDto.Content);
+        _chatSessionService.AddNewMessageToChatSession(systemMessage, chatSession);
+
+        return Ok(MessageDto.ToMessageDto(systemMessage.Content, systemMessage.Role, systemMessage.CreationDate));
     }
 }

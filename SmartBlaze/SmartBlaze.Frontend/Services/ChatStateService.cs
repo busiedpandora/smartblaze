@@ -161,10 +161,35 @@ public class ChatStateService
                 {
                     _chatSessions = new List<ChatSession>();
                 }
+                
                 _chatSessions.Insert(0, chatSession);
                 await SelectChat(chatSession);
-                
                 NotifyStateChanged();
+
+                MessageDto? systemMessageDto = new MessageDto();
+                systemMessageDto.Content = "You are a helpful assistant. You can help me by answering my questions. " +
+                                           "You can also ask me questions.";
+
+                response = await _httpClient.PostAsJsonAsync(
+                    $"http://localhost:15058/chatsessions/{chatSession.Id}/new-system-message", 
+                    systemMessageDto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    responseContent = await response.Content.ReadAsStringAsync();
+                    systemMessageDto = JsonSerializer.Deserialize<MessageDto>(responseContent);
+
+                    if (systemMessageDto is not null
+                        && systemMessageDto.Content is not null
+                        && systemMessageDto.Role is not null
+                        && systemMessageDto.CreationDate is not null)
+                    {
+                        Message systemMessage = new Message(systemMessageDto.Content, systemMessageDto.Role, 
+                            systemMessageDto.CreationDate.Value);
+                        chatSession.Messages.Add(systemMessage);
+                        NotifyStateChanged();
+                    }
+                }
             }
         }
     }

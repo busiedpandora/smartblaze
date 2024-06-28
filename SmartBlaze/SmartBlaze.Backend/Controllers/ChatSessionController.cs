@@ -11,12 +11,15 @@ public class ChatSessionController : ControllerBase
 {
     private ChatSessionService _chatSessionService;
     private MessageService _messageService;
+    private ChatbotService _chatbotService;
 
 
-    public ChatSessionController(ChatSessionService chatSessionService, MessageService messageService)
+    public ChatSessionController(ChatSessionService chatSessionService, MessageService messageService,
+        ChatbotService chatbotService)
     {
         _chatSessionService = chatSessionService;
         _messageService = messageService;
+        _chatbotService = chatbotService;
     }
 
     [HttpGet("")]
@@ -26,7 +29,7 @@ public class ChatSessionController : ControllerBase
 
         if (chatSessions is null)
         {
-            return NotFound();
+            return NotFound($"Chat sessions not found");
         }
         
         return Ok(chatSessions
@@ -34,14 +37,14 @@ public class ChatSessionController : ControllerBase
             .ToList());
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:long}")]
     public ActionResult<ChatSessionDto> GetChatSession(long id)
     {
         var chatSession = _chatSessionService.GetChatSessionById(id);
 
         if (chatSession is null)
         {
-            return NotFound();
+            return NotFound($"Chat session with id {id} not found");
         }
 
         return Ok(ChatSessionDto
@@ -53,23 +56,32 @@ public class ChatSessionController : ControllerBase
     {
         if (chatSessionDto is null || chatSessionDto.Title is null)
         {
-            return BadRequest();
+            return BadRequest("Chat session not specified correctly");
         }
 
-        ChatSession chatSession = _chatSessionService.CreateNewChatSession(chatSessionDto.Title);
+        string chatbotName = "Google Gemini";
+
+        Chatbot? chatbot = _chatbotService.GetChatbotByName(chatbotName);
+
+        if (chatbot is null)
+        {
+            return NotFound($"Chatbot with name {chatbotName} not found");
+        }
+        
+        ChatSession chatSession = _chatSessionService.CreateNewChatSession(chatSessionDto.Title, chatbot);
         _chatSessionService.AddChatSession(chatSession);
         
         return Ok(ChatSessionDto.ToChatSessionDto(chatSession.Id, chatSession.Title, chatSession.CreationDate, null));
     }
     
-    [HttpGet("{id}/messages")]
+    [HttpGet("{id:long}/messages")]
     public ActionResult<List<MessageDto>> GetMessagesFromChatSession(long id)
     {
         ChatSession? chatSession = _chatSessionService.GetChatSessionById(id);
 
         if (chatSession is null)
         {
-            return NotFound();
+            return NotFound($"Chat session with id {id} not found");
         }
 
         if (chatSession.Messages is null)
@@ -82,18 +94,18 @@ public class ChatSessionController : ControllerBase
             .ToList();
     }
     
-    [HttpPost("{id}/new-user-message")]
+    [HttpPost("{id:long}/new-user-message")]
     public ActionResult<MessageDto> AddNewUserMessageToChatSession(long id, [FromBody] MessageDto messageDto)
     {
         if (messageDto is null || messageDto.Content is null)
         {
-            return BadRequest();
+            return BadRequest("Message not specified correctly");
         }
 
         ChatSession? chatSession = _chatSessionService.GetChatSessionById(id);
         if (chatSession is null)
         {
-            return NotFound();
+            return NotFound($"Chat session with id {id} not found");
         }
 
         Message message = _messageService.CreateNewUserMessage(messageDto.Content);
@@ -102,20 +114,20 @@ public class ChatSessionController : ControllerBase
         return Ok(MessageDto.ToMessageDto(message.Content, message.Role, message.CreationDate));
     }
     
-    [HttpPost("{id}/new-assistant-message")]
+    [HttpPost("{id:long}/new-assistant-message")]
     public async Task<ActionResult<MessageDto>> GenerateNewAssistantMessageToChatSession(long id)
     {
         ChatSession? chatSession = _chatSessionService.GetChatSessionById(id);
         if (chatSession is null)
         {
-            return BadRequest();
+            return NotFound($"Chat session with id {id} not found");
         }
         
-        string? content = await _chatSessionService.GenerateAssistantMessageContentFromChatSession(chatSession);
-
+        string? content = await _chatbotService.GenerateAssistantMessageContentFromChatSession(chatSession);
+        
         if (content is null)
         {
-            return Problem();
+            return Problem("Problem occured while generating the assistant message");
         }
 
         Message assistantMessage = _messageService.CreateNewAssistantMessage(content);
@@ -124,18 +136,18 @@ public class ChatSessionController : ControllerBase
         return Ok(MessageDto.ToMessageDto(assistantMessage.Content, assistantMessage.Role, assistantMessage.CreationDate));
     }
 
-    [HttpPost("{id}/new-system-message")]
+    [HttpPost("{id:long}/new-system-message")]
     public ActionResult<MessageDto> AddNewSystemMessageToChatSession(long id, [FromBody] MessageDto messageDto)
     {
         if (messageDto is null || messageDto.Content is null)
         {
-            return BadRequest();
+            return BadRequest("Message not specified correctly");
         }
         
         ChatSession? chatSession = _chatSessionService.GetChatSessionById(id);
         if (chatSession is null)
         {
-            return NotFound();
+            return NotFound($"Chat session with id {id} not found");
         }
 
         Message systemMessage = _messageService.CreateNewSystemMessage(messageDto.Content);

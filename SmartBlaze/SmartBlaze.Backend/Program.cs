@@ -6,6 +6,7 @@ builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ChatSessionService>();
 builder.Services.AddSingleton<MessageService>();
+builder.Services.AddSingleton<ChatbotService>();
 
 var app = builder.Build();
 

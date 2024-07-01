@@ -5,12 +5,16 @@
 
 @if(chatStateService.CurrentChatSession is not null)
 {
-    <div class="d-flex">
-        <div class="col-11">
-            <textarea class="form-control" rows="3" @bind="_inputText"></textarea>
+    <div class="d-flex justify-content-center align-items-center">
+        <div class="col-8">
+            <textarea class="form-control border-3" rows="3" @bind="_inputText" 
+                placeholder="Type your text here">
+            </textarea>
         </div>
-        <div class="col-1">
-            <button class="btn btn-dark" @onclick="OnSendMessageClicked">Send</button>
+        <div class="col-1 ms-1">
+            <button id="sendButton" class="btn btn-light d-flex align-items-center justify-content-center" @onclick="OnSendMessageClicked">
+                <img src="icons/send-fill.svg" alt="send icon" width="20" height="20">
+            </button>
         </div>
     </div>
 }

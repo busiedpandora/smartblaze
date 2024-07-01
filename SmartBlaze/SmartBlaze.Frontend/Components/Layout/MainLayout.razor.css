@@ -16,7 +16,7 @@ main {
     background-color: #f7f7f7;
     border-bottom: 1px solid #d6d5d5;
     justify-content: flex-end;
-    height: 3.5rem;
+    height: 4.5rem;
     display: flex;
     align-items: center;
 }
@@ -35,6 +35,12 @@ main {
         overflow: hidden;
         text-overflow: ellipsis;
     }
+    
+.top-row-2 {
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #d6d5d5;
+    height: 4.5rem;
+}    
 
 @media (max-width: 640.98px) {
     .top-row {
@@ -70,9 +76,13 @@ main {
         width: 0;
     }
 
-    .top-row, article {
+    .top-row {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
+    }
+    
+    article {
+        padding: 50px 100px !important;
     }
 }
 
@@ -94,3 +104,8 @@ main {
         right: 0.75rem;
         top: 0.5rem;
     }
+    
+article {
+    height: 75vh;
+    overflow-y: auto;
+}    

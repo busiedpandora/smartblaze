@@ -107,3 +107,7 @@
         overflow-y: auto;
     }
 }
+
+#chatList {
+    height: 65%;
+}

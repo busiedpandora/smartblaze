@@ -8,11 +8,27 @@
 
 @if (chatStateService.CurrentChatSession is not null)
 {
-    <h2>@chatStateService.CurrentChatSession.Title</h2>
-    
     @foreach(var message in chatStateService.CurrentChatSession.Messages)
     {
-        <p>@message.Content</p>
+        <div class="d-flex">
+            <div>
+                @switch (message.Role)
+                {
+                    case "user":
+                        <img src="icons/person-fill.svg" width="28" height="28" alt="user icon"/>
+                        break;
+                    case "assistant":
+                        <img src="icons/robot.svg" width="28" height="28" alt="assistant icon"/>
+                        break;
+                    case "system":
+                        <img src="icons/gear-fill.svg" width="25" height="25" alt="system icon"/>
+                        break;
+                }
+            </div>
+            <div class="ps-3 pe-3 pb-5 pt-1">
+                <span>@message.Content</span>
+            </div>
+        </div>
     }
 }
 

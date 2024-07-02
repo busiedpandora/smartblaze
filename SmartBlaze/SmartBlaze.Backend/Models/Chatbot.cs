@@ -1,3 +1,5 @@
+using SmartBlaze.Backend.Dtos;
+
 namespace SmartBlaze.Backend.Models;
 
 public abstract class Chatbot
@@ -23,5 +25,5 @@ public abstract class Chatbot
     public string ApiKey => _apiKey;
     public List<string> Models => _models;
 
-    public abstract Task<string?> GenerateAssistantMessageContent(ChatSession chatSession, HttpClient httpClient);
+    public abstract Task<string?> GenerateAssistantMessageContent(ChatSessionDto chatSessionDto, HttpClient httpClient);
 }

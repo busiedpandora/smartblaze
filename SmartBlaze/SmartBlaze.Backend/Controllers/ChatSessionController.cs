@@ -22,30 +22,27 @@ public class ChatSessionController : ControllerBase
     [HttpGet("")]
     public ActionResult<List<ChatSessionDto>> GetAllChatSessions()
     {
-        var chatSessions = _chatSessionService.GetAllChatSessions();
+        var chatSessionDtos = _chatSessionService.GetAllChatSessions();
 
-        if (chatSessions is null)
+        if (chatSessionDtos is null)
         {
             return NotFound($"Chat sessions not found");
         }
         
-        return Ok(chatSessions
-            .Select(ct => ChatSessionDto.ToChatSessionDto(ct.Id, ct.Title, ct.CreationDate, null))
-            .ToList());
+        return Ok(chatSessionDtos);
     }
 
     [HttpGet("{id:long}")]
     public ActionResult<ChatSessionDto> GetChatSession(long id)
     {
-        var chatSession = _chatSessionService.GetChatSessionById(id);
+        var chatSessionDto = _chatSessionService.GetChatSessionById(id);
 
-        if (chatSession is null)
+        if (chatSessionDto is null)
         {
             return NotFound($"Chat session with id {id} not found");
         }
 
-        return Ok(ChatSessionDto
-            .ToChatSessionDto(chatSession.Id, chatSession.Title, chatSession.CreationDate, chatSession.Messages));
+        return Ok(chatSessionDto);
     }
     
     [HttpPost("new")]
@@ -65,9 +62,9 @@ public class ChatSessionController : ControllerBase
             return NotFound($"Chatbot with name {chatbotName} not found");
         }
         
-        ChatSession chatSession = _chatSessionService.CreateNewChatSession(chatSessionDto.Title, chatbot);
-        _chatSessionService.AddChatSession(chatSession);
+        chatSessionDto = _chatSessionService.CreateNewChatSession(chatSessionDto.Title, chatbot);
+        _chatSessionService.AddChatSession(chatSessionDto);
         
-        return Ok(ChatSessionDto.ToChatSessionDto(chatSession.Id, chatSession.Title, chatSession.CreationDate, null));
+        return Ok(chatSessionDto);
     }
 }

@@ -12,17 +12,4 @@ public class MessageDto
     
     [JsonPropertyName("creationDate")]
     public DateTime? CreationDate { get; set; }
-
-
-    public static MessageDto ToMessageDto(string? content, string? role, DateTime? creationDate)
-    {
-        MessageDto messageDto = new MessageDto()
-        {
-            Content = content,
-            Role = role,
-            CreationDate = creationDate
-        };
-
-        return messageDto;
-    }
 }

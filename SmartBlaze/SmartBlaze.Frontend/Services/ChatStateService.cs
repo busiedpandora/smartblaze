@@ -60,7 +60,13 @@ public class ChatStateService
         }
         
         var responseContent = await response.Content.ReadAsStringAsync();
-        var messagesDto = JsonSerializer.Deserialize<List<MessageDto>>(responseContent);
+
+        List<MessageDto>? messagesDto = new List<MessageDto>();
+        
+        if (responseContent != string.Empty)
+        {
+            messagesDto = JsonSerializer.Deserialize<List<MessageDto>>(responseContent);
+        }
 
         if (messagesDto is not null)
         {

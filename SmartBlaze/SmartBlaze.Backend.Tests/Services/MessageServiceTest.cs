@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using SmartBlaze.Backend.Dtos;
 using SmartBlaze.Backend.Models;
 using SmartBlaze.Backend.Services;
 
@@ -18,7 +19,7 @@ public class MessageServiceTest
     [Fact]
     public void CreateNewUserMessage()
     {
-        Message message = _messageService.CreateNewUserMessage("hello");
+        MessageDto message = _messageService.CreateNewUserMessage("hello");
         Assert.Equal("hello", message.Content);
         Assert.Equal(Role.User, message.Role);
     }
@@ -26,7 +27,7 @@ public class MessageServiceTest
     [Fact]
     public void CreateNewAssistantMessage()
     {
-        Message message = _messageService.CreateNewAssistantMessage("hello");
+        MessageDto message = _messageService.CreateNewAssistantMessage("hello");
         Assert.Equal("hello", message.Content);
         Assert.Equal(Role.Assistant, message.Role);
     }
@@ -34,7 +35,7 @@ public class MessageServiceTest
     [Fact]
     public void CreateNewSystemMessage()
     {
-        Message message = _messageService.CreateNewSystemMessage("hello");
+        MessageDto message = _messageService.CreateNewSystemMessage("hello");
         Assert.Equal("hello", message.Content);
         Assert.Equal(Role.System, message.Role);
     }

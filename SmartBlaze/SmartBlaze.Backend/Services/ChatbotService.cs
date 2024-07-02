@@ -1,3 +1,4 @@
+using SmartBlaze.Backend.Dtos;
 using SmartBlaze.Backend.Models;
 
 namespace SmartBlaze.Backend.Services;
@@ -22,11 +23,9 @@ public class ChatbotService
         return _chatbots.Find(c => c.Name == name);
     }
 
-    public async Task<string?> GenerateAssistantMessageContentFromChatSession(ChatSession chatSession)
+    public async Task<string?> GenerateAssistantMessageContentFromChatSession(Chatbot chatbot, ChatSessionDto chatSessionDto)
     {
-        Chatbot chatbot = chatSession.Chatbot;
-        
-        return await chatbot.GenerateAssistantMessageContent(chatSession, _httpClient);
+        return await chatbot.GenerateAssistantMessageContent(chatSessionDto, _httpClient);
     }
 
     private void CreateChatbots()

@@ -1,21 +1,37 @@
+using SmartBlaze.Backend.Dtos;
 using SmartBlaze.Backend.Models;
 
 namespace SmartBlaze.Backend.Services;
 
 public class MessageService
 {
-    public Message CreateNewUserMessage(string content)
+    public MessageDto CreateNewUserMessage(string content)
     {
-        return new Message(content, Role.User, DateTime.Now);
+        return new MessageDto()
+        {
+            Content = content,
+            Role = Role.User,
+            CreationDate = DateTime.Now
+        };
     }
     
-    public Message CreateNewAssistantMessage(string content)
+    public MessageDto CreateNewAssistantMessage(string content)
     {
-        return new Message(content, Role.Assistant, DateTime.Now);
+        return new MessageDto()
+        {
+            Content = content,
+            Role = Role.Assistant,
+            CreationDate = DateTime.Now
+        };
     }
     
-    public Message CreateNewSystemMessage(string content)
+    public MessageDto CreateNewSystemMessage(string content)
     {
-        return new Message(content, Role.System, DateTime.Now);
+        return new MessageDto()
+        {
+            Content = content,
+            Role = Role.System,
+            CreationDate = DateTime.Now
+        };
     }
 }

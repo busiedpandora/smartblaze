@@ -1,5 +1,3 @@
-using System.Text;
-using System.Text.Json;
 using SmartBlaze.Backend.Dtos;
 using SmartBlaze.Backend.Models;
 
@@ -9,7 +7,7 @@ public class ChatSessionService
 {
     private static long _counter = 0L;
     
-    private List<ChatSession> _chatSessions;
+    private List<ChatSessionDto> _chatSessionDtos;
 
     private HttpClient _httpClient;
     
@@ -18,32 +16,45 @@ public class ChatSessionService
     {
         _httpClient = httpClient;
         
-        _chatSessions = new List<ChatSession>();
+        _chatSessionDtos = new List<ChatSessionDto>();
     }
     
-    public List<ChatSession>? GetAllChatSessions()
+    public List<ChatSessionDto>? GetAllChatSessions()
     {
-        return _chatSessions;
+        return _chatSessionDtos;
     }
 
-    public ChatSession? GetChatSessionById(long id)
+    public ChatSessionDto? GetChatSessionById(long id)
     {
-        return _chatSessions.Find(chat => chat.Id.Equals(id));
+        return _chatSessionDtos.Find(chat => chat.Id.Equals(id));
     }
     
-    public void AddNewMessageToChatSession(Message message, ChatSession chatSession)
+    public void AddNewMessageToChatSession(MessageDto messageDto, ChatSessionDto chatSessionDto)
     {
-        chatSession.Messages.Add(message);
+        if (chatSessionDto.Messages is null)
+        {
+            chatSessionDto.Messages = new List<MessageDto>();
+        }
+        
+        chatSessionDto.Messages.Add(messageDto);
     }
 
-    public ChatSession CreateNewChatSession(string title, Chatbot chatbot)
+    public ChatSessionDto CreateNewChatSession(string title, Chatbot chatbot)
     {
         string model = chatbot.Models.ElementAt(0);
-        return new ChatSession(++_counter, title, DateTime.Now, chatbot, model);
+        
+        return new ChatSessionDto()
+        {
+            Id = ++_counter,
+            Title = title,
+            CreationDate = DateTime.Now,
+            ChatbotName = chatbot.Name,
+            ChatbotModel = model
+        };
     }
 
-    public void AddChatSession(ChatSession chatSession)
+    public void AddChatSession(ChatSessionDto chatSessionDto)
     {
-        _chatSessions.Add(chatSession);
+        _chatSessionDtos.Add(chatSessionDto);
     }
 }

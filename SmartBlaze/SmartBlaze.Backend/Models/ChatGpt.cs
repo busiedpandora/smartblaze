@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SmartBlaze.Backend.Dtos;
 
 namespace SmartBlaze.Backend.Models;
 
@@ -10,9 +11,9 @@ public class ChatGpt : Chatbot
     {
     }
 
-    public override async Task<string?> GenerateAssistantMessageContent(ChatSession chatSession, HttpClient httpClient)
+    public override async Task<string?> GenerateAssistantMessageContent(ChatSessionDto chatSessionDto, HttpClient httpClient)
     {
-        var messages = chatSession.Messages
+        var messages = chatSessionDto.Messages
             .Select(m => new Message
             {
                 Content = m.Content,
@@ -22,7 +23,7 @@ public class ChatGpt : Chatbot
 
         var chatRequest = new ChatRequest
         {
-            Model = chatSession.Model,
+            Model = chatSessionDto.ChatbotModel,
             Messages = messages
         };
 

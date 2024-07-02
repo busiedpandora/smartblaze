@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SmartBlaze.Backend.Dtos;
 
 namespace SmartBlaze.Backend.Models;
 
@@ -10,11 +11,11 @@ public class Gemini : Chatbot
     {
     }
 
-    public override async Task<string?> GenerateAssistantMessageContent(ChatSession chatSession, HttpClient httpClient)
+    public override async Task<string?> GenerateAssistantMessageContent(ChatSessionDto chatSessionDto, HttpClient httpClient)
     {
         var contents = new List<Content>();
 
-        foreach (var message in chatSession.Messages)
+        foreach (var message in chatSessionDto.Messages)
         {
             var part = new Part
             {
@@ -42,7 +43,7 @@ public class Gemini : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{ApiHost}/v1/models/{chatSession.Model}:generateContent?key={ApiKey}"),
+            RequestUri = new Uri($"{ApiHost}/v1/models/{chatSessionDto.ChatbotModel}:generateContent?key={ApiKey}"),
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
         

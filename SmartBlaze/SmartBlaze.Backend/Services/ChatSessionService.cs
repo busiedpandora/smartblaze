@@ -5,7 +5,7 @@ namespace SmartBlaze.Backend.Services;
 
 public class ChatSessionService
 {
-    private static long _counter = 0L;
+    private static string _counter = "0";
     
     private List<ChatSessionDto> _chatSessionDtos;
 
@@ -24,9 +24,9 @@ public class ChatSessionService
         return _chatSessionDtos;
     }
 
-    public ChatSessionDto? GetChatSessionById(long id)
+    public ChatSessionDto? GetChatSessionById(string id)
     {
-        return _chatSessionDtos.Find(chat => chat.Id.Equals(id));
+        return _chatSessionDtos.Find(chat => chat.Id is not null && chat.Id == id);
     }
     
     public void AddNewMessageToChatSession(MessageDto messageDto, ChatSessionDto chatSessionDto)
@@ -42,10 +42,11 @@ public class ChatSessionService
     public ChatSessionDto CreateNewChatSession(string title, Chatbot chatbot)
     {
         string model = chatbot.Models.ElementAt(0);
+        _counter = _counter + 1;
         
         return new ChatSessionDto()
         {
-            Id = ++_counter,
+            Id = _counter,
             Title = title,
             CreationDate = DateTime.Now,
             ChatbotName = chatbot.Name,

@@ -2,21 +2,22 @@ namespace SmartBlaze.Frontend.Models;
 
 public class ChatSession
 {
-    private long _id;
+    private string _id;
     private string _title;
     private DateTime _creationDate;
     private List<Message> _messages;
     private bool _selected;
 
     
-    public ChatSession(long id, string title, DateTime creationDate)
+    public ChatSession(string id, string title, DateTime creationDate)
     {
         _id = id;
         _title = title;
         _creationDate = creationDate;
+        _messages = new List<Message>();
     }
     
-    public long Id
+    public string Id
     {
         get => _id;
         set => _id = value;

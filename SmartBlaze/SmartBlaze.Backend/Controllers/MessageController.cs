@@ -6,7 +6,7 @@ using SmartBlaze.Backend.Services;
 namespace SmartBlaze.Backend.Controllers;
 
 [ApiController]
-[Route("chat-session/{id:long}")]
+[Route("chat-session/{id}")]
 public class MessageController : ControllerBase
 {
     private ChatSessionService _chatSessionService;
@@ -23,7 +23,7 @@ public class MessageController : ControllerBase
     }
     
     [HttpGet("messages")]
-    public ActionResult<List<MessageDto>> GetMessagesFromChatSession(long id)
+    public ActionResult<List<MessageDto>> GetMessagesFromChatSession(string id)
     {
         ChatSessionDto? chatSessionDtos = _chatSessionService.GetChatSessionById(id);
 
@@ -41,7 +41,7 @@ public class MessageController : ControllerBase
     }
     
     [HttpPost("new-user-message")]
-    public ActionResult<MessageDto> AddNewUserMessageToChatSession(long id, [FromBody] MessageDto messageDto)
+    public ActionResult<MessageDto> AddNewUserMessageToChatSession(string id, [FromBody] MessageDto messageDto)
     {
         if (messageDto is null || messageDto.Content is null)
         {
@@ -61,7 +61,7 @@ public class MessageController : ControllerBase
     }
     
     [HttpPost("new-assistant-message")]
-    public async Task<ActionResult<MessageDto>> GenerateNewAssistantMessageToChatSession(long id)
+    public async Task<ActionResult<MessageDto>> GenerateNewAssistantMessageToChatSession(string id)
     {
         ChatSessionDto? chatSessionDto = _chatSessionService.GetChatSessionById(id);
         if (chatSessionDto is null)
@@ -95,7 +95,7 @@ public class MessageController : ControllerBase
     }
 
     [HttpPost("new-system-message")]
-    public ActionResult<MessageDto> AddNewSystemMessageToChatSession(long id, [FromBody] MessageDto messageDto)
+    public ActionResult<MessageDto> AddNewSystemMessageToChatSession(string id, [FromBody] MessageDto messageDto)
     {
         if (messageDto is null || messageDto.Content is null)
         {

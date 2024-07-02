@@ -186,7 +186,7 @@ public class ChatStateService
         }
         
         ChatSession chatSession = 
-            new ChatSession(chatSessionDto.Id.Value, chatSessionDto.Title, chatSessionDto.CreationDate.Value);
+            new ChatSession(chatSessionDto.Id, chatSessionDto.Title, chatSessionDto.CreationDate.Value);
 
         _chatSessions.Insert(0, chatSession);
         await SelectChat(chatSession);
@@ -215,6 +215,7 @@ public class ChatStateService
         
         Message systemMessage = new Message(systemMessageDto.Content, systemMessageDto.Role, 
             systemMessageDto.CreationDate.Value);
+        
         chatSession.Messages.Add(systemMessage);
         NotifyStateChanged();
     }
@@ -243,7 +244,7 @@ public class ChatStateService
             if (IsChatSessionValid(chatSessionDto))
             {
                 _chatSessions.Add(
-                    new ChatSession(chatSessionDto.Id.Value, chatSessionDto.Title, 
+                    new ChatSession(chatSessionDto.Id, chatSessionDto.Title, 
                         chatSessionDto.CreationDate.Value));
                         
                 NotifyStateChanged();

@@ -6,7 +6,7 @@ namespace SmartBlaze.Frontend.Dtos;
 public class ChatSessionDto
 {
     [JsonPropertyName("id")]
-    public long? Id { get; set; }
+    public string? Id { get; set; }
     
     [JsonPropertyName("title")]
     public string? Title { get; set; }
@@ -17,7 +17,7 @@ public class ChatSessionDto
     public List<MessageDto>? Messages { get; set; }
     
     
-    public static ChatSessionDto ToChatSessionDto(long? id, string? title, DateTime? creationDate, List<Message>? messages)
+    public static ChatSessionDto ToChatSessionDto(string? id, string? title, DateTime? creationDate, List<Message>? messages)
     {
         List<MessageDto>? messagesDto = null;
         

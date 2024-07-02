@@ -32,8 +32,8 @@ public class ChatSessionController : ControllerBase
         return Ok(chatSessionDtos);
     }
 
-    [HttpGet("{id:long}")]
-    public ActionResult<ChatSessionDto> GetChatSession(long id)
+    [HttpGet("{id}")]
+    public ActionResult<ChatSessionDto> GetChatSession(string id)
     {
         var chatSessionDto = _chatSessionService.GetChatSessionById(id);
 

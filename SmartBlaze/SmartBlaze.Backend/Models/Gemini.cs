@@ -23,12 +23,20 @@ public class Gemini : Chatbot
                 Text = message.Content
             };
 
-            message.Role = message.Role == Role.System ? Role.User : message.Role;
-            message.Role = message.Role == Role.Assistant ? "model" : message.Role;
+            string? role = message.Role;
+
+            if (message.Role == Role.System)
+            {
+                role = Role.User;
+            }
+            else if (message.Role == Role.Assistant)
+            {
+                role = "model";
+            }
             
             var content = new Content
             {
-                Role = message.Role,
+                Role = role,
                 Parts = new List<Part>() {part}
             };
             contents.Add(content);

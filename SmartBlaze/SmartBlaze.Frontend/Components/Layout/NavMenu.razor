@@ -41,7 +41,7 @@
 
 <div class="border-top border-1 border-white">
     <div class="nav-item px-3">
-        @if (!chatStateService.IsGeneratingResponse)
+        @if (!chatStateService.IsGeneratingResponse && !chatStateService.IsNewChatBeingCreated)
         {
             <NavLink class="nav-link user-select-none"
                      @onclick="() => OnNewChatClicked()">
@@ -104,8 +104,8 @@
         await chatStateService.SelectChat(chatSession);
     }
 
-    private void OnNewChatClicked()
+    private async void OnNewChatClicked()
     {
-        chatStateService.CreateNewChatSession();
+        await chatStateService.CreateNewChatSession();
     }
 }

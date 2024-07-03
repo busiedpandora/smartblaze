@@ -11,6 +11,7 @@ public class ChatStateService
     private ChatSessionDto? _currentChatSession;
     private List<MessageDto>? _currentChatSessionMessages;
     private bool isGeneratingResponse = false;
+    private bool isNewChatBeingCreated = false;
 
     public ChatStateService(IHttpClientFactory httpClientFactory)
     {
@@ -40,6 +41,11 @@ public class ChatStateService
     public bool IsGeneratingResponse
     {
         get => isGeneratingResponse;
+    }
+
+    public bool IsNewChatBeingCreated
+    {
+        get => isNewChatBeingCreated;
     }
 
     public event Action? OnChange;
@@ -98,6 +104,11 @@ public class ChatStateService
     public async Task SendUserMessage(string content)
     {
         if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null)
+        {
+            return;
+        }
+        
+        if(isGeneratingResponse || isNewChatBeingCreated)
         {
             return;
         }
@@ -164,8 +175,15 @@ public class ChatStateService
         NotifyStateChanged();
     }
 
-    public async void CreateNewChatSession()
+    public async Task CreateNewChatSession()
     {
+        if (isNewChatBeingCreated)
+        {
+            return;
+        }
+
+        isNewChatBeingCreated = true;
+        
         if (_chatSessions is null)
         {
             _chatSessions = new List<ChatSessionDto>();
@@ -178,6 +196,7 @@ public class ChatStateService
 
         if (!response.IsSuccessStatusCode)
         {
+            isNewChatBeingCreated = false;
             return;
         }
         
@@ -186,6 +205,7 @@ public class ChatStateService
 
         if (chatSessionDto is null || !IsChatSessionValid(chatSessionDto))
         {
+            isNewChatBeingCreated = false;
             return;
         }
 
@@ -195,6 +215,7 @@ public class ChatStateService
 
         if (_currentChatSessionMessages is null)
         {
+            isNewChatBeingCreated = false;
             return;
         }
         
@@ -208,6 +229,7 @@ public class ChatStateService
 
         if (!response.IsSuccessStatusCode)
         {
+            isNewChatBeingCreated = false;
             return;
         }
         
@@ -216,10 +238,14 @@ public class ChatStateService
 
         if (systemMessageDto is null || !IsMessageValid(systemMessageDto))
         {
+            isNewChatBeingCreated = false;
             return;
         }
         
         _currentChatSessionMessages.Add(systemMessageDto);
+        
+        isNewChatBeingCreated = false;
+        
         NotifyStateChanged();
     }
 

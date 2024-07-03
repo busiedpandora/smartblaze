@@ -10,6 +10,7 @@ public class ChatStateService
     private List<ChatSessionDto>? _chatSessions;
     private ChatSessionDto? _currentChatSession;
     private List<MessageDto>? _currentChatSessionMessages;
+    private bool isGeneratingResponse = false;
 
     public ChatStateService(IHttpClientFactory httpClientFactory)
     {
@@ -34,6 +35,11 @@ public class ChatStateService
     public List<MessageDto>? CurrentChatSessionMessages
     {
         get => _currentChatSessionMessages;
+    }
+
+    public bool IsGeneratingResponse
+    {
+        get => isGeneratingResponse;
     }
 
     public event Action? OnChange;
@@ -102,6 +108,8 @@ public class ChatStateService
         {
             return;
         }
+
+        isGeneratingResponse = true;
         
         MessageDto? userMessageDto = new MessageDto();
         userMessageDto.Content = content;
@@ -112,6 +120,7 @@ public class ChatStateService
 
         if (!response.IsSuccessStatusCode)
         {
+            isGeneratingResponse = false;
             return;
         }
         
@@ -120,6 +129,7 @@ public class ChatStateService
 
         if (userMessageDto is null || !IsMessageValid(userMessageDto))
         {
+            isGeneratingResponse = false;
             return;
         }
         
@@ -134,6 +144,7 @@ public class ChatStateService
 
         if (!response.IsSuccessStatusCode)
         {
+            isGeneratingResponse = false;
             return;
         }
         
@@ -142,10 +153,14 @@ public class ChatStateService
         
         if (assistantMessageDto is null || !IsMessageValid(assistantMessageDto))
         {
+            isGeneratingResponse = false;
             return;
         }
         
         _currentChatSessionMessages.Add(assistantMessageDto);
+
+        isGeneratingResponse = false;
+        
         NotifyStateChanged();
     }
 

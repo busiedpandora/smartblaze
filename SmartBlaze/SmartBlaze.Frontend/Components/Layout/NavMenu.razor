@@ -41,11 +41,14 @@
 
 <div class="border-top border-1 border-white">
     <div class="nav-item px-3">
-        <NavLink class="nav-link user-select-none"
-                 @onclick="() => OnNewChatClicked()">
-            <img src="icons/plus-circle-fill.svg" width="20" height="20" alt="new chat icon" class="me-2"/>
-            <span>New chat</span>
-        </NavLink>
+        @if (!chatStateService.IsGeneratingResponse)
+        {
+            <NavLink class="nav-link user-select-none"
+                     @onclick="() => OnNewChatClicked()">
+                <img src="icons/plus-circle-fill.svg" width="20" height="20" alt="new chat icon" class="me-2"/>
+                <span>New chat</span>
+            </NavLink>
+        }
     </div>
     
 </div>
@@ -93,6 +96,11 @@
 
     private async void OnChatClicked(ChatSessionDto chatSession)
     {
+        if (chatStateService.IsGeneratingResponse)
+        {
+            return;
+        }
+        
         await chatStateService.SelectChat(chatSession);
     }
 

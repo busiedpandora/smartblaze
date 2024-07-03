@@ -12,9 +12,13 @@
             </textarea>
         </div>
         <div class="col-1 ms-1">
-            <button id="sendButton" class="btn btn-light d-flex align-items-center justify-content-center" @onclick="OnSendMessageClicked">
-                <img src="icons/send-fill.svg" alt="send icon" width="20" height="20">
-            </button>
+            @if (!chatStateService.IsGeneratingResponse)
+            {
+                <button id="sendButton" class="btn btn-light d-flex align-items-center justify-content-center"
+                        @onclick="OnSendMessageClicked">
+                    <img src="icons/send-fill.svg" alt="send icon" width="20" height="20">
+                </button> 
+            }
         </div>
     </div>
 }

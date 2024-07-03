@@ -11,11 +11,12 @@ public class Gemini : Chatbot
     {
     }
 
-    public override async Task<string?> GenerateAssistantMessageContent(ChatSessionDto chatSessionDto, HttpClient httpClient)
+    public override async Task<string?> GenerateAssistantMessageContent(ChatSessionDto chatSessionDto, 
+        List<MessageDto> messageDtos, HttpClient httpClient)
     {
         var contents = new List<Content>();
 
-        foreach (var message in chatSessionDto.Messages)
+        foreach (var message in messageDtos)
         {
             var part = new Part
             {

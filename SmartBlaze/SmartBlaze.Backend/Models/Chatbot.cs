@@ -25,5 +25,6 @@ public abstract class Chatbot
     public string ApiKey => _apiKey;
     public List<string> Models => _models;
 
-    public abstract Task<string?> GenerateAssistantMessageContent(ChatSessionDto chatSessionDto, HttpClient httpClient);
+    public abstract Task<string?> GenerateAssistantMessageContent(ChatSessionDto chatSessionDto, 
+        List<MessageDto> messageDtos, HttpClient httpClient);
 }

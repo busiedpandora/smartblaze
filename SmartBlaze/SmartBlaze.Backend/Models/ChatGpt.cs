@@ -11,9 +11,10 @@ public class ChatGpt : Chatbot
     {
     }
 
-    public override async Task<string?> GenerateAssistantMessageContent(ChatSessionDto chatSessionDto, HttpClient httpClient)
+    public override async Task<string?> GenerateAssistantMessageContent(ChatSessionDto chatSessionDto, 
+        List<MessageDto> messageDtos, HttpClient httpClient)
     {
-        var messages = chatSessionDto.Messages
+        var messages = messageDtos
             .Select(m => new Message
             {
                 Content = m.Content,

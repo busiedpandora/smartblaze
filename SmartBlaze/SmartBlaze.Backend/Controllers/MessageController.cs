@@ -23,39 +23,36 @@ public class MessageController : ControllerBase
     }
     
     [HttpGet("messages")]
-    public ActionResult<List<MessageDto>> GetMessagesFromChatSession(string id)
+    public async Task<ActionResult<List<MessageDto>>> GetMessagesFromChatSession(string id)
     {
-        ChatSessionDto? chatSessionDtos = _chatSessionService.GetChatSessionById(id);
-
-        if (chatSessionDtos is null)
+        ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
+        
+        if (chatSessionDto is null)
         {
             return NotFound($"Chat session with id {id} not found");
         }
 
-        if (chatSessionDtos.Messages is null)
-        {
-            return NoContent();
-        }
+        var messages = await _messageService.GetMessagesFromChatSession(chatSessionDto);
 
-        return chatSessionDtos.Messages;
+        return messages;
     }
     
     [HttpPost("new-user-message")]
-    public ActionResult<MessageDto> AddNewUserMessageToChatSession(string id, [FromBody] MessageDto messageDto)
+    public async Task<ActionResult<MessageDto>> AddNewUserMessageToChatSession(string id, [FromBody] MessageDto messageDto)
     {
         if (messageDto is null || messageDto.Content is null)
         {
             return BadRequest("Message not specified correctly");
         }
 
-        ChatSessionDto? chatSessionDto = _chatSessionService.GetChatSessionById(id);
+        ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
         if (chatSessionDto is null)
         {
             return NotFound($"Chat session with id {id} not found");
         }
 
         MessageDto userMessageDto = _messageService.CreateNewUserMessage(messageDto.Content);
-        _chatSessionService.AddNewMessageToChatSession(userMessageDto, chatSessionDto);
+        _messageService.AddNewMessageToChatSession(userMessageDto, chatSessionDto);
 
         return Ok(userMessageDto);
     }
@@ -63,7 +60,7 @@ public class MessageController : ControllerBase
     [HttpPost("new-assistant-message")]
     public async Task<ActionResult<MessageDto>> GenerateNewAssistantMessageToChatSession(string id)
     {
-        ChatSessionDto? chatSessionDto = _chatSessionService.GetChatSessionById(id);
+        ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
         if (chatSessionDto is null)
         {
             return NotFound($"Chat session with id {id} not found");
@@ -80,8 +77,11 @@ public class MessageController : ControllerBase
         {
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
+
+        var messageDtos = await _messageService.GetMessagesFromChatSession(chatSessionDto);
         
-        string? content = await _chatbotService.GenerateAssistantMessageContentFromChatSession(chatbot, chatSessionDto);
+        string? content = await _chatbotService.GenerateAssistantMessageContentFromChatSession(chatbot, chatSessionDto,
+            messageDtos);
         
         if (content is null)
         {
@@ -89,27 +89,27 @@ public class MessageController : ControllerBase
         }
 
         MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage(content);
-        _chatSessionService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
+        _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
 
         return Ok(assistantMessageDto);
     }
 
     [HttpPost("new-system-message")]
-    public ActionResult<MessageDto> AddNewSystemMessageToChatSession(string id, [FromBody] MessageDto messageDto)
+    public async Task<ActionResult<MessageDto>> AddNewSystemMessageToChatSession(string id, [FromBody] MessageDto messageDto)
     {
         if (messageDto is null || messageDto.Content is null)
         {
             return BadRequest("Message not specified correctly");
         }
         
-        ChatSessionDto? chatSessionDto = _chatSessionService.GetChatSessionById(id);
+        ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
         if (chatSessionDto is null)
         {
             return NotFound($"Chat session with id {id} not found");
         }
 
         MessageDto systemMessageDto = _messageService.CreateNewSystemMessage(messageDto.Content);
-        _chatSessionService.AddNewMessageToChatSession(systemMessageDto, chatSessionDto);
+        _messageService.AddNewMessageToChatSession(systemMessageDto, chatSessionDto);
 
         return Ok(systemMessageDto);
     }

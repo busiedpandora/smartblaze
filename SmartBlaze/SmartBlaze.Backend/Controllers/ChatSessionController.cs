@@ -20,9 +20,9 @@ public class ChatSessionController : ControllerBase
     }
 
     [HttpGet("")]
-    public ActionResult<List<ChatSessionDto>> GetAllChatSessions()
+    public async Task<ActionResult<List<ChatSessionDto>>> GetAllChatSessions()
     {
-        var chatSessionDtos = _chatSessionService.GetAllChatSessions();
+        var chatSessionDtos = await _chatSessionService.GetAllChatSessions();
 
         if (chatSessionDtos is null)
         {
@@ -46,7 +46,7 @@ public class ChatSessionController : ControllerBase
     }
     
     [HttpPost("new")]
-    public ActionResult<ChatSessionDto> AddNewChatSession([FromBody] ChatSessionDto chatSessionDto)
+    public async Task<ActionResult<ChatSessionDto>> AddNewChatSession([FromBody] ChatSessionDto chatSessionDto)
     {
         if (chatSessionDto is null || chatSessionDto.Title is null)
         {
@@ -63,7 +63,7 @@ public class ChatSessionController : ControllerBase
         }
         
         chatSessionDto = _chatSessionService.CreateNewChatSession(chatSessionDto.Title, chatbot);
-        _chatSessionService.AddChatSession(chatSessionDto);
+        chatSessionDto = await _chatSessionService.AddChatSession(chatSessionDto);
         
         return Ok(chatSessionDto);
     }

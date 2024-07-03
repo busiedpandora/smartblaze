@@ -1,10 +1,19 @@
 using SmartBlaze.Backend.Dtos;
 using SmartBlaze.Backend.Models;
+using SmartBlaze.Backend.Repositories;
 
 namespace SmartBlaze.Backend.Services;
 
 public class MessageService
 {
+    private MessageRepository _messageRepository;
+
+
+    public MessageService(MessageRepository messageRepository)
+    {
+        _messageRepository = messageRepository;
+    }
+
     public MessageDto CreateNewUserMessage(string content)
     {
         return new MessageDto()
@@ -33,5 +42,17 @@ public class MessageService
             Role = Role.System,
             CreationDate = DateTime.Now
         };
+    }
+    
+    public void AddNewMessageToChatSession(MessageDto messageDto, ChatSessionDto chatSessionDto)
+    {
+        _messageRepository.SaveMessage(messageDto, chatSessionDto.Id);
+    }
+
+    public async Task<List<MessageDto>> GetMessagesFromChatSession(ChatSessionDto chatSessionDto)
+    {
+        var messages = await _messageRepository.GetMessagesFromChatSession(chatSessionDto.Id);
+
+        return messages;
     }
 }

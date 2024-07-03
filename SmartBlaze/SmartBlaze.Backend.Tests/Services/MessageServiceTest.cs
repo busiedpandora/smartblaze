@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using SmartBlaze.Backend.Dtos;
 using SmartBlaze.Backend.Models;
+using SmartBlaze.Backend.Repositories;
 using SmartBlaze.Backend.Services;
 
 namespace SmartBlaze.Backend.Tests.Services;
@@ -13,7 +14,7 @@ public class MessageServiceTest
     
     public MessageServiceTest()
     {
-        _messageService = new MessageService();
+        _messageService = new MessageService(new MessageRepository());
     }
 
     [Fact]

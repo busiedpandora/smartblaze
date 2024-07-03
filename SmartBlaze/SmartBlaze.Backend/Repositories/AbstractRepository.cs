@@ -6,8 +6,8 @@ namespace SmartBlaze.Backend.Repositories;
 public abstract class AbstractRepository
 {
     protected const string AppwriteDatabaseId = "667422240010ed7f3097";
-    protected const string ChatSessionCollectionId = "6683c9e90001ea154870";
-    protected const string MessageCollectionId = "66845970001489fb1d3e";
+    protected const string ChatSessionCollectionId = "6685332600286e5a6976";
+    protected const string MessageCollectionId = "6685339500109e79a0de";
     
     private const string AppwriteEndpoint = "https://cloud.appwrite.io/v1";
     private const string AppwriteProjectId = "6674214b0022089a10cb";

@@ -6,9 +6,9 @@
 
 <PageTitle>SmartBlaze</PageTitle>
 
-@if (chatStateService.CurrentChatSession is not null)
+@if (chatStateService.CurrentChatSessionMessages is not null)
 {
-    @foreach(var message in chatStateService.CurrentChatSession.Messages)
+    @foreach(var message in chatStateService.CurrentChatSessionMessages)
     {
         <div class="d-flex">
             <div>

@@ -52,7 +52,7 @@ public class MessageController : ControllerBase
         }
 
         MessageDto userMessageDto = _messageService.CreateNewUserMessage(messageDto.Content);
-        _messageService.AddNewMessageToChatSession(userMessageDto, chatSessionDto);
+        await _messageService.AddNewMessageToChatSession(userMessageDto, chatSessionDto);
 
         return Ok(userMessageDto);
     }
@@ -89,7 +89,7 @@ public class MessageController : ControllerBase
         }
 
         MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage(content);
-        _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
+        await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
 
         return Ok(assistantMessageDto);
     }
@@ -109,7 +109,7 @@ public class MessageController : ControllerBase
         }
 
         MessageDto systemMessageDto = _messageService.CreateNewSystemMessage(messageDto.Content);
-        _messageService.AddNewMessageToChatSession(systemMessageDto, chatSessionDto);
+        await _messageService.AddNewMessageToChatSession(systemMessageDto, chatSessionDto);
 
         return Ok(systemMessageDto);
     }

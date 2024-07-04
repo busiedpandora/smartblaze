@@ -20,7 +20,7 @@ public class MessageRepository : AbstractRepository
           return messages;
      }
      
-     public async void SaveMessage(MessageDto messageDto, string chatSessionId)
+     public async Task SaveMessage(MessageDto messageDto, string chatSessionId)
      {
           var chatSessionDocument = await AppwriteDatabase.GetDocument(AppwriteDatabaseId, ChatSessionCollectionId, 
                chatSessionId);

@@ -44,9 +44,9 @@ public class MessageService
         };
     }
     
-    public void AddNewMessageToChatSession(MessageDto messageDto, ChatSessionDto chatSessionDto)
+    public async Task AddNewMessageToChatSession(MessageDto messageDto, ChatSessionDto chatSessionDto)
     {
-        _messageRepository.SaveMessage(messageDto, chatSessionDto.Id);
+        await _messageRepository.SaveMessage(messageDto, chatSessionDto.Id);
     }
 
     public async Task<List<MessageDto>> GetMessagesFromChatSession(ChatSessionDto chatSessionDto)

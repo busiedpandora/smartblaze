@@ -1,17 +1,16 @@
 @rendermode InteractiveServer
 
 @inject ChatStateService chatStateService
+@inject IJSRuntime jsRuntime
 
 
 @if(chatStateService.CurrentChatSession is not null)
 {
     <div class="d-flex justify-content-center align-items-center">
         <div class="col-8">
-            <!--<textarea class="form-control border-3" rows="3" @bind="_inputText" @onkeydown="HandleKeyDown"
+            <textarea @ref="_textarea" class="form-control border-3" rows="3" @onkeydown="HandleKeyPressed"
                 placeholder="Type your text here">
-            </textarea>-->
-            <input type="text" class="form-control border-3" @bind="_inputText" @onkeyup="HandleKeyPressed" 
-                   placeholder="Type your question here"/>
+            </textarea>
         </div>
         <div class="col-1 ms-1">
             @if (!chatStateService.IsGeneratingResponse)
@@ -26,7 +25,7 @@
 }
 
 @code {
-    private string _inputText = "";
+    private ElementReference _textarea;
     
     protected override async Task OnInitializedAsync()
     {
@@ -37,8 +36,10 @@
     
     private async void OnSendMessageClicked()
     {
-        string text = _inputText;
-        _inputText = "";
+        string text = await jsRuntime.InvokeAsync<string>("getTextareaValue", _textarea);
+        
+        await jsRuntime.InvokeVoidAsync("setTextareaValue", _textarea, string.Empty);
+        
         await chatStateService.SendUserMessage(text);
     }
 

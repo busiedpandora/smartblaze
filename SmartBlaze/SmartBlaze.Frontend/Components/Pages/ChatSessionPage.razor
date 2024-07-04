@@ -30,6 +30,18 @@
             </div>
         </div>
     }
+    
+    @if (chatStateService.IsGeneratingResponse)
+    {
+        <div class="d-flex">
+            <div>
+                <img src="icons/robot.svg" width="28" height="28" alt="assistant icon"/>
+            </div>
+            <div class="ps-3 pe-3 pb-5 pt-1">
+                <span class="text-secondary">I'm elaborating message...</span>
+            </div>
+        </div>
+    }
 }
 
 

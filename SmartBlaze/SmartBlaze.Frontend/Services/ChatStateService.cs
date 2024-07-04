@@ -220,8 +220,7 @@ public class ChatStateService
         }
         
         MessageDto? systemMessageDto = new MessageDto();
-        systemMessageDto.Content = "You are a helpful assistant. You can help me by answering my questions. " +
-                                   "You can also ask me questions.";
+        systemMessageDto.Content = "You are a helpful assistant. You can help me by answering my questions.";
         
         response = await _httpClient.PostAsJsonAsync(
             $"chat-session/{chatSessionDto.Id}/new-system-message", 

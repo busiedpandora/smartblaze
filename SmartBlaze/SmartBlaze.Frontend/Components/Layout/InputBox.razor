@@ -7,9 +7,11 @@
 {
     <div class="d-flex justify-content-center align-items-center">
         <div class="col-8">
-            <textarea class="form-control border-3" rows="3" @bind="_inputText" 
+            <!--<textarea class="form-control border-3" rows="3" @bind="_inputText" @onkeydown="HandleKeyDown"
                 placeholder="Type your text here">
-            </textarea>
+            </textarea>-->
+            <input type="text" class="form-control border-3" @bind="_inputText" @onkeyup="HandleKeyPressed" 
+                   placeholder="Type your question here"/>
         </div>
         <div class="col-1 ms-1">
             @if (!chatStateService.IsGeneratingResponse)
@@ -38,6 +40,14 @@
         string text = _inputText;
         _inputText = "";
         await chatStateService.SendUserMessage(text);
+    }
+
+    private void HandleKeyPressed(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            OnSendMessageClicked();
+        }
     }
     
     private void RefreshView()

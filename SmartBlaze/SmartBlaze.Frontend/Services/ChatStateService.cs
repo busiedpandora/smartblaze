@@ -151,7 +151,7 @@ public class ChatStateService
         response = await 
             _httpClient.PostAsJsonAsync(
                 $"chat-session/{_currentChatSession.Id}/new-assistant-message", 
-                "");
+                _currentChatSessionMessages);
 
         if (!response.IsSuccessStatusCode)
         {

@@ -58,7 +58,8 @@ public class MessageController : ControllerBase
     }
     
     [HttpPost("new-assistant-message")]
-    public async Task<ActionResult<MessageDto>> GenerateNewAssistantMessageToChatSession(string id)
+    public async Task<ActionResult<MessageDto>> GenerateNewAssistantMessageToChatSession(string id, 
+        [FromBody] List<MessageDto> messageDtos)
     {
         ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
         if (chatSessionDto is null)
@@ -77,8 +78,6 @@ public class MessageController : ControllerBase
         {
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
-
-        var messageDtos = await _messageService.GetMessagesFromChatSession(chatSessionDto);
         
         string? content = await _chatbotService.GenerateAssistantMessageContentFromChatSession(chatbot, chatSessionDto,
             messageDtos);

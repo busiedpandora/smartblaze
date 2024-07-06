@@ -79,7 +79,7 @@ public class MessageController : ControllerBase
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
         
-        string? content = await _chatbotService.GenerateAssistantMessageContentFromChatSession(chatbot, chatSessionDto,
+        string? content = await _chatbotService.GenerateTextInChatSession(chatbot, chatSessionDto,
             messageDtos);
         
         if (content is null)

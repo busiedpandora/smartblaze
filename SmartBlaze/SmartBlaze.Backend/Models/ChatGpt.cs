@@ -11,7 +11,7 @@ public class ChatGpt : Chatbot
     {
     }
 
-    public override async Task<string?> GenerateAssistantMessageContent(ChatSessionDto chatSessionDto, 
+    public override async Task<string?> GenerateText(ChatSessionDto chatSessionDto, 
         List<MessageDto> messageDtos, HttpClient httpClient)
     {
         var messages = messageDtos
@@ -25,7 +25,8 @@ public class ChatGpt : Chatbot
         var chatRequest = new ChatRequest
         {
             Model = chatSessionDto.ChatbotModel,
-            Messages = messages
+            Messages = messages,
+            Stream = false
         };
 
         var chatRequestJson = JsonSerializer.Serialize(chatRequest);
@@ -41,12 +42,12 @@ public class ChatGpt : Chatbot
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
         
-        var chatResponseMessage = await httpClient.SendAsync(httpRequest);
+        var chatResponseMessage = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
         chatResponseMessage.EnsureSuccessStatusCode();
         
-        var chatResponseJson = await chatResponseMessage.Content.ReadAsStringAsync();
+        var chatResponseString = await chatResponseMessage.Content.ReadAsStringAsync();
         
-        ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseJson);
+        ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseString);
         
         if (chatResponse is not null && chatResponse.Choices is not null && chatResponse.Choices.Count > 0)
         {
@@ -57,17 +58,26 @@ public class ChatGpt : Chatbot
                 return message.Content;
             }
         }
-
+        
         return null;
     }
 
-    class Message
+    private class Message
     {
         [JsonPropertyName("content")]
         public string? Content { get; set; }
     
         [JsonPropertyName("role")]
         public string? Role { get; set; }
+    }
+
+    private class Delta
+    {
+        [JsonPropertyName("role")]
+        public string? Role { get; set; }
+    
+        [JsonPropertyName("content")]
+        public string? Content { get; set; }
     }
 
     private class ChatRequest
@@ -77,6 +87,9 @@ public class ChatGpt : Chatbot
 
         [JsonPropertyName("messages")]
         public List<Message>? Messages { get; set; }
+        
+        [JsonPropertyName("stream")]
+        public bool? Stream { get; set; }
     }
 
     private class ChatResponse
@@ -107,5 +120,8 @@ public class ChatGpt : Chatbot
     
         [JsonPropertyName("message")]
         public Message? Message { get; set; }
+        
+        [JsonPropertyName("delta")]
+        public Delta? Delta { get; set; }
     }
 }

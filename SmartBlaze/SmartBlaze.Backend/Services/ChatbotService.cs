@@ -26,7 +26,7 @@ public class ChatbotService
     public async Task<string?> GenerateAssistantMessageContentFromChatSession(Chatbot chatbot, ChatSessionDto chatSessionDto,
         List<MessageDto> messageDtos)
     {
-        return await chatbot.GenerateAssistantMessageContent(chatSessionDto, messageDtos, _httpClient);
+        return await chatbot.GenerateText(chatSessionDto, messageDtos, _httpClient);
     }
 
     private void CreateChatbots()

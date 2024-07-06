@@ -53,7 +53,7 @@ public class ChatSessionController : ControllerBase
             return BadRequest("Chat session not specified correctly");
         }
 
-        string chatbotName = "Google Gemini";
+        string chatbotName = "ChatGPT";
 
         Chatbot? chatbot = _chatbotService.GetChatbotByName(chatbotName);
 

@@ -11,7 +11,7 @@ public class Gemini : Chatbot
     {
     }
 
-    public override async Task<string?> GenerateAssistantMessageContent(ChatSessionDto chatSessionDto, 
+    public override async Task<string?> GenerateText(ChatSessionDto chatSessionDto, 
         List<MessageDto> messageDtos, HttpClient httpClient)
     {
         var contents = new List<Content>();

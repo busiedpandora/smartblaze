@@ -58,7 +58,7 @@ public class MessageController : ControllerBase
     }
     
     [HttpPost("new-assistant-message")]
-    public async Task<ActionResult<MessageDto>> GenerateNewAssistantMessageToChatSession(string id, 
+    public async Task<ActionResult<MessageDto>> GenerateNewAssistantMessageInChatSession(string id, 
         [FromBody] List<MessageDto> messageDtos)
     {
         ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);

@@ -1,3 +1,5 @@
+using System.Diagnostics.Tracing;
+using System.Text;
 using System.Text.Json;
 using SmartBlaze.Frontend.Dtos;
 
@@ -125,18 +127,18 @@ public class ChatStateService
         MessageDto? userMessageDto = new MessageDto();
         userMessageDto.Content = content;
             
-        var response = await _httpClient
+        var userMessageResponse = await _httpClient
             .PostAsJsonAsync($"chat-session/{_currentChatSession.Id}/new-user-message", 
                 userMessageDto);
 
-        if (!response.IsSuccessStatusCode)
+        if (!userMessageResponse.IsSuccessStatusCode)
         {
             isGeneratingResponse = false;
             return;
         }
         
-        var responseContent = await response.Content.ReadAsStringAsync();
-        userMessageDto = JsonSerializer.Deserialize<MessageDto>(responseContent);
+        var userMessageResponseContent = await userMessageResponse.Content.ReadAsStringAsync();
+        userMessageDto = JsonSerializer.Deserialize<MessageDto>(userMessageResponseContent);
 
         if (userMessageDto is null || !IsMessageValid(userMessageDto))
         {
@@ -148,6 +150,7 @@ public class ChatStateService
         
         NotifyStateChanged();
         
+        /*
         response = await 
             _httpClient.PostAsJsonAsync(
                 $"chat-session/{_currentChatSession.Id}/new-assistant-message", 
@@ -173,6 +176,90 @@ public class ChatStateService
         isGeneratingResponse = false;
         
         NotifyStateChanged();
+        */
+        
+        var assistantEmptyMessageResponse = await 
+            _httpClient.PostAsJsonAsync(
+                $"chat-session/{_currentChatSession.Id}/new-assistant-empty-message", 
+                _currentChatSessionMessages);
+
+        if (!assistantEmptyMessageResponse.IsSuccessStatusCode)
+        {
+            isGeneratingResponse = false;
+            return;
+        }
+        
+        var assistantEmptyMessageResponseContent = await assistantEmptyMessageResponse.Content.ReadAsStringAsync();
+        var assistantEmptyMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantEmptyMessageResponseContent);
+
+        if (assistantEmptyMessageDto is null || !IsMessageValid(assistantEmptyMessageDto))
+        {
+            isGeneratingResponse = false;
+            return;
+        }
+        
+        using var assistantStreamMessageRequest = new HttpRequestMessage(HttpMethod.Post, 
+            $"chat-session/{_currentChatSession.Id}/generate-assistant-stream-message");
+        assistantStreamMessageRequest.Content = JsonContent.Create(_currentChatSessionMessages);
+
+        using var assistantStreamMessageResponse = await _httpClient.SendAsync(assistantStreamMessageRequest, 
+            HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+        if (!assistantStreamMessageResponse.IsSuccessStatusCode)
+        {
+            isGeneratingResponse = false;
+            return;
+        }
+        
+        _currentChatSessionMessages.Add(assistantEmptyMessageDto);
+        
+        isGeneratingResponse = false;
+        
+        NotifyStateChanged();
+        
+        var assistantStreamMessageResponseContent = await assistantStreamMessageResponse.Content.ReadAsStreamAsync();
+        var streamReader = new StreamReader(assistantStreamMessageResponseContent);
+        
+        var buffer = new char[1];
+        var output = new StringBuilder();
+        bool isFirstChar = true;
+
+        while (await streamReader.ReadAsync(buffer, 0, buffer.Length) > 0)
+        {
+            if (isFirstChar)
+            {
+                isFirstChar = false;
+                continue;
+            }
+            
+            if (streamReader.EndOfStream)
+            {
+                continue;
+            }
+            
+            output.Append(buffer[0]);
+            
+            if (buffer[0] == ' ')
+            {
+                string word = output.ToString();
+                output.Clear();
+                word = word.Replace("\",\"", "");
+                Console.WriteLine(word);
+                
+                assistantEmptyMessageDto.Content += word;
+                NotifyStateChanged();
+                
+                await Task.Delay(100);
+            }
+        }
+        
+        if (output.Length > 0)
+        {
+            string word = output.ToString();
+            output.Clear();
+            word = word.Replace("\",\"", "");
+            assistantEmptyMessageDto.Content += word;
+            NotifyStateChanged();
+        }
     }
 
     public async Task CreateNewChatSession()

@@ -94,7 +94,15 @@ public class MessageController : ControllerBase
         return Ok(assistantMessageDto);
     }
     
-    [HttpPost("new-assistant-stream-message")]
+    [HttpPost("new-assistant-empty-message")]
+    public ActionResult<MessageDto> GetNewAssistantMessageWithEmptyContent(string id)
+    {
+        MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage("");
+
+        return Ok(assistantMessageDto);
+    }
+    
+    [HttpPost("generate-assistant-stream-message")]
     public async IAsyncEnumerable<string> GenerateNewAssistantMessageInChatSessionStreamEnabled(string id, 
         [FromBody] List<MessageDto> messageDtos)
     {

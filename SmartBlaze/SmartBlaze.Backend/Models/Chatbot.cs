@@ -27,4 +27,7 @@ public abstract class Chatbot
 
     public abstract Task<string?> GenerateText(ChatSessionDto chatSessionDto, 
         List<MessageDto> messageDtos, HttpClient httpClient);
+    
+    public abstract IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionDto chatSessionDto, 
+        List<MessageDto> messageDtos, HttpClient httpClient);
 }

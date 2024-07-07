@@ -28,6 +28,15 @@ public class ChatbotService
     {
         return await chatbot.GenerateText(chatSessionDto, messageDtos, _httpClient);
     }
+    
+    public async IAsyncEnumerable<string> GenerateTextStreamInChatSession(Chatbot chatbot, ChatSessionDto chatSessionDto,
+        List<MessageDto> messageDtos)
+    {
+        await foreach (var chunk in chatbot.GenerateTextStreamEnabled(chatSessionDto, messageDtos, _httpClient))
+        {
+            yield return chunk;
+        }
+    }
 
     private void CreateChatbots()
     {

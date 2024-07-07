@@ -76,6 +76,12 @@ public class Gemini : Chatbot
         return null;
     }
 
+    public override IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionDto chatSessionDto, List<MessageDto> messageDtos, 
+        HttpClient httpClient)
+    {
+        throw new NotImplementedException();
+    }
+
     private class Part
     {
         [JsonPropertyName("text")]

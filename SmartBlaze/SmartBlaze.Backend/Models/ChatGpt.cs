@@ -98,40 +98,31 @@ public class ChatGpt : Chatbot
         
         var chatResponseStream = await chatResponseMessage.Content.ReadAsStreamAsync();
         var streamReader = new StreamReader(chatResponseStream);
-        
-        var buffer = new char[1];
-        var output = new StringBuilder();
 
-        while (await streamReader.ReadAsync(buffer, 0, buffer.Length) > 0)
+        string line;
+
+        while (!streamReader.EndOfStream)
         {
-            if (buffer[0] == '\n')
-            {
-                string line = output.ToString();
-                if (line.StartsWith("data: "))
-                {
-                    output.Clear();
-                    string chunk = line.Substring(6).Trim();
-                
-                    if (chunk != "[DONE]")
-                    {
-                        ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chunk);
-                    
-                        if (chatResponse is not null && chatResponse.Choices is not null && chatResponse.Choices.Count > 0)
-                        {
-                            Delta? delta = chatResponse.Choices[0].Delta;
+            line = await streamReader.ReadLineAsync() ?? "";
 
-                            if (delta is not null)
-                            {
-                                //Console.WriteLine(delta.Content);
-                                yield return delta.Content ?? "";
-                            }
+            if (line != string.Empty && line.StartsWith("data: "))
+            {
+                string chunk = line.Substring(6).Trim();
+
+                if (chunk != "[DONE]")
+                {
+                    ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chunk);
+
+                    if (chatResponse is not null && chatResponse.Choices is not null && chatResponse.Choices.Count > 0)
+                    {
+                        Delta? delta = chatResponse.Choices[0].Delta;
+
+                        if (delta is not null)
+                        {
+                            yield return delta.Content ?? "";
                         }
                     }
                 }
-            }
-            else
-            {
-                output.Append(buffer[0]);
             }
         }
     }

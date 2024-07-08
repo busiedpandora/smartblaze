@@ -221,13 +221,14 @@ public class ChatStateService
         
         var buffer = new char[1];
         var output = new StringBuilder();
-        bool isFirstChar = true;
+        int count = -1;
 
         while (await streamReader.ReadAsync(buffer, 0, buffer.Length) > 0)
         {
-            if (isFirstChar)
+            ++count;
+            
+            if (count == 0 || count == 1)
             {
-                isFirstChar = false;
                 continue;
             }
             
@@ -257,6 +258,10 @@ public class ChatStateService
             string word = output.ToString();
             output.Clear();
             word = word.Replace("\",\"", "");
+            if (word.EndsWith('\"'))
+            {
+                word = word.Substring(0, word.Length - 1);
+            }
             assistantEmptyMessageDto.Content += word;
             NotifyStateChanged();
         }

@@ -3,6 +3,7 @@
 
 @inject NavigationManager _navigationManager
 @inject ChatStateService _chatStateService
+@inject RedirectService _redirectService
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -18,7 +19,7 @@
         {
             <div class="nav-item px-3">
                 <NavLink class="nav-link">
-                    Loading...
+                    Loading chat sessions...
                 </NavLink>
             </div>
         }
@@ -41,7 +42,7 @@
 
 <div class="border-top border-1 border-white">
     <div class="nav-item px-3">
-        @if (!_chatStateService.IsGeneratingResponse && !_chatStateService.IsNewChatBeingCreated)
+        @if (!_chatStateService.IsNewChatSessionBeingCreated)
         {
             <NavLink class="nav-link user-select-none"
                      @onclick="() => OnNewChatClicked()">
@@ -57,6 +58,8 @@
 {
     protected override async Task OnInitializedAsync()
     {
+        _chatStateService.NavigateToErrorPage += UpdateErrorInfo;
+        _chatStateService.NavigateToPage += UpdatePageUrl;
         _chatStateService.RefreshView += RefreshView;
 
         await base.OnInitializedAsync();
@@ -64,29 +67,17 @@
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        
         if (firstRender)
         {
-            if (_chatStateService.CurrentChatSession is null)
-            {
-                _navigationManager.NavigateTo("/welcome");
-            }
-            else
-            {
-                _navigationManager.NavigateTo($"/");
-            }
+            await _chatStateService.LoadChats();
         }
-        else
+
+        if (!_navigationManager.Uri.EndsWith(_redirectService.Url))
         {
-            if (_navigationManager.Uri.EndsWith("/welcome") 
-                && _chatStateService.CurrentChatSession is not null)
-            {
-                _navigationManager.NavigateTo($"/");
-            }
+            _navigationManager.NavigateTo(_redirectService.Url);
         }
         
         await base.OnAfterRenderAsync(firstRender);
-        
     }
     
     private void RefreshView()
@@ -96,16 +87,23 @@
 
     private async void OnChatClicked(ChatSessionDto chatSession)
     {
-        if (_chatStateService.IsGeneratingResponse)
-        {
-            return;
-        }
-        
         await _chatStateService.SelectChatSession(chatSession);
     }
 
     private async void OnNewChatClicked()
     {
         await _chatStateService.CreateNewChatSession();
+    }
+
+    private void UpdateErrorInfo(string errorTitle, string errorMessage)
+    {
+        _redirectService.Url = "/error";
+        _redirectService.ErrorTitle = errorTitle;
+        _redirectService.ErrorMessage = errorMessage;
+    }
+
+    private void UpdatePageUrl(string url)
+    {
+        _redirectService.Url = url;
     }
 }

@@ -13,7 +13,7 @@
             </textarea>
         </div>
         <div class="col-1 ms-1">
-            @if (!_chatStateService.IsGeneratingResponse)
+            @if (_chatStateService.CanUserInteract())
             {
                 <button id="sendButton" class="btn btn-light d-flex align-items-center justify-content-center"
                         @onclick="OnSendMessageClicked">
@@ -36,11 +36,14 @@
     
     private async void OnSendMessageClicked()
     {
-        string text = await _jsRuntime.InvokeAsync<string>("getTextareaValue", _textarea);
+        if (_chatStateService.CanUserInteract())
+        {
+            string text = await _jsRuntime.InvokeAsync<string>("getTextareaValue", _textarea);
         
-        await _jsRuntime.InvokeVoidAsync("setTextareaValue", _textarea, string.Empty);
+            await _jsRuntime.InvokeVoidAsync("setTextareaValue", _textarea, string.Empty);
         
-        await _chatStateService.SendUserMessage(text);
+            await _chatStateService.SendUserMessage(text);
+        }
     }
 
     private void HandleKeyPressed(KeyboardEventArgs e)

@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json;
 using SmartBlaze.Frontend.Dtos;
 
@@ -11,17 +10,16 @@ public class ChatStateService
     private List<ChatSessionDto>? _chatSessions;
     private ChatSessionDto? _currentChatSession;
     private List<MessageDto>? _currentChatSessionMessages;
-    private bool isGeneratingResponse = false;
-    private bool isNewChatBeingCreated = false;
+
+    private bool _areChatSessionsLoadingOnStartup;
+    private bool _isNewChatSessionBeingCreated;
+    private bool _isChatSessionBeingSelected;
+    private bool _isGeneratingResponse;
+    
 
     public ChatStateService(IHttpClientFactory httpClientFactory)
     {
         _httpClient = httpClientFactory.CreateClient("_httpClient");
-        
-        if (_chatSessions is null)
-        {
-            LoadChats();
-        }
     }
 
     public List<ChatSessionDto>? ChatSessions
@@ -39,21 +37,39 @@ public class ChatStateService
         get => _currentChatSessionMessages;
     }
 
+    public bool AreChatSessionsLoadingOnStartup
+    {
+        get => _areChatSessionsLoadingOnStartup;
+        set => _areChatSessionsLoadingOnStartup = value;
+    }
+
+    public bool IsNewChatSessionBeingCreated
+    {
+        get => _isNewChatSessionBeingCreated;
+    }
+
+    public bool IsChatSessionBeingSelected
+    {
+        get => _isChatSessionBeingSelected;
+    }
+
     public bool IsGeneratingResponse
     {
-        get => isGeneratingResponse;
+        get => _isGeneratingResponse;
     }
 
-    public bool IsNewChatBeingCreated
-    {
-        get => isNewChatBeingCreated;
-    }
-
-    public event Action? OnChange;
+    public event Action? RefreshView;
+    public event Action<string, string>? NavigateToErrorPage;
+    public event Action<string>? NavigateToPage;
     
     public async Task SelectChatSession(ChatSessionDto chatSession)
     {
         if (_chatSessions is null)
+        {
+            return;
+        }
+        
+        if (!CanUserInteract())
         {
             return;
         }
@@ -62,22 +78,30 @@ public class ChatStateService
         {
             return;
         }
+
+        _isChatSessionBeingSelected = true;
+        NotifyRefreshView();
         
         ChatSessionDto? newSelectedChat = _chatSessions.Find(c => c.Id == chatSession.Id);
 
         if (newSelectedChat is null)
         {
+            _isChatSessionBeingSelected = false;
+            NotifyNavigateToErrorPage("Error occured while selecting the chat session", 
+                $"chat session with id {chatSession.Id} not found");
             return;
         }
         
         var response = await _httpClient.GetAsync($"chat-session/{newSelectedChat.Id}/messages");
-
+        var responseContent = await response.Content.ReadAsStringAsync();
+        
         if (!response.IsSuccessStatusCode)
         {
+            _isChatSessionBeingSelected = false;
+            NotifyNavigateToErrorPage("Error occured while selecting the chat session", 
+                responseContent);
             return;
         }
-        
-        var responseContent = await response.Content.ReadAsStringAsync();
         
         if (responseContent == string.Empty)
         {
@@ -98,8 +122,10 @@ public class ChatStateService
         }
 
         _currentChatSession = newSelectedChat;
+
+        _isChatSessionBeingSelected = false;
         
-        NotifyStateChanged();
+        NotifyRefreshView();
     }
 
     public async Task SendUserMessage(string content)
@@ -109,7 +135,7 @@ public class ChatStateService
             return;
         }
         
-        if(isGeneratingResponse || isNewChatBeingCreated)
+        if (!CanUserInteract())
         {
             return;
         }
@@ -121,7 +147,7 @@ public class ChatStateService
             return;
         }
 
-        isGeneratingResponse = true;
+        _isGeneratingResponse = true;
         
         MessageDto? userMessageDto = new MessageDto();
         userMessageDto.Content = content;
@@ -129,25 +155,29 @@ public class ChatStateService
         var userMessageResponse = await _httpClient
             .PostAsJsonAsync($"chat-session/{_currentChatSession.Id}/new-user-message", 
                 userMessageDto);
+        var userMessageResponseContent = await userMessageResponse.Content.ReadAsStringAsync();
 
         if (!userMessageResponse.IsSuccessStatusCode)
         {
-            isGeneratingResponse = false;
+            _isGeneratingResponse = false;
+            NotifyNavigateToErrorPage("Error occured while sending the message", 
+                userMessageResponseContent);
             return;
         }
         
-        var userMessageResponseContent = await userMessageResponse.Content.ReadAsStringAsync();
         userMessageDto = JsonSerializer.Deserialize<MessageDto>(userMessageResponseContent);
 
         if (userMessageDto is null || !IsMessageValid(userMessageDto))
         {
-            isGeneratingResponse = false;
+            _isGeneratingResponse = false;
+            NotifyNavigateToErrorPage("Error occured while sending the message", 
+                "the message sent cannot be null and must contain a content and a role");
             return;
         }
         
         _currentChatSessionMessages.Add(userMessageDto);
         
-        NotifyStateChanged();
+        NotifyRefreshView();
 
         bool textStreaming = true;
         
@@ -157,19 +187,23 @@ public class ChatStateService
             _httpClient.PostAsJsonAsync(
                 $"chat-session/{_currentChatSession.Id}/new-assistant-empty-message", 
                 _currentChatSessionMessages);
-
+            var assistantEmptyMessageResponseContent = await assistantEmptyMessageResponse.Content.ReadAsStringAsync();
+            
             if (!assistantEmptyMessageResponse.IsSuccessStatusCode)
             {
-                isGeneratingResponse = false;
+                _isGeneratingResponse = false;
+                NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
+                    assistantEmptyMessageResponseContent);
                 return;
             }
             
-            var assistantEmptyMessageResponseContent = await assistantEmptyMessageResponse.Content.ReadAsStringAsync();
             var assistantEmptyMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantEmptyMessageResponseContent);
 
             if (assistantEmptyMessageDto is null || !IsMessageValid(assistantEmptyMessageDto))
             {
-                isGeneratingResponse = false;
+                _isGeneratingResponse = false;
+                NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
+                    "the assistant message cannot be null and must contain a content and a role");
                 return;
             }
             
@@ -181,27 +215,29 @@ public class ChatStateService
         
             using var assistantStreamMessageResponse = await _httpClient.SendAsync(assistantStreamMessageRequest, 
                 HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+            var assistantStreamMessageResponseContent = await assistantStreamMessageResponse.Content.ReadAsStreamAsync()
+                .ConfigureAwait(false);
+            
             if (!assistantStreamMessageResponse.IsSuccessStatusCode)
             {
-                isGeneratingResponse = false;
+                _isGeneratingResponse = false;
+                NotifyNavigateToErrorPage("Error occured while generating a new assistant text stream message", 
+                    assistantStreamMessageResponseContent.ToString() ?? "");
                 return;
             }
             
-            var assistantStreamMessageResponseContent = await assistantStreamMessageResponse.Content.ReadAsStreamAsync()
-                .ConfigureAwait(false);
-
             IAsyncEnumerable<string?> messageChunks =
                 JsonSerializer.DeserializeAsyncEnumerable<string>(assistantStreamMessageResponseContent);
             
-            isGeneratingResponse = false;
-            NotifyStateChanged();
+            _isGeneratingResponse = false;
+            NotifyRefreshView();
 
             await foreach (var messageChunk in messageChunks)
             {
                 if (messageChunk != string.Empty)
                 {
                     assistantEmptyMessageDto.Content += messageChunk;
-                    NotifyStateChanged();
+                    NotifyRefreshView();
 
                     await Task.Delay(100);
                 }
@@ -213,38 +249,43 @@ public class ChatStateService
                 _httpClient.PostAsJsonAsync(
                     $"chat-session/{_currentChatSession.Id}/new-assistant-message", 
                     _currentChatSessionMessages);
-
+            var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
+            
             if (!assistantMessageResponse.IsSuccessStatusCode)
             {
-                isGeneratingResponse = false;
+                _isGeneratingResponse = false;
+                NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
+                    assistantMessageResponseContent);
                 return;
             }
         
-            var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
             MessageDto? assistantMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantMessageResponseContent);
         
             if (assistantMessageDto is null || !IsMessageValid(assistantMessageDto))
             {
-                isGeneratingResponse = false;
+                _isGeneratingResponse = false;
+                NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
+                    "the assistant message cannot be null and must contain a content and a role");
                 return;
             }
         
             _currentChatSessionMessages.Add(assistantMessageDto);
 
-            isGeneratingResponse = false;
+            _isGeneratingResponse = false;
         
-            NotifyStateChanged();
+            NotifyRefreshView();
         }
     }
 
     public async Task CreateNewChatSession()
     {
-        if (isNewChatBeingCreated)
+        if (!CanUserInteract())
         {
             return;
         }
-
-        isNewChatBeingCreated = true;
+        
+        _isNewChatSessionBeingCreated = true;
+        NotifyRefreshView();
         
         if (_chatSessions is null)
         {
@@ -256,69 +297,104 @@ public class ChatStateService
         chatSessionDto.SystemInstruction = "You are Neko and you are a cat.";
         
         var newChatSessionResponse = await _httpClient.PostAsJsonAsync("chat-sessions/new", chatSessionDto);
+        var newChatSessionResponseContent = await newChatSessionResponse.Content.ReadAsStringAsync();
 
         if (!newChatSessionResponse.IsSuccessStatusCode)
         {
-            isNewChatBeingCreated = false;
+            _isNewChatSessionBeingCreated = false;
+            NotifyNavigateToErrorPage("Error occured while creating a new chat session", 
+                newChatSessionResponseContent);
             return;
         }
         
-        var newChatSessionResponseContent = await newChatSessionResponse.Content.ReadAsStringAsync();
         chatSessionDto = JsonSerializer.Deserialize<ChatSessionDto>(newChatSessionResponseContent);
 
         if (chatSessionDto is null || !IsChatSessionValid(chatSessionDto))
         {
-            isNewChatBeingCreated = false;
+            _isNewChatSessionBeingCreated = false;
+            NotifyNavigateToErrorPage("Error occured while creating a new chat session", 
+                "the chat session cannot be null and must contain a title");
             return;
         }
         
+        NotifyNavigateToPage("/");
+        
         _chatSessions.Insert(0, chatSessionDto);
+        _isNewChatSessionBeingCreated = false;
         await SelectChatSession(chatSessionDto);
-        NotifyStateChanged();
+        NotifyRefreshView();
 
         if (_currentChatSession is null || _currentChatSessionMessages is null)
         {
-            isNewChatBeingCreated = false;
+            _isNewChatSessionBeingCreated = false;
+            NotifyNavigateToErrorPage("Error occured while creating a new chat session", 
+                "the chat session and the list of messages cannot be null");
             return;
         }
         
-        isNewChatBeingCreated = false;
-        
-        NotifyStateChanged();
+        NotifyRefreshView();
     }
 
-    private async void LoadChats()
+    public async Task LoadChats()
     {
-        var response = await _httpClient.GetAsync($"chat-sessions");
-
-        if (!response.IsSuccessStatusCode)
+        if (_chatSessions is not null)
         {
             return;
         }
-        
-        var responseContent = await response.Content.ReadAsStringAsync();
-        var chatSessionsDto = JsonSerializer.Deserialize<List<ChatSessionDto>>(responseContent);
 
-        if (chatSessionsDto is null)
+        _areChatSessionsLoadingOnStartup = true;
+        
+        var response = await _httpClient.GetAsync($"chat-sessions");
+        var responseContent = await response.Content.ReadAsStringAsync();
+        
+        if (!response.IsSuccessStatusCode)
         {
-            _chatSessions = new List<ChatSessionDto>();
-        }
-        else
-        {
-            _chatSessions = chatSessionsDto;
+            _areChatSessionsLoadingOnStartup = false;
+            NotifyNavigateToErrorPage("Error occured while loading the chat sessions", 
+                responseContent);
+            return;
         }
         
-        NotifyStateChanged();
+        var chatSessionsDto = JsonSerializer.Deserialize<List<ChatSessionDto>>(responseContent) 
+                              ?? new List<ChatSessionDto>();
+        
+         _chatSessions = chatSessionsDto;
+
+         if (_chatSessions.Count > 0)
+         {
+             NotifyNavigateToPage("/");
+         }
+         else
+         {
+             NotifyNavigateToPage("/welcome");
+         }
+        
+        _areChatSessionsLoadingOnStartup = false;
+        
+        NotifyRefreshView();
                 
         if (_chatSessions is not null && _chatSessions.Count > 0)
         {
             await SelectChatSession(_chatSessions.ElementAt(0));
         }
         
-        NotifyStateChanged();
+        NotifyRefreshView();
     }
     
-    private void NotifyStateChanged() => OnChange?.Invoke();
+    public bool CanUserInteract()
+    {
+        return !_areChatSessionsLoadingOnStartup 
+               && !_isNewChatSessionBeingCreated 
+               && !_isChatSessionBeingSelected 
+               && !_isGeneratingResponse;
+    }
+    
+    private void NotifyRefreshView() => RefreshView?.Invoke();
+
+    private void NotifyNavigateToErrorPage(string errorTitle, string errorMessage) 
+        => NavigateToErrorPage?.Invoke(errorTitle, errorMessage);
+
+    private void NotifyNavigateToPage(string url) => NavigateToPage?.Invoke(url);
 
     private bool IsChatSessionValid(ChatSessionDto chatSessionDto)
     {

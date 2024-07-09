@@ -8,6 +8,20 @@
 
 <PageTitle>SmartBlaze</PageTitle>
 
+@if (chatStateService.CurrentChatSession is not null)
+{
+    <div class="d-flex">
+        <img src="icons/gear-fill.svg" width="25" height="25" alt="system icon" title="system"/>
+
+        <div class="ps-3 pe-3 pb-5 pt-1">
+        <span>
+            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@chatStateService.CurrentChatSession.SystemInstruction ?? ""),
+            "\r?\n|\r", "<br />"))
+        </span>
+        </div>
+    </div>
+}
+
 @if (chatStateService.CurrentChatSessionMessages is not null)
 {
     @foreach(var message in chatStateService.CurrentChatSessionMessages)
@@ -21,9 +35,6 @@
                         break;
                     case "assistant":
                         <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
-                        break;
-                    case "system":
-                        <img src="icons/gear-fill.svg" width="25" height="25" alt="system icon" title="system"/>
                         break;
                 }
             </div>

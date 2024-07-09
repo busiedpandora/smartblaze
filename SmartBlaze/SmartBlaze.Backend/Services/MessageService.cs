@@ -34,16 +34,6 @@ public class MessageService
         };
     }
     
-    public MessageDto CreateNewSystemMessage(string content)
-    {
-        return new MessageDto()
-        {
-            Content = content,
-            Role = Role.System,
-            CreationDate = DateTime.Now
-        };
-    }
-    
     public async Task AddNewMessageToChatSession(MessageDto messageDto, ChatSessionDto chatSessionDto)
     {
         await _messageRepository.SaveMessage(messageDto, chatSessionDto.Id);

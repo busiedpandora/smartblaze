@@ -1,3 +1,4 @@
+using System.Globalization;
 using Appwrite;
 using Appwrite.Models;
 using SmartBlaze.Backend.Dtos;
@@ -30,27 +31,47 @@ public class ChatSessionRepository : AbstractRepository
     {
         var chatSessionDocument = new Dictionary<string, object>()
         {
-            {"title", chatSessionDto.Title},
-            {"creationDate", chatSessionDto.CreationDate},
-            {"chatbotName", chatSessionDto.ChatbotName},
-            {"chatbotModel", chatSessionDto.ChatbotModel}
+            {"title", chatSessionDto.Title ?? ""},
+            {"creationDate", chatSessionDto.CreationDate ?? DateTime.MinValue},
+            {"chatbotName", chatSessionDto.ChatbotName ?? ""},
+            {"chatbotModel", chatSessionDto.ChatbotModel ?? ""},
+            {"systemInstruction", chatSessionDto.SystemInstruction ?? ""}
         };
-
+        
         var csd = await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatSessionCollectionId, 
             ID.Unique(), chatSessionDocument);
 
         return ConvertToChatSession(csd);
     }
 
+    public async Task<ChatSessionDto> EditChatSession(ChatSessionDto chatSessionDto)
+    {
+        var chatSessionDocument = new Dictionary<string, object>()
+        {
+            {"title", chatSessionDto.Title ?? ""},
+            {"creationDate", chatSessionDto.CreationDate ?? DateTime.MinValue},
+            {"chatbotName", chatSessionDto.ChatbotName ?? ""},
+            {"chatbotModel", chatSessionDto.ChatbotModel ?? ""},
+            {"systemInstruction", chatSessionDto.SystemInstruction ?? ""}
+        };
+        
+        var csd = await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatSessionCollectionId, 
+            ID.Unique(), chatSessionDocument);
+
+        return ConvertToChatSession(csd);
+    }
+    
     private ChatSessionDto ConvertToChatSession(Document chatSessionDocument)
     {
         var chatSessionDto = new ChatSessionDto()
         {
             Id = chatSessionDocument.Id,
             Title = chatSessionDocument.Data["title"].ToString(),
-            CreationDate = DateTime.Parse(chatSessionDocument.Data["creationDate"].ToString() ?? ""),
+            CreationDate = DateTime.Parse(chatSessionDocument.Data["creationDate"].ToString() 
+                                          ?? DateTime.MinValue.ToString(CultureInfo.InvariantCulture)),
             ChatbotName = chatSessionDocument.Data["chatbotName"].ToString(),
-            ChatbotModel = chatSessionDocument.Data["chatbotModel"].ToString()
+            ChatbotModel = chatSessionDocument.Data["chatbotModel"].ToString(),
+            SystemInstruction = chatSessionDocument.Data["systemInstruction"].ToString()
         };
 
         return chatSessionDto;

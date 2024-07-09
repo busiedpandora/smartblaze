@@ -135,24 +135,4 @@ public class MessageController : ControllerBase
         MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage(output.ToString());
         await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
     }
-
-    [HttpPost("new-system-message")]
-    public async Task<ActionResult<MessageDto>> AddNewSystemMessageToChatSession(string id, [FromBody] MessageDto messageDto)
-    {
-        if (messageDto is null || messageDto.Content is null)
-        {
-            return BadRequest("Message not specified correctly");
-        }
-        
-        ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
-        if (chatSessionDto is null)
-        {
-            return NotFound($"Chat session with id {id} not found");
-        }
-
-        MessageDto systemMessageDto = _messageService.CreateNewSystemMessage(messageDto.Content);
-        await _messageService.AddNewMessageToChatSession(systemMessageDto, chatSessionDto);
-
-        return Ok(systemMessageDto);
-    }
 }

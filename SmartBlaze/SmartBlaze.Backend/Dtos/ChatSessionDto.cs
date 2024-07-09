@@ -19,4 +19,7 @@ public class ChatSessionDto
     
     [JsonPropertyName("chatbotModel")]
     public string? ChatbotModel { get; set; }
+    
+    [JsonPropertyName("systemInstruction")]
+    public string? SystemInstruction { get; set; }
 }

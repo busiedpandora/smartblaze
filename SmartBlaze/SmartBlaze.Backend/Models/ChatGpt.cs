@@ -22,6 +22,17 @@ public class ChatGpt : Chatbot
             })
             .ToList();
 
+        if (!String.IsNullOrEmpty(chatSessionDto.SystemInstruction))
+        {
+            Message systemInstructionMessage = new Message()
+            {
+                Role = "system",
+                Content = chatSessionDto.SystemInstruction
+            };
+
+            messages.Insert(0, systemInstructionMessage);
+        }
+
         var chatRequest = new ChatRequest
         {
             Model = chatSessionDto.ChatbotModel,
@@ -72,6 +83,15 @@ public class ChatGpt : Chatbot
                 Role = m.Role
             })
             .ToList();
+        
+        if (!String.IsNullOrEmpty(chatSessionDto.SystemInstruction))
+        {
+            Message systemInstructionMessage = new Message()
+            {
+                Role = "system",
+                Content = chatSessionDto.SystemInstruction
+            };
+        }
 
         var chatRequest = new ChatRequest
         {

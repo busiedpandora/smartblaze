@@ -51,7 +51,7 @@ public class ChatStateService
 
     public event Action? OnChange;
     
-    public async Task SelectChat(ChatSessionDto chatSession)
+    public async Task SelectChatSession(ChatSessionDto chatSession)
     {
         if (_chatSessions is null)
         {
@@ -253,57 +253,34 @@ public class ChatStateService
         
         ChatSessionDto? chatSessionDto = new ChatSessionDto();
         chatSessionDto.Title = "Undefined";
+        chatSessionDto.SystemInstruction = "You are Neko and you are a cat.";
         
-        var response = await _httpClient.PostAsJsonAsync("chat-sessions/new", chatSessionDto);
+        var newChatSessionResponse = await _httpClient.PostAsJsonAsync("chat-sessions/new", chatSessionDto);
 
-        if (!response.IsSuccessStatusCode)
+        if (!newChatSessionResponse.IsSuccessStatusCode)
         {
             isNewChatBeingCreated = false;
             return;
         }
         
-        var responseContent = await response.Content.ReadAsStringAsync();
-        chatSessionDto = JsonSerializer.Deserialize<ChatSessionDto>(responseContent);
+        var newChatSessionResponseContent = await newChatSessionResponse.Content.ReadAsStringAsync();
+        chatSessionDto = JsonSerializer.Deserialize<ChatSessionDto>(newChatSessionResponseContent);
 
         if (chatSessionDto is null || !IsChatSessionValid(chatSessionDto))
         {
             isNewChatBeingCreated = false;
             return;
         }
-
+        
         _chatSessions.Insert(0, chatSessionDto);
-        await SelectChat(chatSessionDto);
+        await SelectChatSession(chatSessionDto);
         NotifyStateChanged();
 
-        if (_currentChatSessionMessages is null)
+        if (_currentChatSession is null || _currentChatSessionMessages is null)
         {
             isNewChatBeingCreated = false;
             return;
         }
-        
-        MessageDto? systemMessageDto = new MessageDto();
-        systemMessageDto.Content = "You are a helpful assistant. You can help me by answering my questions.";
-        
-        response = await _httpClient.PostAsJsonAsync(
-            $"chat-session/{chatSessionDto.Id}/new-system-message", 
-            systemMessageDto);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            isNewChatBeingCreated = false;
-            return;
-        }
-        
-        responseContent = await response.Content.ReadAsStringAsync();
-        systemMessageDto = JsonSerializer.Deserialize<MessageDto>(responseContent);
-
-        if (systemMessageDto is null || !IsMessageValid(systemMessageDto))
-        {
-            isNewChatBeingCreated = false;
-            return;
-        }
-        
-        _currentChatSessionMessages.Add(systemMessageDto);
         
         isNewChatBeingCreated = false;
         
@@ -335,7 +312,7 @@ public class ChatStateService
                 
         if (_chatSessions is not null && _chatSessions.Count > 0)
         {
-            await SelectChat(_chatSessions.ElementAt(0));
+            await SelectChatSession(_chatSessions.ElementAt(0));
         }
         
         NotifyStateChanged();

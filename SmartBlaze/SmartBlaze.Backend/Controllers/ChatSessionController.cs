@@ -33,9 +33,9 @@ public class ChatSessionController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public ActionResult<ChatSessionDto> GetChatSession(string id)
+    public async Task<ActionResult<ChatSessionDto>> GetChatSession(string id)
     {
-        var chatSessionDto = _chatSessionService.GetChatSessionById(id);
+        var chatSessionDto = await _chatSessionService.GetChatSessionById(id);
 
         if (chatSessionDto is null)
         {
@@ -62,7 +62,8 @@ public class ChatSessionController : ControllerBase
             return NotFound($"Chatbot with name {chatbotName} not found");
         }
         
-        chatSessionDto = _chatSessionService.CreateNewChatSession(chatSessionDto.Title, chatbot);
+        chatSessionDto = _chatSessionService.CreateNewChatSession(chatSessionDto.Title, chatbot, 
+            chatSessionDto.SystemInstruction ?? "");
         chatSessionDto = await _chatSessionService.AddChatSession(chatSessionDto);
         
         return Ok(chatSessionDto);

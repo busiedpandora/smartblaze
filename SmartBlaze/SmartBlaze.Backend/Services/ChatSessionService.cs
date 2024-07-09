@@ -27,7 +27,7 @@ public class ChatSessionService
         return chatSessionDto;
     }
 
-    public ChatSessionDto CreateNewChatSession(string title, Chatbot chatbot)
+    public ChatSessionDto CreateNewChatSession(string title, Chatbot chatbot, string systemInstruction)
     {
         string model = chatbot.Models.ElementAt(0);
         
@@ -36,7 +36,8 @@ public class ChatSessionService
             Title = title,
             CreationDate = DateTime.Now,
             ChatbotName = chatbot.Name,
-            ChatbotModel = model
+            ChatbotModel = model,
+            SystemInstruction = systemInstruction
         };
     }
 
@@ -44,6 +45,13 @@ public class ChatSessionService
     {
         var csDto = await _chatSessionRepository.SaveChatSession(chatSessionDto);
 
+        return csDto;
+    }
+
+    public async Task<ChatSessionDto> EditChatSession(ChatSessionDto chatSessionDto)
+    {
+        var csDto = await _chatSessionRepository.SaveChatSession(chatSessionDto);
+        
         return csDto;
     }
 }

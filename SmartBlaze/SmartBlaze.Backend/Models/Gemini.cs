@@ -24,12 +24,8 @@ public class Gemini : Chatbot
             };
 
             string? role = message.Role;
-
-            if (message.Role == Role.System)
-            {
-                role = Role.User;
-            }
-            else if (message.Role == Role.Assistant)
+            
+            if (role == Role.Assistant)
             {
                 role = "model";
             }
@@ -46,13 +42,26 @@ public class Gemini : Chatbot
         {
             Contents = contents
         };
+
+        if (!String.IsNullOrEmpty(chatSessionDto.SystemInstruction))
+        {
+            SystemInstruction systemInstruction = new SystemInstruction()
+            {
+                Part = new Part()
+                {
+                    Text = chatSessionDto.SystemInstruction
+                }
+            };
+            
+            chatRequest.SystemInstruction = systemInstruction;
+        }
         
         var chatRequestJson = JsonSerializer.Serialize(chatRequest);
         
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{ApiHost}/v1/models/{chatSessionDto.ChatbotModel}:generateContent?key={ApiKey}"),
+            RequestUri = new Uri($"{ApiHost}/v1beta/models/{chatSessionDto.ChatbotModel}:generateContent?key={ApiKey}"),
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
         
@@ -90,11 +99,7 @@ public class Gemini : Chatbot
 
             string? role = message.Role;
 
-            if (message.Role == Role.System)
-            {
-                role = Role.User;
-            }
-            else if (message.Role == Role.Assistant)
+            if (role == Role.Assistant)
             {
                 role = "model";
             }
@@ -106,18 +111,31 @@ public class Gemini : Chatbot
             };
             contents.Add(content);
         }
-        
+
         var chatRequest = new ChatRequest
         {
             Contents = contents
         };
+
+        if (!String.IsNullOrEmpty(chatSessionDto.SystemInstruction))
+        {
+            SystemInstruction systemInstruction = new SystemInstruction()
+            {
+                Part = new Part()
+                {
+                    Text = chatSessionDto.SystemInstruction
+                }
+            };
+            
+            chatRequest.SystemInstruction = systemInstruction;
+        }
         
         var chatRequestJson = JsonSerializer.Serialize(chatRequest);
         
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{ApiHost}/v1/models/{chatSessionDto.ChatbotModel}:streamGenerateContent?key={ApiKey}"),
+            RequestUri = new Uri($"{ApiHost}/v1beta/models/{chatSessionDto.ChatbotModel}:streamGenerateContent?key={ApiKey}"),
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
         
@@ -159,9 +177,18 @@ public class Gemini : Chatbot
         [JsonPropertyName("parts")]
         public List<Part>? Parts { get; set; }
     }
+
+    private class SystemInstruction
+    {
+        [JsonPropertyName("parts")]
+        public Part? Part { get; set; }
+    }
     
     private class ChatRequest
     {
+        [JsonPropertyName("system_instruction")]
+        public SystemInstruction? SystemInstruction { get; set; }
+        
         [JsonPropertyName("contents")]
         public List<Content>? Contents { get; set; }
     }

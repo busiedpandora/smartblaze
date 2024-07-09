@@ -32,12 +32,4 @@ public class MessageServiceTest
         Assert.Equal("hello", message.Content);
         Assert.Equal(Role.Assistant, message.Role);
     }
-    
-    [Fact]
-    public void CreateNewSystemMessage()
-    {
-        MessageDto message = _messageService.CreateNewSystemMessage("hello");
-        Assert.Equal("hello", message.Content);
-        Assert.Equal(Role.System, message.Role);
-    }
 }

@@ -1,4 +1,3 @@
-using System.Diagnostics.Tracing;
 using System.Text;
 using System.Text.Json;
 using SmartBlaze.Frontend.Dtos;
@@ -149,120 +148,91 @@ public class ChatStateService
         _currentChatSessionMessages.Add(userMessageDto);
         
         NotifyStateChanged();
-        
-        /*
-        response = await 
-            _httpClient.PostAsJsonAsync(
-                $"chat-session/{_currentChatSession.Id}/new-assistant-message", 
-                _currentChatSessionMessages);
 
-        if (!response.IsSuccessStatusCode)
+        bool textStreaming = true;
+        
+        if (textStreaming)
         {
-            isGeneratingResponse = false;
-            return;
-        }
-        
-        responseContent = await response.Content.ReadAsStringAsync();
-        MessageDto? assistantMessageDto = JsonSerializer.Deserialize<MessageDto>(responseContent);
-        
-        if (assistantMessageDto is null || !IsMessageValid(assistantMessageDto))
-        {
-            isGeneratingResponse = false;
-            return;
-        }
-        
-        _currentChatSessionMessages.Add(assistantMessageDto);
-
-        isGeneratingResponse = false;
-        
-        NotifyStateChanged();
-        */
-        
-        var assistantEmptyMessageResponse = await 
+            var assistantEmptyMessageResponse = await 
             _httpClient.PostAsJsonAsync(
                 $"chat-session/{_currentChatSession.Id}/new-assistant-empty-message", 
                 _currentChatSessionMessages);
 
-        if (!assistantEmptyMessageResponse.IsSuccessStatusCode)
-        {
-            isGeneratingResponse = false;
-            return;
-        }
-        
-        var assistantEmptyMessageResponseContent = await assistantEmptyMessageResponse.Content.ReadAsStringAsync();
-        var assistantEmptyMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantEmptyMessageResponseContent);
+            if (!assistantEmptyMessageResponse.IsSuccessStatusCode)
+            {
+                isGeneratingResponse = false;
+                return;
+            }
+            
+            var assistantEmptyMessageResponseContent = await assistantEmptyMessageResponse.Content.ReadAsStringAsync();
+            var assistantEmptyMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantEmptyMessageResponseContent);
 
-        if (assistantEmptyMessageDto is null || !IsMessageValid(assistantEmptyMessageDto))
-        {
-            isGeneratingResponse = false;
-            return;
-        }
+            if (assistantEmptyMessageDto is null || !IsMessageValid(assistantEmptyMessageDto))
+            {
+                isGeneratingResponse = false;
+                return;
+            }
+            
+            _currentChatSessionMessages.Add(assistantEmptyMessageDto);
+            
+            using var assistantStreamMessageRequest = new HttpRequestMessage(HttpMethod.Post, 
+                $"chat-session/{_currentChatSession.Id}/generate-assistant-stream-message");
+            assistantStreamMessageRequest.Content = JsonContent.Create(_currentChatSessionMessages);
         
-        using var assistantStreamMessageRequest = new HttpRequestMessage(HttpMethod.Post, 
-            $"chat-session/{_currentChatSession.Id}/generate-assistant-stream-message");
-        assistantStreamMessageRequest.Content = JsonContent.Create(_currentChatSessionMessages);
+            using var assistantStreamMessageResponse = await _httpClient.SendAsync(assistantStreamMessageRequest, 
+                HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+            if (!assistantStreamMessageResponse.IsSuccessStatusCode)
+            {
+                isGeneratingResponse = false;
+                return;
+            }
+            
+            var assistantStreamMessageResponseContent = await assistantStreamMessageResponse.Content.ReadAsStreamAsync()
+                .ConfigureAwait(false);
 
-        using var assistantStreamMessageResponse = await _httpClient.SendAsync(assistantStreamMessageRequest, 
-            HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
-        if (!assistantStreamMessageResponse.IsSuccessStatusCode)
-        {
+            IAsyncEnumerable<string?> messageChunks =
+                JsonSerializer.DeserializeAsyncEnumerable<string>(assistantStreamMessageResponseContent);
+            
             isGeneratingResponse = false;
-            return;
-        }
-        
-        _currentChatSessionMessages.Add(assistantEmptyMessageDto);
-        
-        isGeneratingResponse = false;
-        
-        NotifyStateChanged();
-        
-        var assistantStreamMessageResponseContent = await assistantStreamMessageResponse.Content.ReadAsStreamAsync();
-        var streamReader = new StreamReader(assistantStreamMessageResponseContent);
-        
-        var buffer = new char[1];
-        var output = new StringBuilder();
-        int count = -1;
+            NotifyStateChanged();
 
-        while (await streamReader.ReadAsync(buffer, 0, buffer.Length) > 0)
-        {
-            ++count;
-            
-            if (count == 0 || count == 1)
+            await foreach (var messageChunk in messageChunks)
             {
-                continue;
-            }
-            
-            if (streamReader.EndOfStream)
-            {
-                continue;
-            }
-            
-            output.Append(buffer[0]);
-            
-            if (buffer[0] == ' ')
-            {
-                string word = output.ToString();
-                output.Clear();
-                word = word.Replace("\",\"", "");
-                Console.WriteLine(word);
-                
-                assistantEmptyMessageDto.Content += word;
-                NotifyStateChanged();
-                
-                await Task.Delay(100);
+                if (messageChunk != string.Empty)
+                {
+                    assistantEmptyMessageDto.Content += messageChunk;
+                    NotifyStateChanged();
+
+                    await Task.Delay(100);
+                }
             }
         }
-        
-        if (output.Length > 0)
+        else
         {
-            string word = output.ToString();
-            output.Clear();
-            word = word.Replace("\",\"", "");
-            if (word.EndsWith('\"'))
+            var assistantMessageResponse = await 
+                _httpClient.PostAsJsonAsync(
+                    $"chat-session/{_currentChatSession.Id}/new-assistant-message", 
+                    _currentChatSessionMessages);
+
+            if (!assistantMessageResponse.IsSuccessStatusCode)
             {
-                word = word.Substring(0, word.Length - 1);
+                isGeneratingResponse = false;
+                return;
             }
-            assistantEmptyMessageDto.Content += word;
+        
+            var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
+            MessageDto? assistantMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantMessageResponseContent);
+        
+            if (assistantMessageDto is null || !IsMessageValid(assistantMessageDto))
+            {
+                isGeneratingResponse = false;
+                return;
+            }
+        
+            _currentChatSessionMessages.Add(assistantMessageDto);
+
+            isGeneratingResponse = false;
+        
             NotifyStateChanged();
         }
     }

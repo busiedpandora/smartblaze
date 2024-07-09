@@ -1,8 +1,8 @@
 ﻿@using SmartBlaze.Frontend.Dtos
 @rendermode InteractiveServer
 
-@inject NavigationManager navigationManager
-@inject ChatStateService chatStateService
+@inject NavigationManager _navigationManager
+@inject ChatStateService _chatStateService
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -14,7 +14,7 @@
 
 <div id="chatList" class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
-        @if (chatStateService.ChatSessions is null)
+        @if (_chatStateService.ChatSessions is null)
         {
             <div class="nav-item px-3">
                 <NavLink class="nav-link">
@@ -24,7 +24,7 @@
         }
         else
         {
-            @foreach (var chatSession in chatStateService.ChatSessions)
+            @foreach (var chatSession in _chatStateService.ChatSessions)
             {
                 <div class="nav-item px-3">
                     
@@ -41,7 +41,7 @@
 
 <div class="border-top border-1 border-white">
     <div class="nav-item px-3">
-        @if (!chatStateService.IsGeneratingResponse && !chatStateService.IsNewChatBeingCreated)
+        @if (!_chatStateService.IsGeneratingResponse && !_chatStateService.IsNewChatBeingCreated)
         {
             <NavLink class="nav-link user-select-none"
                      @onclick="() => OnNewChatClicked()">
@@ -57,7 +57,7 @@
 {
     protected override async Task OnInitializedAsync()
     {
-        chatStateService.OnChange += RefreshView;
+        _chatStateService.RefreshView += RefreshView;
 
         await base.OnInitializedAsync();
     }
@@ -67,21 +67,21 @@
         
         if (firstRender)
         {
-            if (chatStateService.CurrentChatSession is null)
+            if (_chatStateService.CurrentChatSession is null)
             {
-                navigationManager.NavigateTo("/welcome");
+                _navigationManager.NavigateTo("/welcome");
             }
             else
             {
-                navigationManager.NavigateTo($"/");
+                _navigationManager.NavigateTo($"/");
             }
         }
         else
         {
-            if (navigationManager.Uri.EndsWith("/welcome") 
-                && chatStateService.CurrentChatSession is not null)
+            if (_navigationManager.Uri.EndsWith("/welcome") 
+                && _chatStateService.CurrentChatSession is not null)
             {
-                navigationManager.NavigateTo($"/");
+                _navigationManager.NavigateTo($"/");
             }
         }
         
@@ -96,16 +96,16 @@
 
     private async void OnChatClicked(ChatSessionDto chatSession)
     {
-        if (chatStateService.IsGeneratingResponse)
+        if (_chatStateService.IsGeneratingResponse)
         {
             return;
         }
         
-        await chatStateService.SelectChatSession(chatSession);
+        await _chatStateService.SelectChatSession(chatSession);
     }
 
     private async void OnNewChatClicked()
     {
-        await chatStateService.CreateNewChatSession();
+        await _chatStateService.CreateNewChatSession();
     }
 }

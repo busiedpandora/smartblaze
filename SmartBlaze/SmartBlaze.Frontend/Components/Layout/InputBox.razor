@@ -1,10 +1,10 @@
 @rendermode InteractiveServer
 
-@inject ChatStateService chatStateService
-@inject IJSRuntime jsRuntime
+@inject ChatStateService _chatStateService
+@inject IJSRuntime _jsRuntime
 
 
-@if(chatStateService.CurrentChatSession is not null)
+@if(_chatStateService.CurrentChatSession is not null)
 {
     <div class="d-flex justify-content-center align-items-center">
         <div class="col-8">
@@ -13,7 +13,7 @@
             </textarea>
         </div>
         <div class="col-1 ms-1">
-            @if (!chatStateService.IsGeneratingResponse)
+            @if (!_chatStateService.IsGeneratingResponse)
             {
                 <button id="sendButton" class="btn btn-light d-flex align-items-center justify-content-center"
                         @onclick="OnSendMessageClicked">
@@ -29,18 +29,18 @@
     
     protected override async Task OnInitializedAsync()
     {
-        chatStateService.OnChange += RefreshView;
+        _chatStateService.RefreshView += RefreshView;
 
         await base.OnInitializedAsync();
     }
     
     private async void OnSendMessageClicked()
     {
-        string text = await jsRuntime.InvokeAsync<string>("getTextareaValue", _textarea);
+        string text = await _jsRuntime.InvokeAsync<string>("getTextareaValue", _textarea);
         
-        await jsRuntime.InvokeVoidAsync("setTextareaValue", _textarea, string.Empty);
+        await _jsRuntime.InvokeVoidAsync("setTextareaValue", _textarea, string.Empty);
         
-        await chatStateService.SendUserMessage(text);
+        await _chatStateService.SendUserMessage(text);
     }
 
     private void HandleKeyPressed(KeyboardEventArgs e)

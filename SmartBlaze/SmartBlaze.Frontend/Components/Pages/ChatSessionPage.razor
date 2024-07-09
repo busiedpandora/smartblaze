@@ -4,27 +4,27 @@
 
 @rendermode InteractiveServer
 
-@inject ChatStateService chatStateService
+@inject ChatStateService _chatStateService
 
 <PageTitle>SmartBlaze</PageTitle>
 
-@if (chatStateService.CurrentChatSession is not null)
+@if (_chatStateService.CurrentChatSession is not null)
 {
     <div class="d-flex">
         <img src="icons/gear-fill.svg" width="25" height="25" alt="system icon" title="system"/>
 
         <div class="ps-3 pe-3 pb-5 pt-1">
         <span>
-            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@chatStateService.CurrentChatSession.SystemInstruction ?? ""),
+            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@_chatStateService.CurrentChatSession.SystemInstruction ?? ""),
             "\r?\n|\r", "<br />"))
         </span>
         </div>
     </div>
 }
 
-@if (chatStateService.CurrentChatSessionMessages is not null)
+@if (_chatStateService.CurrentChatSessionMessages is not null)
 {
-    @foreach(var message in chatStateService.CurrentChatSessionMessages)
+    @foreach(var message in _chatStateService.CurrentChatSessionMessages)
     {
         <div class="d-flex">
             <div>
@@ -47,7 +47,7 @@
         </div>
     }
     
-    @if (chatStateService.IsGeneratingResponse)
+    @if (_chatStateService.IsGeneratingResponse)
     {
         <div class="d-flex">
             <div>
@@ -64,7 +64,7 @@
 @code {
     protected override async Task OnInitializedAsync()
     {
-        chatStateService.OnChange += RefreshView;
+        _chatStateService.RefreshView += RefreshView;
 
         await base.OnInitializedAsync();
     }

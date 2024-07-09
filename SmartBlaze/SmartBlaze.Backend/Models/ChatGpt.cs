@@ -62,6 +62,71 @@ public class ChatGpt : Chatbot
         return null;
     }
 
+    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionDto chatSessionDto, List<MessageDto> messageDtos, 
+        HttpClient httpClient)
+    {
+        var messages = messageDtos
+            .Select(m => new Message
+            {
+                Content = m.Content,
+                Role = m.Role
+            })
+            .ToList();
+
+        var chatRequest = new ChatRequest
+        {
+            Model = chatSessionDto.ChatbotModel,
+            Messages = messages,
+            Stream = true
+        };
+
+        var chatRequestJson = JsonSerializer.Serialize(chatRequest);
+        
+        var httpRequest = new HttpRequestMessage
+        {
+            Method = HttpMethod.Post,
+            RequestUri = new Uri($"{ApiHost}/v1/chat/completions"),
+            Headers =
+            {
+                { "Authorization", $"Bearer {ApiKey}" },
+            },
+            Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
+        };
+        
+        var chatResponseMessage = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
+        chatResponseMessage.EnsureSuccessStatusCode();
+        
+        var chatResponseStream = await chatResponseMessage.Content.ReadAsStreamAsync();
+        var streamReader = new StreamReader(chatResponseStream);
+
+        string line;
+
+        while (!streamReader.EndOfStream)
+        {
+            line = await streamReader.ReadLineAsync() ?? "";
+
+            if (line != string.Empty && line.StartsWith("data: "))
+            {
+                string chunk = line.Substring(6).Trim();
+
+                if (chunk != "[DONE]")
+                {
+                    ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chunk);
+
+                    if (chatResponse is not null && chatResponse.Choices is not null && chatResponse.Choices.Count > 0)
+                    {
+                        Delta? delta = chatResponse.Choices[0].Delta;
+
+                        if (delta is not null)
+                        {
+                            yield return delta.Content ?? "";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private class Message
     {
         [JsonPropertyName("content")]

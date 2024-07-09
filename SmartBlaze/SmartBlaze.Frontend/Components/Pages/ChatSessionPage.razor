@@ -1,4 +1,6 @@
 @page "/"
+@using System.Text.RegularExpressions
+@using System.Web
 
 @rendermode InteractiveServer
 
@@ -26,7 +28,10 @@
                 }
             </div>
             <div class="ps-3 pe-3 pb-5 pt-1">
-                <span>@message.Content</span>
+                <span>
+                    @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@message.Content ?? ""), 
+                        "\r?\n|\r", "<br />"))
+                </span>
             </div>
         </div>
     }

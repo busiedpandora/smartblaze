@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using SmartBlaze.Backend.Dtos;
 using SmartBlaze.Backend.Models;
@@ -91,6 +92,48 @@ public class MessageController : ControllerBase
         await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
 
         return Ok(assistantMessageDto);
+    }
+    
+    [HttpPost("new-assistant-empty-message")]
+    public ActionResult<MessageDto> GetNewAssistantMessageWithEmptyContent(string id)
+    {
+        MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage("");
+
+        return Ok(assistantMessageDto);
+    }
+    
+    [HttpPost("generate-assistant-stream-message")]
+    public async IAsyncEnumerable<string> GenerateNewAssistantMessageInChatSessionStreamEnabled(string id, 
+        [FromBody] List<MessageDto> messageDtos)
+    {
+        ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
+        if (chatSessionDto is null)
+        {
+            yield break;
+        }
+
+        if (chatSessionDto.ChatbotName is null)
+        {
+            yield break;
+        }
+
+        Chatbot? chatbot = _chatbotService.GetChatbotByName(chatSessionDto.ChatbotName);
+        
+        if (chatbot is null)
+        {
+            yield break;
+        }
+        
+        var output = new StringBuilder();
+        
+        await foreach (var chunk in _chatbotService.GenerateTextStreamInChatSession(chatbot, chatSessionDto, messageDtos))
+        {
+            output.Append(chunk);
+            yield return chunk;
+        }
+
+        MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage(output.ToString());
+        await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
     }
 
     [HttpPost("new-system-message")]

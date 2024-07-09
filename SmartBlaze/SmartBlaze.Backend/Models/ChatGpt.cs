@@ -91,6 +91,8 @@ public class ChatGpt : Chatbot
                 Role = "system",
                 Content = chatSessionDto.SystemInstruction
             };
+            
+            messages.Insert(0, systemInstructionMessage);
         }
 
         var chatRequest = new ChatRequest

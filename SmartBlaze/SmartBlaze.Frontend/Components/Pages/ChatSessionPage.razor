@@ -1,6 +1,7 @@
 @page "/"
 @using System.Text.RegularExpressions
 @using System.Web
+@using SmartBlaze.Frontend.Components.Layout
 
 @rendermode InteractiveServer
 
@@ -8,10 +9,11 @@
 
 <PageTitle>SmartBlaze</PageTitle>
 
-@if (_chatStateService.CurrentChatSession is not null)
-{
+<div id="conversationContainer">
+    @if (_chatStateService.CurrentChatSession is not null)
+    {
     <div class="d-flex">
-        <img src="icons/gear-fill.svg" width="25" height="25" alt="system icon" title="system"/>
+        <img src="icons/gear-wide.svg" width="25" height="25" alt="system icon" title="system"/>
 
         <div class="ps-3 pe-3 pb-5 pt-1">
         <span>
@@ -20,45 +22,50 @@
         </span>
         </div>
     </div>
-}
+    }
 
-@if (_chatStateService.CurrentChatSessionMessages is not null)
-{
+    @if (_chatStateService.CurrentChatSessionMessages is not null)
+    {
     @foreach(var message in _chatStateService.CurrentChatSessionMessages)
     {
-        <div class="d-flex">
-            <div>
-                @switch (message.Role)
-                {
-                    case "user":
-                        <img src="icons/person-fill.svg" width="28" height="28" alt="user icon" title="user"/>
-                        break;
-                    case "assistant":
-                        <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
-                        break;
-                }
-            </div>
-            <div class="ps-3 pe-3 pb-5 pt-1">
-                <span>
-                    @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@message.Content ?? ""), 
-                        "\r?\n|\r", "<br />"))
-                </span>
-            </div>
+    <div class="d-flex">
+        <div>
+            @switch (message.Role)
+            {
+            case "user":
+            <img src="icons/person-fill.svg" width="28" height="28" alt="user icon" title="user"/>
+            break;
+            case "assistant":
+            <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
+            break;
+            }
         </div>
+        <div class="ps-3 pe-3 pb-5 pt-1">
+                <span>
+                    @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@message.Content ?? ""),
+                    "\r?\n|\r", "<br />"))
+                </span>
+        </div>
+    </div>
     }
-    
+
     @if (_chatStateService.IsGeneratingResponse)
     {
-        <div class="d-flex">
-            <div>
-                <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
-            </div>
-            <div class="ps-3 pe-3 pb-5 pt-1">
-                <span class="text-secondary">I'm elaborating message...</span>
-            </div>
+    <div class="d-flex">
+        <div>
+            <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
         </div>
+        <div class="ps-3 pe-3 pb-5 pt-1">
+            <span class="text-secondary">I'm elaborating message...</span>
+        </div>
+    </div>
     }
-}
+    }
+</div>
+
+<div>
+    <InputBox/>
+</div>
 
 
 @code {

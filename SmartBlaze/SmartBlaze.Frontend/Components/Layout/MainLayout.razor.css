@@ -80,10 +80,6 @@ main {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }
-    
-    article {
-        padding: 50px 100px !important;
-    }
 }
 
 #blazor-error-ui {
@@ -106,6 +102,7 @@ main {
     }
     
 article {
-    height: 75vh;
-    overflow-y: auto;
-}    
+    padding-left: 100px;
+    padding-right: 100px;
+    padding-top: 50px;
+}

@@ -42,14 +42,18 @@
 
 <div class="border-top border-1 border-white">
     <div class="nav-item px-3">
-        @if (!_chatStateService.IsNewChatSessionBeingCreated)
-        {
-            <NavLink class="nav-link user-select-none"
-                     @onclick="() => OnNewChatClicked()">
-                <img src="icons/plus-circle-fill.svg" width="20" height="20" alt="new chat icon" class="me-2"/>
-                <span>New chat</span>
-            </NavLink>
-        }
+        <NavLink class="nav-link user-select-none"
+                 @onclick="() => OnNewChatClicked()">
+            <img src="icons/plus-circle-fill.svg" width="20" height="20" alt="new chat icon" class="me-2"/>
+            <span>New chat</span>
+        </NavLink>
+    </div>
+    <div class="nav-item px-3">
+        <NavLink class="nav-link user-select-none"
+                 @onclick="() => OnSettingsClicked()">
+            <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
+            <span>Settings</span>
+        </NavLink>
     </div>
     
 </div>
@@ -105,5 +109,10 @@
     private void UpdatePageUrl(string url)
     {
         _redirectService.Url = url;
+    }
+
+    private void OnSettingsClicked()
+    {
+        
     }
 }

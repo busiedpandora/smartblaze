@@ -1,0 +1,28 @@
+@rendermode InteractiveServer
+
+@inject ChatStateService _chatStateService
+
+<div class="top-row-2 px-4">
+    <div class="d-flex align-items-center">
+        @if (_chatStateService.CurrentChatSession is not null)
+        {
+            <h2>
+                @_chatStateService.CurrentChatSession.Title
+            </h2>
+        }
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        _chatStateService.RefreshView += RefreshView;
+
+        await base.OnInitializedAsync();
+    }
+    
+    private void RefreshView()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}

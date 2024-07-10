@@ -9,6 +9,15 @@
 
 <PageTitle>SmartBlaze</PageTitle>
 
+<div id="pageRow">
+    <span id="pageTitle">
+        @if (_chatStateService.CurrentChatSession is not null)
+        {
+            @_chatStateService.CurrentChatSession.Title
+        }
+    </span>
+</div>
+
 <div id="conversationContainer">
     @if (_chatStateService.CurrentChatSession is not null)
     {

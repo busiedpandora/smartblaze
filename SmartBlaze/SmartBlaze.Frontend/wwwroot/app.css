@@ -17,7 +17,7 @@ a, .btn-link {
 }
 
 .content {
-    padding-top: 1.1rem;
+    /*padding-top: 1.1rem;*/
 }
 
 h1:focus {
@@ -50,8 +50,36 @@ h1:focus {
     border-color: #929292;
 }
 
+#pageRow {
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #d6d5d5;
+    height: 3.5rem;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+#pageTitle {
+    font-size: 1.5rem;
+}
+
 #conversationContainer {
     height: 67vh;
     overflow-y: auto;
     margin-bottom: 40px;
+    padding-left: 100px;
+    padding-right: 100px;
+    padding-top: 50px;
+}
+
+#welcomePageContainer {
+    padding-left: 100px;
+    padding-right: 100px;
+    padding-top: 50px;
+}
+
+#errorPageContainer {
+    padding-left: 100px;
+    padding-right: 100px;
+    padding-top: 50px;
 }

@@ -10,12 +10,13 @@
 <PageTitle>SmartBlaze</PageTitle>
 
 <div id="pageRow">
-    <span id="pageTitle">
-        @if (_chatStateService.CurrentChatSession is not null)
-        {
+    @if (_chatStateService.CurrentChatSession is not null)
+    {
+        <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/>
+        <span id="pageTitle">
             @_chatStateService.CurrentChatSession.Title
-        }
-    </span>
+        </span>
+    }
 </div>
 
 <div id="conversationContainer">

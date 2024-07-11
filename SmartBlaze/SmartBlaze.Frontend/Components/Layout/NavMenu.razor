@@ -4,6 +4,7 @@
 @inject NavigationManager _navigationManager
 @inject ChatStateService _chatStateService
 @inject RedirectService _redirectService
+@inject SettingsService _settingsService
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -73,7 +74,14 @@
     {
         if (firstRender)
         {
+            await _settingsService.LoadChatbots();
+            
             await _chatStateService.LoadChats();
+        }
+
+        if (_navigationManager.Uri.EndsWith("/error"))
+        {
+            return;
         }
 
         if (!_navigationManager.Uri.EndsWith(_redirectService.Url))
@@ -113,6 +121,8 @@
 
     private void OnSettingsClicked()
     {
+        _chatStateService.DeselectChatSession(_chatStateService.CurrentChatSession);
         
+        _redirectService.Url = "/settings/models";
     }
 }

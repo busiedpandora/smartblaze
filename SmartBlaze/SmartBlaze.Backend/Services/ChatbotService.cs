@@ -18,6 +18,11 @@ public class ChatbotService
         CreateChatbots();
     }
 
+    public List<Chatbot>? GetAllChatbots()
+    {
+        return _chatbots;
+    }
+
     public Chatbot? GetChatbotByName(string name)
     {
         return _chatbots.Find(c => c.Name == name);

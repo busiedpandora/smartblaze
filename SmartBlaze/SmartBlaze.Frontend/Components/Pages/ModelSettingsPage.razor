@@ -1,0 +1,117 @@
+@page "/settings/models"
+@using SmartBlaze.Frontend.Dtos
+
+@rendermode InteractiveServer
+
+@inject RedirectService _redirectService
+@inject SettingsService _settingsService
+
+<PageTitle>Model settings - SmartBlaze</PageTitle>
+
+<div id="pageRow">
+    <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
+    <span id="pageTitle">
+        Settings
+    </span>
+</div>
+
+<div id="settingsPagesContainer">
+    @if (_settingsService.Chatbots is not null && _settingsService.ChatbotSelected?.Models is not null)
+    {
+        <EditForm Model="@_chatbotDto" OnSubmit="@OnSaveClicked" autocomplete="off">
+            <div>
+                <label for="chatbot" class="form-label">Chatbot</label>
+                <div class="col-2">
+                    <InputSelect id="chatbot" class="form-select" 
+                                 Value="_chatbotDto.Name" ValueExpression="() => _chatbotDto.Name" TValue="string"
+                                 ValueChanged="(string chatbotName) => OnChatbotSelected(chatbotName)">
+                        @foreach (var chatbot in _settingsService.Chatbots)
+                        { 
+                            <option value="@chatbot.Name">@chatbot.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+            
+            <div class="border border1 mt-5 mb-4 col-6"></div>
+            
+            <div class="mb-3">
+                <label for="apiKey" class="form-label">API Key</label>
+                    <div class="row align-items-center">
+                        <div class="col-4">
+                            <InputText id="apiKey" type="password" @bind-Value="_apiKey" class="form-control">
+                                
+                            </InputText>
+                        </div>
+                        <div class="col">
+                            <img src="icons/eye-fill.svg" width="21" height="21" alt="eye icon" class=""/>
+                        </div>
+                    </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="apiHost" class="form-label">API Host</label>
+                <div class="col-4">
+                    <InputText id="apiHost" @bind-Value="_apiHost" class="form-control">
+                        
+                    </InputText>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="chatbotModel" class="form-label">Model</label>
+                <div class="col-2">
+                    <InputSelect id="chatbotModel" @bind-Value="_chatbotModel" class="form-select">
+                        @foreach (var chatbotModel in _settingsService.ChatbotSelected.Models)
+                        {
+                            <option value="@chatbotModel">@chatbotModel</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" type="submit" value="Submit">
+                Save
+            </button>
+        </EditForm>
+    }
+</div>
+
+@code
+{
+    private ChatbotDto _chatbotDto = new();
+    private string _apiKey = "";
+    private string _apiHost = "";
+    private string _chatbotModel = "";
+
+    
+    protected override Task OnInitializedAsync()
+    {
+        _settingsService.RefreshView += RefreshView;
+        
+        _chatbotDto = _settingsService.ChatbotSelected ?? new ChatbotDto();
+        _chatbotModel = _settingsService.ChatbotSelectedModel ?? "";
+        
+        return base.OnInitializedAsync();
+    }
+
+    private void OnChatbotSelected(string chatbotName)
+    {
+        _chatbotDto = _settingsService.Chatbots?.Find(c => c.Name == chatbotName) ?? new();
+        _chatbotModel = _chatbotDto.Models?.ElementAt(0) ?? "";
+        _settingsService.SelectChatbot(_chatbotDto);
+    }
+
+    private void OnSaveClicked()
+    {
+        Console.WriteLine("chatbot: " + _chatbotDto.Name);
+        Console.WriteLine("api key: " + _apiKey);
+        Console.WriteLine("api host: " + _apiHost);
+        Console.WriteLine("chatbot model: " + _chatbotModel);
+    }
+    
+    private void RefreshView()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}

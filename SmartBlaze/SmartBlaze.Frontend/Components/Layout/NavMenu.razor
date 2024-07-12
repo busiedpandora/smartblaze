@@ -4,7 +4,7 @@
 @inject NavigationManager _navigationManager
 @inject ChatStateService _chatStateService
 @inject RedirectService _redirectService
-@inject SettingsService _settingsService
+@inject ChatbotStateService _chatbotStateService
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -74,7 +74,7 @@
     {
         if (firstRender)
         {
-            await _settingsService.LoadChatbots();
+            await _chatbotStateService.LoadChatbots();
             
             await _chatStateService.LoadChats();
         }
@@ -104,7 +104,13 @@
 
     private async void OnNewChatClicked()
     {
-        await _chatStateService.CreateNewChatSession();
+        ChatbotDto? chatbot = _chatbotStateService.ChatbotSelected;
+        string? model = _chatbotStateService.ChatbotSelectedModel;
+
+        if (chatbot?.Name != null && model is not null)
+        {
+            await _chatStateService.CreateNewChatSession(chatbot.Name, model);
+        }
     }
 
     private void UpdateErrorInfo(string errorTitle, string errorMessage)

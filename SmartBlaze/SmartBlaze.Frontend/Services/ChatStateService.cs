@@ -290,7 +290,7 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         }
     }
 
-    public async Task CreateNewChatSession()
+    public async Task CreateNewChatSession(string chatbotName, string chatbotModel)
     {
         if (!CanUserInteract())
         {
@@ -307,7 +307,9 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         
         ChatSessionDto? chatSessionDto = new ChatSessionDto();
         chatSessionDto.Title = "Undefined";
-        chatSessionDto.SystemInstruction = "You are Neko and you are a cat.";
+        chatSessionDto.SystemInstruction = "";
+        chatSessionDto.ChatbotName = chatbotName;
+        chatSessionDto.ChatbotModel = chatbotModel;
         
         var newChatSessionResponse = await HttpClient.PostAsJsonAsync("chat-sessions/new", chatSessionDto);
         var newChatSessionResponseContent = await newChatSessionResponse.Content.ReadAsStringAsync();

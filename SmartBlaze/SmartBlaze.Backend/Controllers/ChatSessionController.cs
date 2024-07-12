@@ -53,7 +53,12 @@ public class ChatSessionController : ControllerBase
             return BadRequest("Chat session not specified correctly");
         }
 
-        string chatbotName = "ChatGPT";
+        if (chatSessionDto.ChatbotName is null)
+        {
+            return BadRequest("No chatbot specified for the chat session");
+        }
+
+        string chatbotName = chatSessionDto.ChatbotName;
 
         Chatbot? chatbot = _chatbotService.GetChatbotByName(chatbotName);
 
@@ -61,8 +66,15 @@ public class ChatSessionController : ControllerBase
         {
             return NotFound($"Chatbot with name {chatbotName} not found");
         }
+
+        string? chatbotModel = chatSessionDto.ChatbotModel;
+
+        if (chatbotModel is null || !chatbot.Models.Contains(chatbotModel))
+        {
+            return NotFound($"Unknown model {chatbotModel ?? ""} for chatbot {chatbot.Name}");
+        }
         
-        chatSessionDto = _chatSessionService.CreateNewChatSession(chatSessionDto.Title, chatbot, 
+        chatSessionDto = _chatSessionService.CreateNewChatSession(chatSessionDto.Title, chatbot, chatbotModel,
             chatSessionDto.SystemInstruction ?? "");
         chatSessionDto = await _chatSessionService.AddChatSession(chatSessionDto);
         

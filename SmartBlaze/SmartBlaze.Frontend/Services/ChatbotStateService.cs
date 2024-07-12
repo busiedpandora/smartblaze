@@ -3,7 +3,7 @@ using SmartBlaze.Frontend.Dtos;
 
 namespace SmartBlaze.Frontend.Services;
 
-public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
+public class ChatbotStateService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
 {
     private List<ChatbotDto>? _chatbots;
     private ChatbotDto? _chatbotSelected;
@@ -16,14 +16,9 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
     public string? ChatbotSelectedModel => _chatbotSelectedModel;
 
-    public void SelectChatbot(ChatbotDto chatbot)
+    public void SelectChatbot(ChatbotDto chatbot, string chatbotModel)
     {
         if (_chatbots is null)
-        {
-            return;
-        }
-
-        if (_chatbotSelected is not null && _chatbotSelected.Name == chatbot.Name)
         {
             return;
         }
@@ -32,11 +27,12 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         {
             NotifyNavigateToErrorPage($"Error occured while selecting the chatbot {chatbot.Name}", 
                 $"No models for chatbot {chatbot.Name} found");
+            NotifyRefreshView();
             return;
         }
 
         _chatbotSelected = chatbot;
-        _chatbotSelectedModel = chatbot.Models.ElementAt(0);
+        _chatbotSelectedModel = chatbotModel;
         
         NotifyRefreshView();
     }
@@ -59,11 +55,23 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
         var chatbots = JsonSerializer.Deserialize<List<ChatbotDto>>(chatbotsResponseContent) ?? new List<ChatbotDto>();
 
-        _chatbots = chatbots;
-
-        if (_chatbots.Count > 0)
+        if (chatbots.Count == 0)
         {
-            SelectChatbot(_chatbots.ElementAt(0));
+            NotifyNavigateToErrorPage("Error occured while loading the chatbots", "No chatbot found");
+            return;
         }
+        
+        _chatbots = chatbots;
+        
+        var chatbotToSelect = _chatbots.ElementAt(0);
+
+        if (chatbotToSelect.Models is null || chatbotToSelect.Models.Count == 0)
+        {
+            NotifyNavigateToErrorPage("Error occured while loading the chatbots", 
+                $"No model found for chatbot {chatbotToSelect.Name}");
+            return;
+        }
+        
+        SelectChatbot(chatbotToSelect, chatbotToSelect.Models.ElementAt(0));
     }
 }

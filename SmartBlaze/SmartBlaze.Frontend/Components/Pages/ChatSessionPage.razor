@@ -79,14 +79,20 @@
 
 
 @code {
+    private bool _applicationStarted = false;
+    
     protected override async Task OnInitializedAsync()
     {
-        _chatStateService.RefreshView += RefreshView;
+        if (!_applicationStarted)
+        {
+            _applicationStarted = true;
+            _chatStateService.RefreshView += ReloadComponentState;
+        }
 
         await base.OnInitializedAsync();
     }
 
-    private void RefreshView()
+    private void ReloadComponentState()
     {
         InvokeAsync(StateHasChanged);
     }

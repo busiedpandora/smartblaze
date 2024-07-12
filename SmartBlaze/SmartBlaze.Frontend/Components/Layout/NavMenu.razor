@@ -61,38 +61,20 @@
 
 @code
 {
+    private bool _applicationStarted = false;
+    
     protected override async Task OnInitializedAsync()
     {
-        _chatStateService.NavigateToErrorPage += UpdateErrorInfo;
-        _chatStateService.NavigateToPage += UpdatePageUrl;
-        _chatStateService.RefreshView += RefreshView;
-
+        if (!_applicationStarted)
+        {
+            _applicationStarted = true;
+            _chatStateService.RefreshView += ReloadComponentState;
+        }
+        
         await base.OnInitializedAsync();
     }
     
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await _chatbotStateService.LoadChatbots();
-            
-            await _chatStateService.LoadChats();
-        }
-
-        if (_navigationManager.Uri.EndsWith("/error"))
-        {
-            return;
-        }
-
-        if (!_navigationManager.Uri.EndsWith(_redirectService.Url))
-        {
-            _navigationManager.NavigateTo(_redirectService.Url);
-        }
-        
-        await base.OnAfterRenderAsync(firstRender);
-    }
-    
-    private void RefreshView()
+    private void ReloadComponentState()
     {
         InvokeAsync(StateHasChanged);
     }
@@ -111,18 +93,6 @@
         {
             await _chatStateService.CreateNewChatSession(chatbot.Name, model);
         }
-    }
-
-    private void UpdateErrorInfo(string errorTitle, string errorMessage)
-    {
-        _redirectService.Url = "/error";
-        _redirectService.ErrorTitle = errorTitle;
-        _redirectService.ErrorMessage = errorMessage;
-    }
-
-    private void UpdatePageUrl(string url)
-    {
-        _redirectService.Url = url;
     }
 
     private void OnSettingsClicked()

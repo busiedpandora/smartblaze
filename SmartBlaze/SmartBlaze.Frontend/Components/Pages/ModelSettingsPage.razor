@@ -73,7 +73,7 @@
             </div>
             
             <div class="mt-5">
-                <button class="btn btn-primary" @onclick="() => OnCancelClicked()">
+                <button class="btn btn-primary" type="button" @onclick="() => OnCancelClicked()">
                     Cancel
                 </button>
 
@@ -120,9 +120,20 @@
         _chatbotModelInputSelect = _chatbotInputSelect.Models?.ElementAt(0) ?? "";
     }
 
-    private void OnSaveClicked()
+    private async void OnSaveClicked()
     {
         _chatbotStateService.SelectChatbot(_chatbotInputSelect, _chatbotModelInputSelect);
+        
+        _settingsService.CloseSettings();
+        
+        if (_chatStateService.ChatSessions?.Count > 0)
+        {
+            await _chatStateService.SelectChatSession(_chatStateService.ChatSessions.ElementAt(0));
+        }
+        else
+        {
+            _redirectService.Url = "/welcome";
+        }
     }
     
     private void ReloadComponentState()

@@ -14,7 +14,7 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
     private bool _isChatSessionBeingSelected;
     private bool _isGeneratingResponse;
     
-
+    
     public List<ChatSessionDto>? ChatSessions
     {
         get => _chatSessions;
@@ -119,23 +119,18 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         NotifyRefreshView();
     }
 
-    public void DeselectChatSession(ChatSessionDto? chatSession)
+    public void DeselectCurrentChatSession()
     {
-        if (_chatSessions is null || chatSession is null)
+        if (_chatSessions is null)
         {
             return;
         }
         
-        if (_currentChatSession is null)
+        if (_currentChatSession is not null)
         {
-            return;
-        }
-        
-        ChatSessionDto? chatToDeselect = _chatSessions.Find(c => c.Id == chatSession.Id);
+            _currentChatSession.Selected = false;
 
-        if (chatToDeselect is not null)
-        {
-            chatToDeselect.Selected = false;
+            _currentChatSession = null;
             
             NotifyRefreshView();
         }

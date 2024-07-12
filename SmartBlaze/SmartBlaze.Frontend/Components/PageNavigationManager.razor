@@ -4,6 +4,7 @@
 @inject RedirectService _redirectService
 @inject ChatStateService _chatStateService
 @inject ChatbotStateService _chatbotStateService
+@inject SettingsService _settingsService
 
 @code {
     private bool _applicationStarted = false;
@@ -15,6 +16,14 @@
             _chatStateService.RefreshView += ReloadComponentState;
             _chatStateService.NavigateToPage += UpdatePageUrl;
             _chatStateService.NavigateToErrorPage += UpdateErrorInfo;
+            
+            _chatbotStateService.RefreshView += ReloadComponentState;
+            _chatbotStateService.NavigateToPage += UpdatePageUrl;
+            _chatbotStateService.NavigateToErrorPage += UpdateErrorInfo;
+            
+            _settingsService.RefreshView += ReloadComponentState;
+            _settingsService.NavigateToPage += UpdatePageUrl;
+            _settingsService.NavigateToErrorPage += UpdateErrorInfo;
         }
         
         return base.OnInitializedAsync();

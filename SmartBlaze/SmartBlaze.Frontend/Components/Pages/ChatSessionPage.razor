@@ -6,6 +6,7 @@
 @rendermode InteractiveServer
 
 @inject ChatStateService _chatStateService
+@inject ChatbotStateService _chatbotStateService
 
 <PageTitle>SmartBlaze</PageTitle>
 
@@ -86,7 +87,9 @@
         if (!_applicationStarted)
         {
             _applicationStarted = true;
+            
             _chatStateService.RefreshView += ReloadComponentState;
+            _chatbotStateService.RefreshView += ReloadComponentState;
         }
 
         await base.OnInitializedAsync();

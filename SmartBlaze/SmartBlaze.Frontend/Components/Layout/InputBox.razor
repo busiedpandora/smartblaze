@@ -1,6 +1,7 @@
 @rendermode InteractiveServer
 
 @inject ChatStateService _chatStateService
+@inject ChatbotStateService _chatbotStateService
 @inject IJSRuntime _jsRuntime
 
 
@@ -33,7 +34,9 @@
         if (!_applicationStarted)
         {
             _applicationStarted = true;
+            
             _chatStateService.RefreshView += ReloadComponentState;
+            _chatbotStateService.RefreshView += ReloadComponentState;
         }
 
         await base.OnInitializedAsync();

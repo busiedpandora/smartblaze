@@ -5,6 +5,7 @@
 @inject ChatStateService _chatStateService
 @inject RedirectService _redirectService
 @inject ChatbotStateService _chatbotStateService
+@inject SettingsService _settingsService
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -50,7 +51,7 @@
         </NavLink>
     </div>
     <div class="nav-item px-3">
-        <NavLink class="nav-link user-select-none"
+        <NavLink class="@(_settingsService.SettingsPageOpen ?  "nav-link user-select-none active" : "nav-link user-select-none")"
                  @onclick="() => OnSettingsClicked()">
             <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
             <span>Settings</span>
@@ -68,7 +69,10 @@
         if (!_applicationStarted)
         {
             _applicationStarted = true;
+            
             _chatStateService.RefreshView += ReloadComponentState;
+            _chatbotStateService.RefreshView += ReloadComponentState;
+            _settingsService.RefreshView += ReloadComponentState;
         }
         
         await base.OnInitializedAsync();
@@ -81,6 +85,11 @@
 
     private async void OnChatClicked(ChatSessionDto chatSession)
     {
+        if (_settingsService.SettingsPageOpen)
+        {
+            _settingsService.CloseSettings();
+        }
+        
         await _chatStateService.SelectChatSession(chatSession);
     }
 
@@ -91,14 +100,19 @@
 
         if (chatbot?.Name != null && model is not null)
         {
+            if (_settingsService.SettingsPageOpen)
+            {
+                _settingsService.CloseSettings();
+            }
+            
             await _chatStateService.CreateNewChatSession(chatbot.Name, model);
         }
     }
 
     private void OnSettingsClicked()
     {
-        _chatStateService.DeselectChatSession(_chatStateService.CurrentChatSession);
+        _chatStateService.DeselectCurrentChatSession();
         
-        _redirectService.Url = "/settings/models";
+        _settingsService.OpenModelsSettings();
     }
 }

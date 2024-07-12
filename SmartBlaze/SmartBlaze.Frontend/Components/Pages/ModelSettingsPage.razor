@@ -4,6 +4,9 @@
 @rendermode InteractiveServer
 
 @inject ChatbotStateService _chatbotStateService
+@inject ChatStateService _chatStateService
+@inject SettingsService _settingsService
+@inject RedirectService _redirectService
 
 <PageTitle>Model settings - SmartBlaze</PageTitle>
 
@@ -70,7 +73,7 @@
             </div>
             
             <div class="mt-5">
-                <button class="btn btn-primary">
+                <button class="btn btn-primary" @onclick="() => OnCancelClicked()">
                     Cancel
                 </button>
 
@@ -84,6 +87,8 @@
 
 @code
 {
+    private bool _applicationStarted = false;
+    
     private ChatbotDto _chatbotInputSelect = new();
     private string _apiKey = "";
     private string _apiHost = "";
@@ -93,6 +98,14 @@
 
     protected override Task OnInitializedAsync()
     {
+        if (!_applicationStarted)
+        {
+            _applicationStarted = true;
+            
+            _chatbotStateService.RefreshView += ReloadComponentState;
+            _chatStateService.RefreshView += ReloadComponentState;
+        }
+        
         _chatbotInputSelect = _chatbotStateService.ChatbotSelected ?? new ChatbotDto();
         _chatbotModelInputSelect = _chatbotStateService.ChatbotSelectedModel ?? "";
         _chatbotModelsInputSelect = _chatbotInputSelect.Models ?? new();
@@ -110,5 +123,24 @@
     private void OnSaveClicked()
     {
         _chatbotStateService.SelectChatbot(_chatbotInputSelect, _chatbotModelInputSelect);
+    }
+    
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async void OnCancelClicked()
+    {
+        _settingsService.CloseSettings();
+        
+        if (_chatStateService.ChatSessions?.Count > 0)
+        {
+            await _chatStateService.SelectChatSession(_chatStateService.ChatSessions.ElementAt(0));
+        }
+        else
+        {
+            _redirectService.Url = "/welcome";
+        }
     }
 }

@@ -17,6 +17,7 @@ builder.Services.AddHttpClient("_httpClient", client =>
 builder.Services.AddSingleton<ChatStateService>();
 builder.Services.AddSingleton<RedirectService>();
 builder.Services.AddSingleton<ChatbotStateService>();
+builder.Services.AddSingleton<SettingsService>();
 
 var app = builder.Build();
 

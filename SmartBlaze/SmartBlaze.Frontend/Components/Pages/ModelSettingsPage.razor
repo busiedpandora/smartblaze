@@ -3,8 +3,7 @@
 
 @rendermode InteractiveServer
 
-@inject RedirectService _redirectService
-@inject SettingsService _settingsService
+@inject ChatbotStateService _chatbotStateService
 
 <PageTitle>Model settings - SmartBlaze</PageTitle>
 
@@ -16,16 +15,16 @@
 </div>
 
 <div id="settingsPagesContainer">
-    @if (_settingsService.Chatbots is not null && _settingsService.ChatbotSelected?.Models is not null)
+    @if (_chatbotStateService.Chatbots is not null && _chatbotStateService.ChatbotSelected?.Models is not null)
     {
-        <EditForm Model="@_chatbotDto" OnSubmit="@OnSaveClicked" autocomplete="off">
+        <EditForm Model="@_chatbotInputSelect" OnSubmit="@OnSaveClicked" autocomplete="off">
             <div>
                 <label for="chatbot" class="form-label">Chatbot</label>
                 <div class="col-2">
                     <InputSelect id="chatbot" class="form-select" 
-                                 Value="_chatbotDto.Name" ValueExpression="() => _chatbotDto.Name" TValue="string"
+                                 Value="_chatbotInputSelect.Name" ValueExpression="() => _chatbotInputSelect.Name" TValue="string"
                                  ValueChanged="(string chatbotName) => OnChatbotSelected(chatbotName)">
-                        @foreach (var chatbot in _settingsService.Chatbots)
+                        @foreach (var chatbot in _chatbotStateService.Chatbots)
                         { 
                             <option value="@chatbot.Name">@chatbot.Name</option>
                         }
@@ -61,8 +60,8 @@
             <div class="mb-3">
                 <label for="chatbotModel" class="form-label">Model</label>
                 <div class="col-2">
-                    <InputSelect id="chatbotModel" @bind-Value="_chatbotModel" class="form-select">
-                        @foreach (var chatbotModel in _settingsService.ChatbotSelected.Models)
+                    <InputSelect id="chatbotModel" @bind-Value="_chatbotModelInputSelect" class="form-select">
+                        @foreach (var chatbotModel in _chatbotModelsInputSelect)
                         {
                             <option value="@chatbotModel">@chatbotModel</option>
                         }
@@ -70,48 +69,46 @@
                 </div>
             </div>
             
-            <button class="btn btn-primary" type="submit" value="Submit">
-                Save
-            </button>
+            <div class="mt-5">
+                <button class="btn btn-primary">
+                    Cancel
+                </button>
+
+                <button class="btn btn-primary ms-2" type="submit" value="Submit">
+                    Save
+                </button>
+            </div>
         </EditForm>
     }
 </div>
 
 @code
 {
-    private ChatbotDto _chatbotDto = new();
+    private ChatbotDto _chatbotInputSelect = new();
     private string _apiKey = "";
     private string _apiHost = "";
-    private string _chatbotModel = "";
+    private string _chatbotModelInputSelect = "";
+    private List<string> _chatbotModelsInputSelect = new();
 
-    
+
     protected override Task OnInitializedAsync()
     {
-        _settingsService.RefreshView += RefreshView;
-        
-        _chatbotDto = _settingsService.ChatbotSelected ?? new ChatbotDto();
-        _chatbotModel = _settingsService.ChatbotSelectedModel ?? "";
-        
+        _chatbotInputSelect = _chatbotStateService.ChatbotSelected ?? new ChatbotDto();
+        _chatbotModelInputSelect = _chatbotStateService.ChatbotSelectedModel ?? "";
+        _chatbotModelsInputSelect = _chatbotInputSelect.Models ?? new();
+
         return base.OnInitializedAsync();
     }
 
     private void OnChatbotSelected(string chatbotName)
     {
-        _chatbotDto = _settingsService.Chatbots?.Find(c => c.Name == chatbotName) ?? new();
-        _chatbotModel = _chatbotDto.Models?.ElementAt(0) ?? "";
-        _settingsService.SelectChatbot(_chatbotDto);
+        _chatbotInputSelect = _chatbotStateService.Chatbots?.Find(c => c.Name == chatbotName) ?? new();
+        _chatbotModelsInputSelect = _chatbotInputSelect.Models ?? new();
+        _chatbotModelInputSelect = _chatbotInputSelect.Models?.ElementAt(0) ?? "";
     }
 
     private void OnSaveClicked()
     {
-        Console.WriteLine("chatbot: " + _chatbotDto.Name);
-        Console.WriteLine("api key: " + _apiKey);
-        Console.WriteLine("api host: " + _apiHost);
-        Console.WriteLine("chatbot model: " + _chatbotModel);
-    }
-    
-    private void RefreshView()
-    {
-        InvokeAsync(StateHasChanged);
+        _chatbotStateService.SelectChatbot(_chatbotInputSelect, _chatbotModelInputSelect);
     }
 }

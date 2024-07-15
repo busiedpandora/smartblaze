@@ -6,7 +6,7 @@
 @rendermode InteractiveServer
 
 @inject ChatStateService _chatStateService
-@inject ChatbotStateService _chatbotStateService
+@inject SettingsService _settingsService
 
 <PageTitle>SmartBlaze</PageTitle>
 
@@ -21,14 +21,15 @@
 </div>
 
 <div id="conversationContainer">
-    @if (_chatStateService.CurrentChatSession is not null)
+    @if (_chatStateService.CurrentChatSession is not null 
+         && !string.IsNullOrEmpty(_chatStateService.CurrentChatSession.SystemInstruction))
     {
     <div class="d-flex">
         <img src="icons/gear-wide.svg" width="25" height="25" alt="system icon" title="system"/>
 
         <div class="ps-3 pe-3 pb-5 pt-1">
         <span>
-            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@_chatStateService.CurrentChatSession.SystemInstruction ?? ""),
+            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@_chatStateService.CurrentChatSession.SystemInstruction),
             "\r?\n|\r", "<br />"))
         </span>
         </div>
@@ -89,7 +90,7 @@
             _applicationStarted = true;
             
             _chatStateService.RefreshView += ReloadComponentState;
-            _chatbotStateService.RefreshView += ReloadComponentState;
+            _settingsService.RefreshView += ReloadComponentState;
         }
 
         await base.OnInitializedAsync();

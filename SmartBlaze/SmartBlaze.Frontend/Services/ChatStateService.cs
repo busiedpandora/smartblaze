@@ -13,7 +13,7 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
     private bool _isNewChatSessionBeingCreated;
     private bool _isChatSessionBeingSelected;
     private bool _isGeneratingResponse;
-    
+
     
     public List<ChatSessionDto>? ChatSessions
     {
@@ -136,7 +136,7 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         }
     }
 
-    public async Task SendUserMessage(string content)
+    public async Task SendUserMessage(string content, bool textStream)
     {
         if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null)
         {
@@ -186,10 +186,8 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         _currentChatSessionMessages.Add(userMessageDto);
         
         NotifyRefreshView();
-
-        bool textStreaming = true;
         
-        if (textStreaming)
+        if (textStream)
         {
             var assistantEmptyMessageResponse = await 
                 HttpClient.PostAsJsonAsync(
@@ -285,7 +283,7 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         }
     }
 
-    public async Task CreateNewChatSession(string chatbotName, string chatbotModel)
+    public async Task CreateNewChatSession(string title, string systemInstruction, string chatbotName, string chatbotModel)
     {
         if (!CanUserInteract())
         {
@@ -301,8 +299,8 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         }
         
         ChatSessionDto? chatSessionDto = new ChatSessionDto();
-        chatSessionDto.Title = "Undefined";
-        chatSessionDto.SystemInstruction = "";
+        chatSessionDto.Title = title;
+        chatSessionDto.SystemInstruction = systemInstruction;
         chatSessionDto.ChatbotName = chatbotName;
         chatSessionDto.ChatbotModel = chatbotModel;
         

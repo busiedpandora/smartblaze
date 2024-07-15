@@ -1,9 +1,9 @@
 @page "/settings/models"
-@using SmartBlaze.Frontend.Dtos
+@using SmartBlaze.Frontend.Components.Layout
+@using SmartBlaze.Frontend.Models
 
 @rendermode InteractiveServer
 
-@inject ChatbotStateService _chatbotStateService
 @inject ChatStateService _chatStateService
 @inject SettingsService _settingsService
 @inject RedirectService _redirectService
@@ -18,60 +18,63 @@
 </div>
 
 <div id="settingsPagesContainer">
-    @if (_chatbotStateService.Chatbots is not null && _chatbotStateService.ChatbotSelected?.Models is not null)
+    
+    <SettingsMenu/>
+    
+    @if (_settingsService.Chatbots is not null && _settingsService.ChatbotSelected?.Models is not null)
     {
-        <EditForm Model="@_chatbotInputSelect" OnSubmit="@OnSaveClicked" autocomplete="off">
+        <EditForm Model="@_modelSettings" OnSubmit="@OnSaveClicked" autocomplete="off">
             <div>
                 <label for="chatbot" class="form-label">Chatbot</label>
                 <div class="col-2">
-                    <InputSelect id="chatbot" class="form-select" 
-                                 Value="_chatbotInputSelect.Name" ValueExpression="() => _chatbotInputSelect.Name" TValue="string"
+                    <InputSelect id="chatbot" class="form-select"
+                                 Value="_modelSettings.ChatbotName" ValueExpression="() => _modelSettings.ChatbotName" TValue="string"
                                  ValueChanged="(string chatbotName) => OnChatbotSelected(chatbotName)">
-                        @foreach (var chatbot in _chatbotStateService.Chatbots)
-                        { 
+                        @foreach (var chatbot in _settingsService.Chatbots)
+                        {
                             <option value="@chatbot.Name">@chatbot.Name</option>
                         }
                     </InputSelect>
                 </div>
             </div>
-            
+
             <div class="border border1 mt-5 mb-4 col-6"></div>
-            
+
             <div class="mb-3">
                 <label for="apiKey" class="form-label">API Key</label>
-                    <div class="row align-items-center">
-                        <div class="col-4">
-                            <InputText id="apiKey" type="password" @bind-Value="_apiKey" class="form-control">
-                                
-                            </InputText>
-                        </div>
-                        <div class="col">
-                            <img src="icons/eye-fill.svg" width="21" height="21" alt="eye icon" class=""/>
-                        </div>
+                <div class="row align-items-center">
+                    <div class="col-4">
+                        <InputText id="apiKey" type="password" @bind-Value="_modelSettings.ApiKey" class="form-control">
+
+                        </InputText>
                     </div>
+                    <div class="col">
+                        <img src="icons/eye-fill.svg" width="21" height="21" alt="eye icon" class=""/>
+                    </div>
+                </div>
             </div>
-            
+
             <div class="mb-3">
                 <label for="apiHost" class="form-label">API Host</label>
                 <div class="col-4">
-                    <InputText id="apiHost" @bind-Value="_apiHost" class="form-control">
-                        
+                    <InputText id="apiHost" @bind-Value="_modelSettings.ApiHost" class="form-control">
+
                     </InputText>
                 </div>
             </div>
-            
+
             <div class="mb-3">
                 <label for="chatbotModel" class="form-label">Model</label>
                 <div class="col-2">
-                    <InputSelect id="chatbotModel" @bind-Value="_chatbotModelInputSelect" class="form-select">
-                        @foreach (var chatbotModel in _chatbotModelsInputSelect)
+                    <InputSelect id="chatbotModel" @bind-Value="_modelSettings.ChatbotModel" class="form-select">
+                        @foreach (var chatbotModel in _modelSettings.ChatbotModels)
                         {
                             <option value="@chatbotModel">@chatbotModel</option>
                         }
                     </InputSelect>
                 </div>
             </div>
-            
+
             <div class="mt-5">
                 <button class="btn btn-primary" type="button" @onclick="() => OnCancelClicked()">
                     Cancel
@@ -88,42 +91,43 @@
 @code
 {
     private bool _applicationStarted = false;
+
+    private ModelSettings _modelSettings = new();
     
-    private ChatbotDto _chatbotInputSelect = new();
-    private string _apiKey = "";
-    private string _apiHost = "";
-    private string _chatbotModelInputSelect = "";
-    private List<string> _chatbotModelsInputSelect = new();
-
-
+    
     protected override Task OnInitializedAsync()
     {
         if (!_applicationStarted)
         {
             _applicationStarted = true;
             
-            _chatbotStateService.RefreshView += ReloadComponentState;
+            _settingsService.RefreshView += ReloadComponentState;
             _chatStateService.RefreshView += ReloadComponentState;
         }
         
-        _chatbotInputSelect = _chatbotStateService.ChatbotSelected ?? new ChatbotDto();
-        _chatbotModelInputSelect = _chatbotStateService.ChatbotSelectedModel ?? "";
-        _chatbotModelsInputSelect = _chatbotInputSelect.Models ?? new();
+        _modelSettings.ChatbotName = _settingsService.ChatbotSelected?.Name ?? "";
+        _modelSettings.ChatbotModel = _settingsService.ChatbotSelectedModel ?? "";
+        _modelSettings.ChatbotModels = _settingsService.ChatbotSelected?.Models ?? [];
 
         return base.OnInitializedAsync();
     }
 
     private void OnChatbotSelected(string chatbotName)
     {
-        _chatbotInputSelect = _chatbotStateService.Chatbots?.Find(c => c.Name == chatbotName) ?? new();
-        _chatbotModelsInputSelect = _chatbotInputSelect.Models ?? new();
-        _chatbotModelInputSelect = _chatbotInputSelect.Models?.ElementAt(0) ?? "";
+        var chatbotSelected = _settingsService.Chatbots?.Find(c => c.Name == chatbotName) ?? new();
+        
+        _modelSettings.ChatbotName = chatbotSelected.Name ?? "";
+        _modelSettings.ChatbotModels = chatbotSelected.Models ?? [];
+        _modelSettings.ChatbotModel = chatbotSelected.Models?.ElementAt(0) ?? "";
     }
 
-    private async void OnSaveClicked()
+    private void OnSaveClicked()
     {
-        _chatbotStateService.SelectChatbot(_chatbotInputSelect, _chatbotModelInputSelect);
-        
+        _settingsService.SaveModelSettings(_modelSettings);
+    }
+    
+    private async void OnCancelClicked()
+    {
         _settingsService.CloseSettings();
         
         if (_chatStateService.ChatSessions?.Count > 0)
@@ -139,19 +143,5 @@
     private void ReloadComponentState()
     {
         InvokeAsync(StateHasChanged);
-    }
-
-    private async void OnCancelClicked()
-    {
-        _settingsService.CloseSettings();
-        
-        if (_chatStateService.ChatSessions?.Count > 0)
-        {
-            await _chatStateService.SelectChatSession(_chatStateService.ChatSessions.ElementAt(0));
-        }
-        else
-        {
-            _redirectService.Url = "/welcome";
-        }
     }
 }

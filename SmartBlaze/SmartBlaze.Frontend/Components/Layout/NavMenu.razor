@@ -4,7 +4,6 @@
 @inject NavigationManager _navigationManager
 @inject ChatStateService _chatStateService
 @inject RedirectService _redirectService
-@inject ChatbotStateService _chatbotStateService
 @inject SettingsService _settingsService
 
 <div class="top-row ps-3 navbar navbar-dark">
@@ -71,7 +70,6 @@
             _applicationStarted = true;
             
             _chatStateService.RefreshView += ReloadComponentState;
-            _chatbotStateService.RefreshView += ReloadComponentState;
             _settingsService.RefreshView += ReloadComponentState;
         }
         
@@ -95,17 +93,15 @@
 
     private async void OnNewChatClicked()
     {
-        ChatbotDto? chatbot = _chatbotStateService.ChatbotSelected;
-        string? model = _chatbotStateService.ChatbotSelectedModel;
-
-        if (chatbot?.Name != null && model is not null)
+        if (_settingsService.ChatbotSelected?.Name != null)
         {
             if (_settingsService.SettingsPageOpen)
             {
                 _settingsService.CloseSettings();
             }
-            
-            await _chatStateService.CreateNewChatSession(chatbot.Name, model);
+        
+            await _chatStateService.CreateNewChatSession("Undefined", _settingsService.SystemInstruction,
+                _settingsService.ChatbotSelected.Name, _settingsService.ChatbotSelectedModel);
         }
     }
 

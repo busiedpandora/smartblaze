@@ -1,7 +1,7 @@
 @rendermode InteractiveServer
 
 @inject ChatStateService _chatStateService
-@inject ChatbotStateService _chatbotStateService
+@inject SettingsService _settingsService
 @inject IJSRuntime _jsRuntime
 
 
@@ -36,7 +36,7 @@
             _applicationStarted = true;
             
             _chatStateService.RefreshView += ReloadComponentState;
-            _chatbotStateService.RefreshView += ReloadComponentState;
+            _settingsService.RefreshView += ReloadComponentState;
         }
 
         await base.OnInitializedAsync();
@@ -50,7 +50,7 @@
         
             await _jsRuntime.InvokeVoidAsync("setTextareaValue", _textarea, string.Empty);
         
-            await _chatStateService.SendUserMessage(text);
+            await _chatStateService.SendUserMessage(text, _settingsService.TextStream);
         }
     }
 

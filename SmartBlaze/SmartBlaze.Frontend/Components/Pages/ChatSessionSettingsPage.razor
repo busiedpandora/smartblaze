@@ -1,0 +1,94 @@
+@page "/settings/chat"
+@using SmartBlaze.Frontend.Models
+@using SmartBlaze.Frontend.Components.Layout
+
+@rendermode InteractiveServer
+
+@inject SettingsService _settingsService
+@inject ChatStateService _chatStateService
+@inject RedirectService _redirectService
+
+<PageTitle>Chat settings - SmartBlaze</PageTitle>
+
+<div id="pageRow">
+    <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
+    <span id="pageTitle">
+        Settings
+    </span>
+</div>
+
+<div id="settingsPagesContainer">
+    
+    <SettingsMenu/>
+
+    <EditForm Model="_chatSessionSettings" OnSubmit="@OnSaveClicked" autocomplete="off">
+        <div class="mb-3">
+            <label for="systemInstruction" class="form-label">System instruction</label>
+            <div class="col-6">
+                <InputTextArea id="systemInstruction" class="form-control" @bind-Value="_chatSessionSettings.SystemInstruction"></InputTextArea>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="textStream" class="form-label">Text stream</label>
+            <InputCheckbox id="textStream" class="form-check" @bind-Value="_chatSessionSettings.TextStream"></InputCheckbox>
+        </div>
+
+        <div class="mt-5">
+            <button class="btn btn-primary" type="button" @onclick="() => OnCancelClicked()">
+                Cancel
+            </button>
+
+            <button class="btn btn-primary ms-2" type="submit" value="Submit">
+                Save
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private bool _applicationStarted = false;
+    
+    private ChatSessionSettings _chatSessionSettings = new();
+
+    
+    protected override Task OnInitializedAsync()
+    {
+        if (!_applicationStarted)
+        {
+            _applicationStarted = true;
+            
+            _settingsService.RefreshView += ReloadComponentState;
+            _chatStateService.RefreshView += ReloadComponentState;
+        }
+        
+        _chatSessionSettings.SystemInstruction = _settingsService.SystemInstruction ?? "";
+        _chatSessionSettings.TextStream = _settingsService.TextStream;
+        
+        return base.OnInitializedAsync();
+    }
+    
+    private void OnSaveClicked()
+    {
+        _settingsService.SaveChatSessionSettings(_chatSessionSettings);
+    }
+    
+    private async void OnCancelClicked()
+    {
+        _settingsService.CloseSettings();
+        
+        if (_chatStateService.ChatSessions?.Count > 0)
+        {
+            await _chatStateService.SelectChatSession(_chatStateService.ChatSessions.ElementAt(0));
+        }
+        else
+        {
+            _redirectService.Url = "/welcome";
+        }
+    }
+    
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}

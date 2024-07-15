@@ -91,3 +91,12 @@ h1:focus {
     padding-right: 100px;
     padding-top: 50px;
 }
+
+#settingsMenusContainer {
+    margin-bottom: 50px;
+}
+
+.settingsMenuTitle {
+    font-size: 1.3rem;
+    cursor: pointer;
+}

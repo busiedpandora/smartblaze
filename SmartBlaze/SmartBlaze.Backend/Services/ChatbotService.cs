@@ -13,6 +13,8 @@ public class ChatbotService
     {
         _httpClient = httpClient;
         _chatbots = new List<Chatbot>();
+        
+        CreateChatbots();
     }
 
     public List<Chatbot> GetAllChatbots()

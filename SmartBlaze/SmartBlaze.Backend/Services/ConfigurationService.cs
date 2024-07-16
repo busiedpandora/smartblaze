@@ -29,7 +29,7 @@ public class ConfigurationService
         await _configurationRepository.EditChatbotConfiguration(chatbotConfigurationDto);
     }
 
-    public async Task UnselectCurrentChatbot()
+    public async Task DeselectCurrentChatbotConfiguration()
     {
         var selectedChatbotConfiguration = await _configurationRepository.GetSelectedChatbotConfiguration();
 

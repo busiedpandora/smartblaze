@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SmartBlaze.Backend.Dtos;
 using SmartBlaze.Backend.Services;
@@ -20,7 +19,7 @@ public class ConfigurationController : ControllerBase
     }
 
     [HttpGet("chatbot")]
-    public async Task<ActionResult<List<ChatbotDto>>> GetChatbotsConfiguration()
+    public async Task<ActionResult<List<ChatbotDto>>> GetChatbotConfiguration()
     {
         var chatbots = _chatbotService.GetAllChatbots();
         var chatbotDtos = new List<ChatbotDto>();
@@ -29,42 +28,26 @@ public class ConfigurationController : ControllerBase
         {
             var chatbotConfiguration = await _configurationService.GetChatbotConfiguration(chatbot.Name);
 
-            if (chatbotConfiguration is not null)
+            if (chatbotConfiguration is null)
             {
-                var chatbotDto = new ChatbotDto()
-                {
-                    Name = chatbot.Name,
-                    Model = chatbotConfiguration.ChatbotModel,
-                    ApiHost = chatbotConfiguration.ApiHost,
-                    ApiKey = chatbotConfiguration.ApiKey,
-                    Selected = chatbotConfiguration.Selected,
-                    Models = chatbot.Models
-                };
-                
-                chatbotDtos.Add(chatbotDto);
+                chatbotConfiguration = chatbot.GetDefaultConfiguration();
+                await _configurationService.AddChatbotConfiguration(chatbotConfiguration);
             }
+            
+            var chatbotDto = new ChatbotDto()
+            {
+                Name = chatbot.Name,
+                Model = chatbotConfiguration.ChatbotModel,
+                ApiHost = chatbotConfiguration.ApiHost,
+                ApiKey = chatbotConfiguration.ApiKey,
+                Selected = chatbotConfiguration.Selected,
+                Models = chatbot.Models
+            };
+                
+            chatbotDtos.Add(chatbotDto);
         }
 
         return Ok(chatbotDtos);
-    }
-
-    [HttpPost("chatbot/default")]
-    public async Task<ActionResult> SetUpDefaultChatbotConfiguration()
-    {
-        _chatbotService.CreateChatbots();
-        
-        var chatbots = _chatbotService.GetAllChatbots();
-
-        foreach (var chatbot in chatbots)
-        {
-            if (await _configurationService.GetChatbotConfiguration(chatbot.Name) is null)
-            {
-                var chatbotDefaultConfiguration = chatbot.GetDefaultConfiguration();
-                await _configurationService.AddChatbotConfiguration(chatbotDefaultConfiguration);
-            }
-        }
-        
-        return Ok();
     }
 
     [HttpPost("chatbot")]
@@ -84,7 +67,7 @@ public class ConfigurationController : ControllerBase
 
         if (chatbotConfigurationDto.Selected == false)
         {
-            await _configurationService.UnselectCurrentChatbot();
+            await _configurationService.DeselectCurrentChatbotConfiguration();
         }
 
         chatbotConfigurationDto.ChatbotModel = chatbotDto.Model;
@@ -102,20 +85,13 @@ public class ConfigurationController : ControllerBase
     {
         var chatSessionConfiguration = await _configurationService.GetChatSessionConfiguration();
 
-        return Ok(chatSessionConfiguration);
-    }
-    
-    [HttpPost("chat-session/default")]
-    public async Task<ActionResult> SetUpDefaultChatSessionConfiguration()
-    {
-        if (await _configurationService.GetChatSessionConfiguration() is null)
+        if (chatSessionConfiguration is null)
         {
-            var chatSessionConfiguration = _configurationService.GetDefaultChatSessionConfiguration();
-
+            chatSessionConfiguration = _configurationService.GetDefaultChatSessionConfiguration();
             await _configurationService.SaveChatSessionConfiguration(chatSessionConfiguration);
         }
 
-        return Ok();
+        return Ok(chatSessionConfiguration);
     }
 
     [HttpPost("chat-session")]

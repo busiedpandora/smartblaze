@@ -7,7 +7,6 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 {
     private List<Chatbot>? _chatbots;
     private Chatbot? _chatbotSelected;
-    //private string _chatbotSelectedModel = "";
 
     private string _systemInstruction = "";
     private bool _textStream;
@@ -40,9 +39,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
     public async Task SetUpConfiguration()
     {
-        await SetUpChatbotConfiguration();
-        await LoadChatbots();
-        await SetUpChatSessionConfiguration();
+        await LoadChatbotConfiguration();
         await LoadChatSessionConfiguration();
     }
     
@@ -138,13 +135,8 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
         _chatbotSelected = chatbot;
     }
-
-    private async Task SetUpChatbotConfiguration()
-    {
-        await HttpClient.PostAsync("configuration/chatbot/default", null);
-    }
     
-    private async Task LoadChatbots()
+    private async Task LoadChatbotConfiguration()
     {
         if (_chatbots is not null)
         {
@@ -198,11 +190,6 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         }
         
         SelectChatbot(chatbotToSelect);
-    }
-
-    private async Task SetUpChatSessionConfiguration()
-    {
-        await HttpClient.PostAsync("configuration/chat-session/default", null);
     }
 
     private async Task LoadChatSessionConfiguration()

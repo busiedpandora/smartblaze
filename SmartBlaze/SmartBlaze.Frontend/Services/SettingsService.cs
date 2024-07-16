@@ -40,12 +40,12 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         //await LoadDefaultChatSessionConfigurations();
     }
     
-    public void OpenModelsSettings()
+    public void OpenChatbotSettings()
     {
         _settingsPageOpen = true;
-        _settingsMenuSelected = "model";
+        _settingsMenuSelected = "chatbot";
         
-        NotifyNavigateToPage("/settings/models");
+        NotifyNavigateToPage("/settings/chatbot");
         NotifyRefreshView();
     }
     
@@ -65,15 +65,15 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         NotifyRefreshView();
     }
 
-    public async Task SaveModelSettings(ModelSettings modelSettings)
+    public async Task SaveChatbotSettings(ChatbotSettings chatbotSettings)
     {
-        var chatbot = _chatbots?.Find(c => c.Name == modelSettings.ChatbotName);
+        var chatbot = _chatbots?.Find(c => c.Name == chatbotSettings.ChatbotName);
 
         if (chatbot is not null)
         {
-            chatbot.Model = modelSettings.ChatbotModel;
-            chatbot.Apihost = modelSettings.ApiHost;
-            chatbot.ApiKey = modelSettings.ApiKey;
+            chatbot.Model = chatbotSettings.ChatbotModel;
+            chatbot.Apihost = chatbotSettings.ApiHost;
+            chatbot.ApiKey = chatbotSettings.ApiKey;
             
             SelectChatbot(chatbot);
 
@@ -119,7 +119,6 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         }
 
         _chatbotSelected = chatbot;
-        //_chatbotSelectedModel = chatbotModel;
     }
 
     private async Task SetUpChatbotConfiguration()

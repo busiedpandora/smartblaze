@@ -9,9 +9,9 @@
                 <img src="icons/robot.svg" width="25" height="25" alt="assistant icon"/>
             </div>
             <div class="ms-2">
-                <span class="@(_settingsService.SettingsMenuSelected == "model" ? "settingsMenuTitle text-primary" : "settingsMenuTitle")"
-                      @onclick="OnModelSettingsClicked">
-                    Model
+                <span class="@(_settingsService.SettingsMenuSelected == "chatbot" ? "settingsMenuTitle text-primary" : "settingsMenuTitle")"
+                      @onclick="OnChatbotSettingsClicked">
+                    Chatbot
                 </span>
             </div>
         </div>
@@ -33,9 +33,9 @@
 </div>
 
 @code {
-    private void OnModelSettingsClicked()
+    private void OnChatbotSettingsClicked()
     {
-        _settingsService.OpenModelsSettings();
+        _settingsService.OpenChatbotSettings();
     }
 
     private void OnChatSettingsClicked()

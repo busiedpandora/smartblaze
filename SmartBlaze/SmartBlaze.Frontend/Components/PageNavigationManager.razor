@@ -1,0 +1,71 @@
+@rendermode InteractiveServer
+
+@inject NavigationManager _navigationManager
+@inject RedirectService _redirectService
+@inject ChatStateService _chatStateService
+@inject SettingsService _settingsService
+
+@code {
+    private bool _applicationStarted = false;
+    
+    protected override Task OnInitializedAsync()
+    {
+        if (!_applicationStarted)
+        {
+            _chatStateService.RefreshView += ReloadComponentState;
+            _chatStateService.NavigateToPage += UpdatePageUrl;
+            _chatStateService.NavigateToErrorPage += UpdateErrorInfo;
+            
+            _settingsService.RefreshView += ReloadComponentState;
+            _settingsService.NavigateToPage += UpdatePageUrl;
+            _settingsService.NavigateToErrorPage += UpdateErrorInfo;
+        }
+        
+        return base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_applicationStarted)
+        {
+            _applicationStarted = true;
+            
+            await _settingsService.SetUpConfiguration();
+            await _chatStateService.LoadChats();
+        }
+        
+        if (_navigationManager.Uri.EndsWith("/error"))
+        {
+            return;
+        }
+
+        if (!_navigationManager.Uri.EndsWith(_redirectService.Url))
+        {
+            _navigationManager.NavigateTo(_redirectService.Url);
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+    
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+    
+    private void UpdateErrorInfo(string errorTitle, string errorMessage)
+    {
+        _redirectService.Url = "/error";
+        _redirectService.ErrorTitle = errorTitle;
+        _redirectService.ErrorMessage = errorMessage;
+    }
+
+    private void UpdatePageUrl(string url)
+    {
+        if (_redirectService.Url == "/error")
+        {
+            return;
+        }
+
+        _redirectService.Url = url;
+    }
+}

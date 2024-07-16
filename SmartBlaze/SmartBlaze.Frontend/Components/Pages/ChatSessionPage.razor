@@ -6,27 +6,30 @@
 @rendermode InteractiveServer
 
 @inject ChatStateService _chatStateService
+@inject SettingsService _settingsService
 
 <PageTitle>SmartBlaze</PageTitle>
 
 <div id="pageRow">
-    <span id="pageTitle">
-        @if (_chatStateService.CurrentChatSession is not null)
-        {
+    @if (_chatStateService.CurrentChatSession is not null)
+    {
+        <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/>
+        <span id="pageTitle">
             @_chatStateService.CurrentChatSession.Title
-        }
-    </span>
+        </span>
+    }
 </div>
 
 <div id="conversationContainer">
-    @if (_chatStateService.CurrentChatSession is not null)
+    @if (_chatStateService.CurrentChatSession is not null 
+         && !string.IsNullOrEmpty(_chatStateService.CurrentChatSession.SystemInstruction))
     {
     <div class="d-flex">
         <img src="icons/gear-wide.svg" width="25" height="25" alt="system icon" title="system"/>
 
         <div class="ps-3 pe-3 pb-5 pt-1">
         <span>
-            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@_chatStateService.CurrentChatSession.SystemInstruction ?? ""),
+            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@_chatStateService.CurrentChatSession.SystemInstruction),
             "\r?\n|\r", "<br />"))
         </span>
         </div>
@@ -78,14 +81,22 @@
 
 
 @code {
+    private bool _applicationStarted = false;
+    
     protected override async Task OnInitializedAsync()
     {
-        _chatStateService.RefreshView += RefreshView;
+        if (!_applicationStarted)
+        {
+            _applicationStarted = true;
+            
+            _chatStateService.RefreshView += ReloadComponentState;
+            _settingsService.RefreshView += ReloadComponentState;
+        }
 
         await base.OnInitializedAsync();
     }
 
-    private void RefreshView()
+    private void ReloadComponentState()
     {
         InvokeAsync(StateHasChanged);
     }

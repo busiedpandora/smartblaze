@@ -3,10 +3,8 @@ using SmartBlaze.Frontend.Dtos;
 
 namespace SmartBlaze.Frontend.Services;
 
-public class ChatStateService
+public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
 {
-    private HttpClient _httpClient;
-    
     private List<ChatSessionDto>? _chatSessions;
     private ChatSessionDto? _currentChatSession;
     private List<MessageDto>? _currentChatSessionMessages;
@@ -15,13 +13,8 @@ public class ChatStateService
     private bool _isNewChatSessionBeingCreated;
     private bool _isChatSessionBeingSelected;
     private bool _isGeneratingResponse;
+
     
-
-    public ChatStateService(IHttpClientFactory httpClientFactory)
-    {
-        _httpClient = httpClientFactory.CreateClient("_httpClient");
-    }
-
     public List<ChatSessionDto>? ChatSessions
     {
         get => _chatSessions;
@@ -57,10 +50,6 @@ public class ChatStateService
     {
         get => _isGeneratingResponse;
     }
-
-    public event Action? RefreshView;
-    public event Action<string, string>? NavigateToErrorPage;
-    public event Action<string>? NavigateToPage;
     
     public async Task SelectChatSession(ChatSessionDto chatSession)
     {
@@ -92,7 +81,7 @@ public class ChatStateService
             return;
         }
         
-        var response = await _httpClient.GetAsync($"chat-session/{newSelectedChat.Id}/messages");
+        var response = await HttpClient.GetAsync($"chat-session/{newSelectedChat.Id}/messages");
         var responseContent = await response.Content.ReadAsStringAsync();
         
         if (!response.IsSuccessStatusCode)
@@ -122,13 +111,32 @@ public class ChatStateService
         }
 
         _currentChatSession = newSelectedChat;
+        
+        NotifyNavigateToPage("/");
 
         _isChatSessionBeingSelected = false;
         
         NotifyRefreshView();
     }
 
-    public async Task SendUserMessage(string content)
+    public void DeselectCurrentChatSession()
+    {
+        if (_chatSessions is null)
+        {
+            return;
+        }
+        
+        if (_currentChatSession is not null)
+        {
+            _currentChatSession.Selected = false;
+
+            _currentChatSession = null;
+            
+            NotifyRefreshView();
+        }
+    }
+
+    public async Task SendUserMessage(string content, string apiHost, string apiKey, bool textStream)
     {
         if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null)
         {
@@ -152,7 +160,7 @@ public class ChatStateService
         MessageDto? userMessageDto = new MessageDto();
         userMessageDto.Content = content;
             
-        var userMessageResponse = await _httpClient
+        var userMessageResponse = await HttpClient
             .PostAsJsonAsync($"chat-session/{_currentChatSession.Id}/new-user-message", 
                 userMessageDto);
         var userMessageResponseContent = await userMessageResponse.Content.ReadAsStringAsync();
@@ -179,12 +187,17 @@ public class ChatStateService
         
         NotifyRefreshView();
 
-        bool textStreaming = true;
+        var chatSessionInfoDto = new ChatSessionInfoDto()
+        {
+            Messages = _currentChatSessionMessages,
+            Apihost = apiHost,
+            ApiKey = apiKey
+        };
         
-        if (textStreaming)
+        if (textStream)
         {
             var assistantEmptyMessageResponse = await 
-            _httpClient.PostAsJsonAsync(
+                HttpClient.PostAsJsonAsync(
                 $"chat-session/{_currentChatSession.Id}/new-assistant-empty-message", 
                 _currentChatSessionMessages);
             var assistantEmptyMessageResponseContent = await assistantEmptyMessageResponse.Content.ReadAsStringAsync();
@@ -211,9 +224,9 @@ public class ChatStateService
             
             using var assistantStreamMessageRequest = new HttpRequestMessage(HttpMethod.Post, 
                 $"chat-session/{_currentChatSession.Id}/generate-assistant-stream-message");
-            assistantStreamMessageRequest.Content = JsonContent.Create(_currentChatSessionMessages);
+            assistantStreamMessageRequest.Content = JsonContent.Create(chatSessionInfoDto);
         
-            using var assistantStreamMessageResponse = await _httpClient.SendAsync(assistantStreamMessageRequest, 
+            using var assistantStreamMessageResponse = await HttpClient.SendAsync(assistantStreamMessageRequest, 
                 HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
             var assistantStreamMessageResponseContent = await assistantStreamMessageResponse.Content.ReadAsStreamAsync()
                 .ConfigureAwait(false);
@@ -246,9 +259,9 @@ public class ChatStateService
         else
         {
             var assistantMessageResponse = await 
-                _httpClient.PostAsJsonAsync(
+                HttpClient.PostAsJsonAsync(
                     $"chat-session/{_currentChatSession.Id}/new-assistant-message", 
-                    _currentChatSessionMessages);
+                    chatSessionInfoDto);
             var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
             
             if (!assistantMessageResponse.IsSuccessStatusCode)
@@ -277,7 +290,7 @@ public class ChatStateService
         }
     }
 
-    public async Task CreateNewChatSession()
+    public async Task CreateNewChatSession(string title, string systemInstruction, string chatbotName, string chatbotModel)
     {
         if (!CanUserInteract())
         {
@@ -293,10 +306,12 @@ public class ChatStateService
         }
         
         ChatSessionDto? chatSessionDto = new ChatSessionDto();
-        chatSessionDto.Title = "Undefined";
-        chatSessionDto.SystemInstruction = "You are Neko and you are a cat.";
+        chatSessionDto.Title = title;
+        chatSessionDto.SystemInstruction = systemInstruction;
+        chatSessionDto.ChatbotName = chatbotName;
+        chatSessionDto.ChatbotModel = chatbotModel;
         
-        var newChatSessionResponse = await _httpClient.PostAsJsonAsync("chat-sessions/new", chatSessionDto);
+        var newChatSessionResponse = await HttpClient.PostAsJsonAsync("chat-sessions/new", chatSessionDto);
         var newChatSessionResponseContent = await newChatSessionResponse.Content.ReadAsStringAsync();
 
         if (!newChatSessionResponse.IsSuccessStatusCode)
@@ -344,7 +359,7 @@ public class ChatStateService
 
         _areChatSessionsLoadingOnStartup = true;
         
-        var response = await _httpClient.GetAsync($"chat-sessions");
+        var response = await HttpClient.GetAsync($"chat-sessions");
         var responseContent = await response.Content.ReadAsStringAsync();
         
         if (!response.IsSuccessStatusCode)
@@ -388,13 +403,6 @@ public class ChatStateService
                && !_isChatSessionBeingSelected 
                && !_isGeneratingResponse;
     }
-    
-    private void NotifyRefreshView() => RefreshView?.Invoke();
-
-    private void NotifyNavigateToErrorPage(string errorTitle, string errorMessage) 
-        => NavigateToErrorPage?.Invoke(errorTitle, errorMessage);
-
-    private void NotifyNavigateToPage(string url) => NavigateToPage?.Invoke(url);
 
     private bool IsChatSessionValid(ChatSessionDto chatSessionDto)
     {

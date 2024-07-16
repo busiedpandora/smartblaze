@@ -7,12 +7,12 @@ namespace SmartBlaze.Backend.Models;
 
 public class Gemini : Chatbot
 {
-    public Gemini(string name, string apiHost, string apiKey) : base(name, apiHost, apiKey)
+    public Gemini(string name, List<string> models) : base(name, models)
     {
     }
 
     public override async Task<string?> GenerateText(ChatSessionDto chatSessionDto, 
-        List<MessageDto> messageDtos, HttpClient httpClient)
+        List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient)
     {
         var contents = new List<Content>();
 
@@ -61,16 +61,19 @@ public class Gemini : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{ApiHost}/v1beta/models/{chatSessionDto.ChatbotModel}:generateContent?key={ApiKey}"),
+            RequestUri = new Uri($"{apiHost}/v1beta/models/{chatSessionDto.ChatbotModel}:generateContent?key={apiKey}"),
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
         
         var chatResponseMessage = await httpClient.SendAsync(httpRequest);
-        chatResponseMessage.EnsureSuccessStatusCode();
+        var chatResponseMessageContent = await chatResponseMessage.Content.ReadAsStringAsync();
+
+        if (!chatResponseMessage.IsSuccessStatusCode)
+        {
+            return chatResponseMessageContent;
+        }
         
-        var chatResponseJson = await chatResponseMessage.Content.ReadAsStringAsync();
-        
-        ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseJson);
+        ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseMessageContent);
 
         if (chatResponse is not null && chatResponse.Candidates is not null)
         {
@@ -85,8 +88,8 @@ public class Gemini : Chatbot
         return null;
     }
 
-    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionDto chatSessionDto, List<MessageDto> messageDtos, 
-        HttpClient httpClient)
+    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionDto chatSessionDto, 
+        List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient)
     {
         var contents = new List<Content>();
 
@@ -135,12 +138,18 @@ public class Gemini : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{ApiHost}/v1beta/models/{chatSessionDto.ChatbotModel}:streamGenerateContent?key={ApiKey}"),
+            RequestUri = new Uri($"{apiHost}/v1beta/models/{chatSessionDto.ChatbotModel}:streamGenerateContent?key={apiKey}"),
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
         
         var chatResponseMessage = await httpClient.SendAsync(httpRequest);
-        chatResponseMessage.EnsureSuccessStatusCode();
+
+        if (!chatResponseMessage.IsSuccessStatusCode)
+        {
+            var chatResponseMessageContent = await chatResponseMessage.Content.ReadAsStringAsync();
+            yield return chatResponseMessageContent;
+            yield break;
+        }
         
         var chatResponseStream = await chatResponseMessage.Content.ReadAsStreamAsync();
         var streamReader = new StreamReader(chatResponseStream);
@@ -161,6 +170,18 @@ public class Gemini : Chatbot
                 }
             }
         }
+    }
+
+    public override ChatbotConfigurationDto GetDefaultConfiguration()
+    {
+        return new ChatbotConfigurationDto()
+        {
+            ChatbotName = "Google Gemini",
+            ChatbotModel = "gemini-1.5-pro",
+            ApiHost = "https://generativelanguage.googleapis.com",
+            ApiKey = "",
+            Selected = false
+        };
     }
 
     private class Part

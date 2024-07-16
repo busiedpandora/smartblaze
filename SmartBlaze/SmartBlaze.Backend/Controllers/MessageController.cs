@@ -60,7 +60,7 @@ public class MessageController : ControllerBase
     
     [HttpPost("new-assistant-message")]
     public async Task<ActionResult<MessageDto>> GenerateNewAssistantMessageInChatSession(string id, 
-        [FromBody] List<MessageDto> messageDtos)
+        [FromBody] ChatSessionInfoDto chatSessionInfoDto)
     {
         ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
         if (chatSessionDto is null)
@@ -73,6 +73,14 @@ public class MessageController : ControllerBase
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
 
+        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.Apihost is null ||
+            chatSessionInfoDto.ApiKey is null)
+        {
+            return BadRequest(
+                $"messages, API host and the API key must be specified for the chat session with id {id} " +
+                $"for generating the assistant message");
+        }
+
         Chatbot? chatbot = _chatbotService.GetChatbotByName(chatSessionDto.ChatbotName);
         
         if (chatbot is null)
@@ -81,7 +89,7 @@ public class MessageController : ControllerBase
         }
         
         string? content = await _chatbotService.GenerateTextInChatSession(chatbot, chatSessionDto,
-            messageDtos);
+            chatSessionInfoDto.Messages, chatSessionInfoDto.Apihost, chatSessionInfoDto.ApiKey);
         
         if (content is null)
         {
@@ -104,7 +112,7 @@ public class MessageController : ControllerBase
     
     [HttpPost("generate-assistant-stream-message")]
     public async IAsyncEnumerable<string> GenerateNewAssistantMessageInChatSessionStreamEnabled(string id, 
-        [FromBody] List<MessageDto> messageDtos)
+        [FromBody] ChatSessionInfoDto chatSessionInfoDto)
     {
         ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
         if (chatSessionDto is null)
@@ -113,6 +121,12 @@ public class MessageController : ControllerBase
         }
 
         if (chatSessionDto.ChatbotName is null)
+        {
+            yield break;
+        }
+        
+        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.Apihost is null ||
+            chatSessionInfoDto.ApiKey is null)
         {
             yield break;
         }
@@ -126,7 +140,8 @@ public class MessageController : ControllerBase
         
         var output = new StringBuilder();
         
-        await foreach (var chunk in _chatbotService.GenerateTextStreamInChatSession(chatbot, chatSessionDto, messageDtos))
+        await foreach (var chunk in _chatbotService.GenerateTextStreamInChatSession(chatbot, chatSessionDto, 
+                           chatSessionInfoDto.Messages, chatSessionInfoDto.Apihost, chatSessionInfoDto.ApiKey))
         {
             output.Append(chunk);
             yield return chunk;

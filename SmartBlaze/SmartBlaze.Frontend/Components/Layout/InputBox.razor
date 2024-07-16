@@ -46,9 +46,16 @@
     {
         if (_chatStateService.CanUserInteract())
         {
-            var chatbotSelected = _settingsService.ChatbotSelected;
+            var chatbotName = _chatStateService.CurrentChatSession?.ChatbotName;
 
-            if (chatbotSelected is null)
+            if (chatbotName is null)
+            {
+                return;
+            }
+
+            var chatbot = _settingsService.GetChatbotByName(chatbotName);
+
+            if (chatbot is null)
             {
                 return;
             }
@@ -57,8 +64,8 @@
         
             await _jsRuntime.InvokeVoidAsync("setTextareaValue", _textarea, string.Empty);
             
-            await _chatStateService.SendUserMessage(text, chatbotSelected.Apihost, 
-                chatbotSelected.ApiKey, _settingsService.TextStream);
+            await _chatStateService.SendUserMessage(text, chatbot.Apihost, 
+                chatbot.ApiKey, _settingsService.TextStream);
         }
     }
 

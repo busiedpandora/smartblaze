@@ -26,12 +26,17 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
     public List<Chatbot>? Chatbots => _chatbots;
 
     public Chatbot? ChatbotSelected => _chatbotSelected;
-
-    //public string ChatbotSelectedModel => _chatbotSelectedModel;
-
+    
     public string SystemInstruction => _systemInstruction;
 
     public bool TextStream => _textStream;
+
+    public Chatbot? GetChatbotByName(string chatbotName)
+    {
+        var chatbot = _chatbots?.Find(c => c.Name == chatbotName);
+
+        return chatbot;
+    }
 
     public async Task SetUpConfiguration()
     {

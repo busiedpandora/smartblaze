@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SmartBlaze.Backend.Dtos;
 using SmartBlaze.Backend.Services;
@@ -18,28 +19,8 @@ public class ConfigurationController : ControllerBase
         _chatbotService = chatbotService;
     }
 
-    [HttpGet("default/chat-session")]
-    public ActionResult GetDefaultChatSessionConfigurations()
-    {
-        var chatSessionConfiguration = _configurationService.GetDefaultChatSessionConfiguration();
-
-        return Ok(chatSessionConfiguration);
-    }
-
-    [HttpGet("model")]
-    public ActionResult GetModelConfiguration()
-    {
-        return Ok();
-    }
-
-    [HttpGet("chat-session")]
-    public ActionResult GetChatSessionConfiguration()
-    {
-        return Ok();
-    }
-
     [HttpGet("chatbot")]
-    public async Task<ActionResult> GetChatbotsConfiguration()
+    public async Task<ActionResult<List<ChatbotDto>>> GetChatbotsConfiguration()
     {
         var chatbots = _chatbotService.GetAllChatbots();
         var chatbotDtos = new List<ChatbotDto>();
@@ -87,7 +68,7 @@ public class ConfigurationController : ControllerBase
     }
 
     [HttpPost("chatbot")]
-    public async Task<ActionResult> ConfigureChatbot([FromBody] ChatbotDto chatbotDto)
+    public async Task<ActionResult> UpdateChatbotConfiguration([FromBody] ChatbotDto chatbotDto)
     {
         if (chatbotDto.Name is null || chatbotDto.Model is null)
         {
@@ -112,6 +93,52 @@ public class ConfigurationController : ControllerBase
         chatbotConfigurationDto.Selected = true;
 
         await _configurationService.EditChatbotConfiguration(chatbotConfigurationDto);
+
+        return Ok();
+    }
+
+    [HttpGet("chat-session")]
+    public async Task<ActionResult<ChatSessionConfigurationDto>> GetChatSessionConfiguration()
+    {
+        var chatSessionConfiguration = await _configurationService.GetChatSessionConfiguration();
+
+        return Ok(chatSessionConfiguration);
+    }
+    
+    [HttpPost("chat-session/default")]
+    public async Task<ActionResult> SetUpDefaultChatSessionConfiguration()
+    {
+        if (await _configurationService.GetChatSessionConfiguration() is null)
+        {
+            var chatSessionConfiguration = _configurationService.GetDefaultChatSessionConfiguration();
+
+            await _configurationService.SaveChatSessionConfiguration(chatSessionConfiguration);
+        }
+
+        return Ok();
+    }
+
+    [HttpPost("chat-session")]
+    public async Task<ActionResult> UpdateChatSessionConfiguration(
+        [FromBody] ChatSessionConfigurationDto chatSessionConfigurationDto)
+    {
+        if (chatSessionConfigurationDto.SystemInstruction is null || chatSessionConfigurationDto.TextStream is null)
+        {
+            return BadRequest(
+                $"Properties of chat session configuration with id {chatSessionConfigurationDto.Id} specified incorrectly");
+        }
+
+        var chatSessionConfiguration = await _configurationService.GetChatSessionConfiguration();
+
+        if (chatSessionConfiguration is null)
+        {
+            return NotFound("Cannot find the chat session configuration");
+        }
+        
+        chatSessionConfiguration.SystemInstruction = chatSessionConfigurationDto.SystemInstruction;
+        chatSessionConfiguration.TextStream = chatSessionConfigurationDto.TextStream;
+
+        await _configurationService.EditChatSessionConfiguration(chatSessionConfiguration);
 
         return Ok();
     }

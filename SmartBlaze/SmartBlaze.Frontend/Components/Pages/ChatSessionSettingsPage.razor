@@ -68,9 +68,9 @@
         return base.OnInitializedAsync();
     }
     
-    private void OnSaveClicked()
+    private async void OnSaveClicked()
     {
-        _settingsService.SaveChatSessionSettings(_chatSessionSettings);
+        await _settingsService.SaveChatSessionSettings(_chatSessionSettings);
     }
     
     private async void OnCancelClicked()

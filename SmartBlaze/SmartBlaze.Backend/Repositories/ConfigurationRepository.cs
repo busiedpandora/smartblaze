@@ -94,6 +94,53 @@ public class ConfigurationRepository : AbstractRepository
         await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatbotConfigurationCollectionId, 
             chatbotConfigurationDto.Id, chatbotConfigurationDocument);
     }
+
+    public async Task<ChatSessionConfigurationDto?> GetChatSessionConfiguration()
+    {
+        var chatSessionConfigurationDocuments =
+            await AppwriteDatabase.ListDocuments(AppwriteDatabaseId, ChatSessionConfigurationCollectionId);
+
+        var chatSessionConfigurationDocument =
+            chatSessionConfigurationDocuments.Documents.Count > 0 ? chatSessionConfigurationDocuments.Documents.First() : null;
+
+        if (chatSessionConfigurationDocument is null)
+        {
+            return null;
+        }
+
+        var chatSessionConfiguration = ConvertToChatSessionConfiguration(chatSessionConfigurationDocument);
+
+        return chatSessionConfiguration;
+    }
+
+    public async Task SaveChatSessionConfiguration(ChatSessionConfigurationDto chatSessionConfigurationDto)
+    {
+        var chatSessionConfigurationDocument = new Dictionary<string, object>()
+        {
+            { "systemInstruction", chatSessionConfigurationDto.SystemInstruction ?? "" },
+            { "textStream", chatSessionConfigurationDto.TextStream ?? false}
+        };
+
+        await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatSessionConfigurationCollectionId,
+            ID.Unique(), chatSessionConfigurationDocument);
+    }
+    
+    public async Task EditChatSessionConfiguration(ChatSessionConfigurationDto chatSessionConfigurationDto)
+    {
+        if (string.IsNullOrEmpty(chatSessionConfigurationDto.Id))
+        {
+            throw new ArgumentException("The document ID must be provided.", nameof(chatSessionConfigurationDto.Id));
+        }
+        
+        var chatSessionConfigurationDocument = new Dictionary<string, object>()
+        {
+            { "systemInstruction", chatSessionConfigurationDto.SystemInstruction ?? "" },
+            { "textStream", chatSessionConfigurationDto.TextStream ?? false}
+        };
+
+        await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatSessionConfigurationCollectionId,
+            chatSessionConfigurationDto.Id, chatSessionConfigurationDocument);
+    }
         
     private ChatbotConfigurationDto ConvertToChatbotConfiguration(Document chatbotConfigurationDocument)
     {
@@ -108,5 +155,17 @@ public class ConfigurationRepository : AbstractRepository
         };
 
         return chatbotConfigurationDto;
+    }
+
+    private ChatSessionConfigurationDto ConvertToChatSessionConfiguration(Document chatSessionConfigurationDocument)
+    {
+        var chatSessionConfigurationDto = new ChatSessionConfigurationDto()
+        {
+            Id = chatSessionConfigurationDocument.Id,
+            SystemInstruction = chatSessionConfigurationDocument.Data["systemInstruction"].ToString(),
+            TextStream = bool.Parse(chatSessionConfigurationDocument.Data["textStream"].ToString() ?? "false")
+        };
+
+        return chatSessionConfigurationDto;
     }
 }

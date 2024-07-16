@@ -42,7 +42,8 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
     {
         await SetUpChatbotConfiguration();
         await LoadChatbots();
-        //await LoadDefaultChatSessionConfigurations();
+        await SetUpChatSessionConfiguration();
+        await LoadChatSessionConfiguration();
     }
     
     public void OpenChatbotSettings()
@@ -92,18 +93,30 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             };
 
             var chatbotConfigurationResponse = await HttpClient.PostAsJsonAsync("configuration/chatbot", chatbotDto);
-            var chatbotConfigurationResponseContent = await chatbotConfigurationResponse.Content.ReadAsStringAsync();
 
             if (!chatbotConfigurationResponse.IsSuccessStatusCode)
             {
+                var chatbotConfigurationResponseContent = await chatbotConfigurationResponse.Content.ReadAsStringAsync();
                 NotifyNavigateToErrorPage($"Error occured while configuring the chatbot {chatbot.Name}",
                     chatbotConfigurationResponseContent);
             }
         }
     }
 
-    public void SaveChatSessionSettings(ChatSessionSettings chatSessionSettings)
+    public async Task SaveChatSessionSettings(ChatSessionSettings chatSessionSettings)
     {
+        var chatSessionConfigurationResponse = await HttpClient.PostAsJsonAsync("configuration/chat-session", 
+            chatSessionSettings);
+
+        if (!chatSessionConfigurationResponse.IsSuccessStatusCode)
+        {
+            var chatSessionConfigurationResponseContent =
+                await chatSessionConfigurationResponse.Content.ReadAsStringAsync();
+            NotifyNavigateToErrorPage("Error occured while configuring the chat session", 
+                chatSessionConfigurationResponseContent);
+            return;
+        }
+        
         _systemInstruction = chatSessionSettings.SystemInstruction;
         _textStream = chatSessionSettings.TextStream;
     }
@@ -187,20 +200,30 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         SelectChatbot(chatbotToSelect);
     }
 
-    private async Task LoadDefaultChatSessionConfigurations()
+    private async Task SetUpChatSessionConfiguration()
     {
-        var chatSessionDefaultConfig = await HttpClient.GetFromJsonAsync<ChatSessionSettingsDto>
-            ("configuration/default/chat-session");
+        await HttpClient.PostAsync("configuration/chat-session/default", null);
+    }
 
-        if (chatSessionDefaultConfig is null || chatSessionDefaultConfig.SystemInstruction is null 
-            || chatSessionDefaultConfig.TextStream is null)
+    private async Task LoadChatSessionConfiguration()
+    {
+        var chatSessionSettings = await HttpClient.GetFromJsonAsync<ChatSessionSettingsDto>("configuration/chat-session");
+
+        if (chatSessionSettings is null)
         {
-            NotifyNavigateToErrorPage("Error occured while setting up the configurations", 
-                "The default configuration for the chat session have not been loaded correctly");
+            NotifyNavigateToErrorPage("Error occured while loading the chat session configuration", 
+                "No configuration found");
+            return;
+        }
+
+        if (chatSessionSettings.SystemInstruction is null || chatSessionSettings.TextStream is null)
+        {
+            NotifyNavigateToErrorPage("Error occured while loading the chat session configuration", 
+                "The system instruction and text stream must be specified");
             return;
         }
         
-        _systemInstruction = chatSessionDefaultConfig.SystemInstruction;
-        _textStream = chatSessionDefaultConfig.TextStream ?? false;
+        _systemInstruction = chatSessionSettings.SystemInstruction;
+        _textStream = chatSessionSettings.TextStream.Value;
     }
 }

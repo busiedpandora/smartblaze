@@ -54,11 +54,14 @@ public class ChatGpt : Chatbot
         };
         
         var chatResponseMessage = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
-        chatResponseMessage.EnsureSuccessStatusCode();
+        var chatResponseMessageContent = await chatResponseMessage.Content.ReadAsStringAsync();
+
+        if (!chatResponseMessage.IsSuccessStatusCode)
+        {
+            return chatResponseMessageContent;
+        }
         
-        var chatResponseString = await chatResponseMessage.Content.ReadAsStringAsync();
-        
-        ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseString);
+        ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseMessageContent);
         
         if (chatResponse is not null && chatResponse.Choices is not null && chatResponse.Choices.Count > 0)
         {
@@ -116,7 +119,13 @@ public class ChatGpt : Chatbot
         };
         
         var chatResponseMessage = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
-        chatResponseMessage.EnsureSuccessStatusCode();
+
+        if (!chatResponseMessage.IsSuccessStatusCode)
+        {
+            var chatResponseMessageContent = await chatResponseMessage.Content.ReadAsStringAsync();
+            yield return chatResponseMessageContent;
+            yield break;
+        }
         
         var chatResponseStream = await chatResponseMessage.Content.ReadAsStreamAsync();
         var streamReader = new StreamReader(chatResponseStream);

@@ -66,11 +66,14 @@ public class Gemini : Chatbot
         };
         
         var chatResponseMessage = await httpClient.SendAsync(httpRequest);
-        chatResponseMessage.EnsureSuccessStatusCode();
+        var chatResponseMessageContent = await chatResponseMessage.Content.ReadAsStringAsync();
+
+        if (!chatResponseMessage.IsSuccessStatusCode)
+        {
+            return chatResponseMessageContent;
+        }
         
-        var chatResponseJson = await chatResponseMessage.Content.ReadAsStringAsync();
-        
-        ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseJson);
+        ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseMessageContent);
 
         if (chatResponse is not null && chatResponse.Candidates is not null)
         {
@@ -140,7 +143,13 @@ public class Gemini : Chatbot
         };
         
         var chatResponseMessage = await httpClient.SendAsync(httpRequest);
-        chatResponseMessage.EnsureSuccessStatusCode();
+
+        if (!chatResponseMessage.IsSuccessStatusCode)
+        {
+            var chatResponseMessageContent = await chatResponseMessage.Content.ReadAsStringAsync();
+            yield return chatResponseMessageContent;
+            yield break;
+        }
         
         var chatResponseStream = await chatResponseMessage.Content.ReadAsStreamAsync();
         var streamReader = new StreamReader(chatResponseStream);

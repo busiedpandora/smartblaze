@@ -41,6 +41,15 @@
             <div class="border border1 mt-5 mb-4 col-6"></div>
 
             <div class="mb-3">
+                <label for="apiHost" class="form-label">API Host</label>
+                <div class="col-4">
+                    <InputText id="apiHost" @bind-Value="_modelSettings.ApiHost" class="form-control">
+
+                    </InputText>
+                </div>
+            </div>
+            
+            <div class="mb-3">
                 <label for="apiKey" class="form-label">API Key</label>
                 <div class="row align-items-center">
                     <div class="col-4">
@@ -51,15 +60,6 @@
                     <div class="col">
                         <img src="icons/eye-fill.svg" width="21" height="21" alt="eye icon" class=""/>
                     </div>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="apiHost" class="form-label">API Host</label>
-                <div class="col-4">
-                    <InputText id="apiHost" @bind-Value="_modelSettings.ApiHost" class="form-control">
-
-                    </InputText>
                 </div>
             </div>
 
@@ -106,24 +106,29 @@
         }
         
         _modelSettings.ChatbotName = _settingsService.ChatbotSelected?.Name ?? "";
-        _modelSettings.ChatbotModel = _settingsService.ChatbotSelectedModel ?? "";
+        _modelSettings.ChatbotModel = _settingsService.ChatbotSelected?.Model ?? "";
         _modelSettings.ChatbotModels = _settingsService.ChatbotSelected?.Models ?? [];
+        _modelSettings.ApiHost = _settingsService.ChatbotSelected?.Apihost ?? "";
 
         return base.OnInitializedAsync();
     }
 
     private void OnChatbotSelected(string chatbotName)
     {
-        var chatbotSelected = _settingsService.Chatbots?.Find(c => c.Name == chatbotName) ?? new();
-        
-        _modelSettings.ChatbotName = chatbotSelected.Name ?? "";
-        _modelSettings.ChatbotModels = chatbotSelected.Models ?? [];
-        _modelSettings.ChatbotModel = chatbotSelected.Models?.ElementAt(0) ?? "";
+        var chatbotSelected = _settingsService.Chatbots?.Find(c => c.Name == chatbotName);
+
+        if (chatbotSelected is not null)
+        {
+            _modelSettings.ChatbotName = chatbotSelected.Name;
+            _modelSettings.ChatbotModels = chatbotSelected.Models;
+            _modelSettings.ChatbotModel = chatbotSelected.Model;
+            _modelSettings.ApiHost = chatbotSelected.Apihost;
+        }
     }
 
-    private void OnSaveClicked()
+    private async void OnSaveClicked()
     {
-        _settingsService.SaveModelSettings(_modelSettings);
+        await _settingsService.SaveModelSettings(_modelSettings);
     }
     
     private async void OnCancelClicked()

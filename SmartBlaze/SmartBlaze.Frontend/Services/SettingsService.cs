@@ -1,4 +1,3 @@
-using System.Text.Json;
 using SmartBlaze.Frontend.Dtos;
 using SmartBlaze.Frontend.Models;
 
@@ -6,9 +5,9 @@ namespace SmartBlaze.Frontend.Services;
 
 public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
 {
-    private List<ChatbotDto>? _chatbots;
-    private ChatbotDto? _chatbotSelected;
-    private string _chatbotSelectedModel = "";
+    private List<Chatbot>? _chatbots;
+    private Chatbot? _chatbotSelected;
+    //private string _chatbotSelectedModel = "";
 
     private string _systemInstruction = "";
     private bool _textStream;
@@ -24,11 +23,11 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
     public string SettingsMenuSelected => _settingsMenuSelected;
     
-    public List<ChatbotDto>? Chatbots => _chatbots;
+    public List<Chatbot>? Chatbots => _chatbots;
 
-    public ChatbotDto? ChatbotSelected => _chatbotSelected;
+    public Chatbot? ChatbotSelected => _chatbotSelected;
 
-    public string ChatbotSelectedModel => _chatbotSelectedModel;
+    //public string ChatbotSelectedModel => _chatbotSelectedModel;
 
     public string SystemInstruction => _systemInstruction;
 
@@ -36,10 +35,9 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
     public async Task SetUpConfiguration()
     {
+        await SetUpChatbotConfiguration();
         await LoadChatbots();
-
-        _systemInstruction = "You are a helpful assistant. You can help me by answering my questions.";
-        _textStream = true;
+        //await LoadDefaultChatSessionConfigurations();
     }
     
     public void OpenModelsSettings()
@@ -67,13 +65,35 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         NotifyRefreshView();
     }
 
-    public void SaveModelSettings(ModelSettings modelSettings)
+    public async Task SaveModelSettings(ModelSettings modelSettings)
     {
         var chatbot = _chatbots?.Find(c => c.Name == modelSettings.ChatbotName);
 
         if (chatbot is not null)
         {
-            SelectChatbot(chatbot, modelSettings.ChatbotModel);
+            chatbot.Model = modelSettings.ChatbotModel;
+            chatbot.Apihost = modelSettings.ApiHost;
+            chatbot.ApiKey = modelSettings.ApiKey;
+            
+            SelectChatbot(chatbot);
+
+            var chatbotDto = new ChatbotDto()
+            {
+                Name = chatbot.Name,
+                Model = chatbot.Model,
+                ApiHost = chatbot.Apihost,
+                ApiKey = chatbot.ApiKey,
+                Selected = true,
+            };
+
+            var chatbotConfigurationResponse = await HttpClient.PostAsJsonAsync("configuration/chatbot", chatbotDto);
+            var chatbotConfigurationResponseContent = await chatbotConfigurationResponse.Content.ReadAsStringAsync();
+
+            if (!chatbotConfigurationResponse.IsSuccessStatusCode)
+            {
+                NotifyNavigateToErrorPage($"Error occured while configuring the chatbot {chatbot.Name}",
+                    chatbotConfigurationResponseContent);
+            }
         }
     }
 
@@ -83,14 +103,14 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         _textStream = chatSessionSettings.TextStream;
     }
     
-    private void SelectChatbot(ChatbotDto chatbot, string chatbotModel)
+    private void SelectChatbot(Chatbot chatbot)
     {
         if (_chatbots is null)
         {
             return;
         }
 
-        if (chatbot.Models is null || chatbot.Models.Count == 0)
+        if (chatbot.Models.Count == 0)
         {
             NotifyNavigateToErrorPage($"Error occured while selecting the chatbot {chatbot.Name}", 
                 $"No models for chatbot {chatbot.Name} found");
@@ -99,7 +119,12 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         }
 
         _chatbotSelected = chatbot;
-        _chatbotSelectedModel = chatbotModel;
+        //_chatbotSelectedModel = chatbotModel;
+    }
+
+    private async Task SetUpChatbotConfiguration()
+    {
+        await HttpClient.PostAsync("configuration/chatbot/default", null);
     }
     
     private async Task LoadChatbots()
@@ -109,34 +134,69 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             return;
         }
 
-        var chatbotsResponse = await HttpClient.GetAsync("chatbots");
-        var chatbotsResponseContent = await chatbotsResponse.Content.ReadAsStringAsync();
+        var chatbotDtos = await HttpClient.GetFromJsonAsync<List<ChatbotDto>>("configuration/chatbot");
 
-        if (!chatbotsResponse.IsSuccessStatusCode)
+        if (chatbotDtos is null || chatbotDtos.Count == 0)
         {
-            NotifyNavigateToErrorPage("Error occured while loading the chatbots", chatbotsResponseContent);
+            NotifyNavigateToErrorPage("Error occured while loading the chatbots", "No chatbot found");
             return;
         }
 
-        var chatbots = JsonSerializer.Deserialize<List<ChatbotDto>>(chatbotsResponseContent) ?? new List<ChatbotDto>();
+        var chatbots = new List<Chatbot>();
+        Chatbot? chatbotToSelect = null;
 
-        if (chatbots.Count == 0)
+        foreach (var chatbotDto in chatbotDtos)
+        {
+            if (chatbotDto.Name is not null && chatbotDto.Models is not null && chatbotDto.ApiHost is not null 
+                && chatbotDto.ApiKey is not null && chatbotDto.Model is not null)
+            {
+                var chatbot = new Chatbot(chatbotDto.Name, chatbotDto.Models, chatbotDto.ApiHost, chatbotDto.ApiKey, chatbotDto.Model);
+                chatbots.Add(chatbot);
+
+                if (chatbotDto.Selected is not null && chatbotDto.Selected == true)
+                {
+                    chatbotToSelect = chatbot;
+                }
+            }
+        }
+
+        _chatbots = chatbots;
+        
+        if (_chatbots is null || _chatbots.Count == 0)
         {
             NotifyNavigateToErrorPage("Error occured while loading the chatbots", "No chatbot found");
             return;
         }
         
-        _chatbots = chatbots;
-        
-        var chatbotToSelect = _chatbots.ElementAt(0);
-
-        if (chatbotToSelect.Models is null || chatbotToSelect.Models.Count == 0)
+        if (chatbotToSelect?.Models.Count == 0)
         {
             NotifyNavigateToErrorPage("Error occured while loading the chatbots", 
                 $"No model found for chatbot {chatbotToSelect.Name}");
             return;
         }
+
+        if (chatbotToSelect is null)
+        {
+            chatbotToSelect = _chatbots.ElementAt(0);
+        }
         
-        SelectChatbot(chatbotToSelect, chatbotToSelect.Models.ElementAt(0));
+        SelectChatbot(chatbotToSelect);
+    }
+
+    private async Task LoadDefaultChatSessionConfigurations()
+    {
+        var chatSessionDefaultConfig = await HttpClient.GetFromJsonAsync<ChatSessionSettingsDto>
+            ("configuration/default/chat-session");
+
+        if (chatSessionDefaultConfig is null || chatSessionDefaultConfig.SystemInstruction is null 
+            || chatSessionDefaultConfig.TextStream is null)
+        {
+            NotifyNavigateToErrorPage("Error occured while setting up the configurations", 
+                "The default configuration for the chat session have not been loaded correctly");
+            return;
+        }
+        
+        _systemInstruction = chatSessionDefaultConfig.SystemInstruction;
+        _textStream = chatSessionDefaultConfig.TextStream ?? false;
     }
 }

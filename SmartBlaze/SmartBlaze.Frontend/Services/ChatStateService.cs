@@ -136,7 +136,7 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         }
     }
 
-    public async Task SendUserMessage(string content, bool textStream)
+    public async Task SendUserMessage(string content, string apiHost, string apiKey, bool textStream)
     {
         if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null)
         {
@@ -186,6 +186,13 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         _currentChatSessionMessages.Add(userMessageDto);
         
         NotifyRefreshView();
+
+        var chatSessionInfoDto = new ChatSessionInfoDto()
+        {
+            Messages = _currentChatSessionMessages,
+            Apihost = apiHost,
+            ApiKey = apiKey
+        };
         
         if (textStream)
         {
@@ -217,7 +224,7 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
             
             using var assistantStreamMessageRequest = new HttpRequestMessage(HttpMethod.Post, 
                 $"chat-session/{_currentChatSession.Id}/generate-assistant-stream-message");
-            assistantStreamMessageRequest.Content = JsonContent.Create(_currentChatSessionMessages);
+            assistantStreamMessageRequest.Content = JsonContent.Create(chatSessionInfoDto);
         
             using var assistantStreamMessageResponse = await HttpClient.SendAsync(assistantStreamMessageRequest, 
                 HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
@@ -254,7 +261,7 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
             var assistantMessageResponse = await 
                 HttpClient.PostAsJsonAsync(
                     $"chat-session/{_currentChatSession.Id}/new-assistant-message", 
-                    _currentChatSessionMessages);
+                    chatSessionInfoDto);
             var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
             
             if (!assistantMessageResponse.IsSuccessStatusCode)

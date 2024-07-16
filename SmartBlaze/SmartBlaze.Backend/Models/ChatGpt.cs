@@ -7,12 +7,12 @@ namespace SmartBlaze.Backend.Models;
 
 public class ChatGpt : Chatbot
 {
-    public ChatGpt(string name, string apiHost, string apiKey) : base(name, apiHost, apiKey)
+    public ChatGpt(string name, List<string> models) : base(name, models)
     {
     }
 
     public override async Task<string?> GenerateText(ChatSessionDto chatSessionDto, 
-        List<MessageDto> messageDtos, HttpClient httpClient)
+        List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient)
     {
         var messages = messageDtos
             .Select(m => new Message
@@ -45,10 +45,10 @@ public class ChatGpt : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{ApiHost}/v1/chat/completions"),
+            RequestUri = new Uri($"{apiHost}/v1/chat/completions"),
             Headers =
             {
-                { "Authorization", $"Bearer {ApiKey}" },
+                { "Authorization", $"Bearer {apiKey}" },
             },
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
@@ -73,8 +73,8 @@ public class ChatGpt : Chatbot
         return null;
     }
 
-    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionDto chatSessionDto, List<MessageDto> messageDtos, 
-        HttpClient httpClient)
+    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionDto chatSessionDto, 
+        List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient)
     {
         var messages = messageDtos
             .Select(m => new Message
@@ -107,10 +107,10 @@ public class ChatGpt : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{ApiHost}/v1/chat/completions"),
+            RequestUri = new Uri($"{apiHost}/v1/chat/completions"),
             Headers =
             {
-                { "Authorization", $"Bearer {ApiKey}" },
+                { "Authorization", $"Bearer {apiKey}" },
             },
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
@@ -147,6 +147,18 @@ public class ChatGpt : Chatbot
                 }
             }
         }
+    }
+
+    public override ChatbotConfigurationDto GetDefaultConfiguration()
+    {
+        return new ChatbotConfigurationDto()
+        {
+            ChatbotName = "ChatGPT",
+            ChatbotModel = "gpt-4o",
+            ApiHost = "https://api.openai.com",
+            ApiKey = "",
+            Selected = true
+        };
     }
 
     private class Message

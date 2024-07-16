@@ -46,11 +46,19 @@
     {
         if (_chatStateService.CanUserInteract())
         {
+            var chatbotSelected = _settingsService.ChatbotSelected;
+
+            if (chatbotSelected is null)
+            {
+                return;
+            }
+            
             string text = await _jsRuntime.InvokeAsync<string>("getTextareaValue", _textarea);
         
             await _jsRuntime.InvokeVoidAsync("setTextareaValue", _textarea, string.Empty);
-        
-            await _chatStateService.SendUserMessage(text, _settingsService.TextStream);
+            
+            await _chatStateService.SendUserMessage(text, chatbotSelected.Apihost, 
+                chatbotSelected.ApiKey, _settingsService.TextStream);
         }
     }
 

@@ -319,7 +319,8 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
                 UserImageDto userImageDto = new()
                 {
                     Type = imageInput.Type,
-                    Content = imageInput.Data
+                    Content = imageInput.Data,
+                    ContentType = imageInput.ContentType
                 };
 
                 userTextMessageDto.UserImageDtos.Add(userImageDto);

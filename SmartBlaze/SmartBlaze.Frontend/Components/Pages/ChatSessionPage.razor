@@ -74,7 +74,7 @@
                 else if (userImage.Type == "image-file")
                 {
                     <div class="col" py-2>
-                        <img src="data:image/jpeg;base64, @userImage.Content" alt="user image" width="300" class="img-thumbnail"/>
+                        <img src="data:@userImage.ContentType;base64, @userImage.Content" alt="user image" width="300" class="img-thumbnail"/>
                     </div>
                 }
             }

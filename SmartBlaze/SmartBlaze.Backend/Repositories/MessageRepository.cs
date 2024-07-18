@@ -13,10 +13,6 @@ public class MessageRepository : AbstractRepository
                Query.Equal("chatSession", chatSessionId)
           ]);
 
-          /*var messages = messageDocuments.Documents
-               .Select(ConvertToMessage)
-               .ToList();*/
-
           List<MessageDto> messages = new();
 
           foreach (var messageDocument in messageDocuments.Documents)
@@ -58,6 +54,7 @@ public class MessageRepository : AbstractRepository
                     {
                          { "content", userImageDto.Content },
                          { "type", userImageDto.Type },
+                         { "contentType", userImageDto.ContentType },
                          { "message", messageStoredDocument.Id }
                     };
 
@@ -85,7 +82,8 @@ public class MessageRepository : AbstractRepository
                     var userImageDto = new UserImageDto()
                     {
                          Type = userImageDocument.Data["type"].ToString(),
-                         Content = userImageDocument.Data["content"].ToString()
+                         Content = userImageDocument.Data["content"].ToString(),
+                         ContentType = userImageDocument.Data["contentType"].ToString()
                     };
                     
                     userImageDtos.Add(userImageDto);

@@ -55,7 +55,7 @@ public class ChatGpt : Chatbot
                         ImageUrl imageUrl = new();
                         if (userImageDto.Type == "image-file")
                         {
-                            imageUrl.Url = $"data:image/jpeg;base64,{userImageDto.Content}";
+                            imageUrl.Url = $"data:{userImageDto.ContentType};base64,{userImageDto.Content}";
                         }
                         else
                         {
@@ -181,7 +181,7 @@ public class ChatGpt : Chatbot
                         ImageUrl imageUrl = new();
                         if (userImageDto.Type == "image-file")
                         {
-                            imageUrl.Url = $"data:image/jpeg;base64,{userImageDto.Content}";
+                            imageUrl.Url = $"data:{userImageDto.ContentType};base64,{userImageDto.Content}";
                         }
                         else
                         {

@@ -9,4 +9,7 @@ public class UserImageDto
     
     [JsonPropertyName("type")]
     public string? Type { get; set; }
+    
+    [JsonPropertyName("contentType")]
+    public string? ContentType { get; set; }
 }

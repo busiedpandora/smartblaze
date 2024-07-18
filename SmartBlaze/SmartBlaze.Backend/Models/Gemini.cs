@@ -29,12 +29,12 @@ public class Gemini : Chatbot
 
             if (messageDto.UserImageDtos is not null && messageDto.UserImageDtos.Count > 0)
             {
-                foreach (var userImage in messageDto.UserImageDtos)
+                foreach (var userImageDto in messageDto.UserImageDtos)
                 {
                     InlineData inlineData = new()
                     {
-                        MimeType = "image/jpeg",
-                        Data = userImage.Content
+                        MimeType = userImageDto.Type == "image-file" ? userImageDto.ContentType : "",
+                        Data = userImageDto.Content
                     };
 
                     InlineDataPart inlineDataPart = new()
@@ -132,12 +132,12 @@ public class Gemini : Chatbot
 
             if (messageDto.UserImageDtos is not null && messageDto.UserImageDtos.Count > 0)
             {
-                foreach (var userImage in messageDto.UserImageDtos)
+                foreach (var userImageDto in messageDto.UserImageDtos)
                 {
                     InlineData inlineData = new()
                     {
-                        MimeType = "image/jpeg",
-                        Data = userImage.Content
+                        MimeType = userImageDto.Type == "image-file" ? userImageDto.ContentType : "",
+                        Data = userImageDto.Content
                     };
 
                     InlineDataPart inlineDataPart = new()

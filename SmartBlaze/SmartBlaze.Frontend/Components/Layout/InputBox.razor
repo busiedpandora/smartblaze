@@ -97,7 +97,7 @@
                             }
                             else if (imageInput.Type == "image-file")
                             {
-                                <img src="data:image/jpeg;base64, @imageInput.Data" alt="user image" width="100" class="img-thumbnail"/>
+                                <img src="data:@imageInput.ContentType;base64, @imageInput.Data" alt="user image" width="100" class="img-thumbnail"/>
                             }
                             <button type="button" class="btn-close" aria-label="Close"
                                     @onclick="() => RemoveInputImage(current)">
@@ -244,7 +244,8 @@
         {
             Name = e.File.Name,
             Data = base64String,
-            Type = "image-file"
+            Type = "image-file",
+            ContentType = e.File.ContentType
         });
         
         HideImageFileInput();

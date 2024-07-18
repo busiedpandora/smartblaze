@@ -1,5 +1,7 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Components.Forms;
 using SmartBlaze.Frontend.Dtos;
+using SmartBlaze.Frontend.Models;
 
 namespace SmartBlaze.Frontend.Services;
 
@@ -136,7 +138,7 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         }
     }
 
-    public async Task SendUserMessage(string content, string apiHost, string apiKey, bool textStream)
+    public async Task SendUserMessage(string text, List<ImageInput> imageInputs, string apiHost, string apiKey, bool textStream)
     {
         if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null)
         {
@@ -147,43 +149,10 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         {
             return;
         }
-        
-        content = content.Trim();
-
-        if (content == string.Empty)
-        {
-            return;
-        }
 
         _isGeneratingResponse = true;
-        
-        MessageDto? userMessageDto = new MessageDto();
-        userMessageDto.Content = content;
-            
-        var userMessageResponse = await HttpClient
-            .PostAsJsonAsync($"chat-session/{_currentChatSession.Id}/new-user-message", 
-                userMessageDto);
-        var userMessageResponseContent = await userMessageResponse.Content.ReadAsStringAsync();
 
-        if (!userMessageResponse.IsSuccessStatusCode)
-        {
-            _isGeneratingResponse = false;
-            NotifyNavigateToErrorPage("Error occured while sending the message", 
-                userMessageResponseContent);
-            return;
-        }
-        
-        userMessageDto = JsonSerializer.Deserialize<MessageDto>(userMessageResponseContent);
-
-        if (userMessageDto is null || !IsMessageValid(userMessageDto))
-        {
-            _isGeneratingResponse = false;
-            NotifyNavigateToErrorPage("Error occured while sending the message", 
-                "the message sent cannot be null and must contain a content and a role");
-            return;
-        }
-        
-        _currentChatSessionMessages.Add(userMessageDto);
+        await SendUserMessage(text, imageInputs);
         
         NotifyRefreshView();
 
@@ -196,98 +165,16 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         
         if (textStream)
         {
-            var assistantEmptyMessageResponse = await 
-                HttpClient.PostAsJsonAsync(
-                $"chat-session/{_currentChatSession.Id}/new-assistant-empty-message", 
-                _currentChatSessionMessages);
-            var assistantEmptyMessageResponseContent = await assistantEmptyMessageResponse.Content.ReadAsStringAsync();
-            
-            if (!assistantEmptyMessageResponse.IsSuccessStatusCode)
-            {
-                _isGeneratingResponse = false;
-                NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
-                    assistantEmptyMessageResponseContent);
-                return;
-            }
-            
-            var assistantEmptyMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantEmptyMessageResponseContent);
-
-            if (assistantEmptyMessageDto is null || !IsMessageValid(assistantEmptyMessageDto))
-            {
-                _isGeneratingResponse = false;
-                NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
-                    "the assistant message cannot be null and must contain a content and a role");
-                return;
-            }
-            
-            _currentChatSessionMessages.Add(assistantEmptyMessageDto);
-            
-            using var assistantStreamMessageRequest = new HttpRequestMessage(HttpMethod.Post, 
-                $"chat-session/{_currentChatSession.Id}/generate-assistant-stream-message");
-            assistantStreamMessageRequest.Content = JsonContent.Create(chatSessionInfoDto);
-        
-            using var assistantStreamMessageResponse = await HttpClient.SendAsync(assistantStreamMessageRequest, 
-                HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
-            var assistantStreamMessageResponseContent = await assistantStreamMessageResponse.Content.ReadAsStreamAsync()
-                .ConfigureAwait(false);
-            
-            if (!assistantStreamMessageResponse.IsSuccessStatusCode)
-            {
-                _isGeneratingResponse = false;
-                NotifyNavigateToErrorPage("Error occured while generating a new assistant text stream message", 
-                    assistantStreamMessageResponseContent.ToString() ?? "");
-                return;
-            }
-            
-            IAsyncEnumerable<string?> messageChunks =
-                JsonSerializer.DeserializeAsyncEnumerable<string>(assistantStreamMessageResponseContent);
-            
-            _isGeneratingResponse = false;
-            NotifyRefreshView();
-
-            await foreach (var messageChunk in messageChunks)
-            {
-                if (messageChunk != string.Empty)
-                {
-                    assistantEmptyMessageDto.Content += messageChunk;
-                    NotifyRefreshView();
-
-                    await Task.Delay(100);
-                }
-            }
+            await GenerateAssistantTextMessageWithStreamEnabled(chatSessionInfoDto);
         }
         else
         {
-            var assistantMessageResponse = await 
-                HttpClient.PostAsJsonAsync(
-                    $"chat-session/{_currentChatSession.Id}/new-assistant-message", 
-                    chatSessionInfoDto);
-            var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
-            
-            if (!assistantMessageResponse.IsSuccessStatusCode)
-            {
-                _isGeneratingResponse = false;
-                NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
-                    assistantMessageResponseContent);
-                return;
-            }
-        
-            MessageDto? assistantMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantMessageResponseContent);
-        
-            if (assistantMessageDto is null || !IsMessageValid(assistantMessageDto))
-            {
-                _isGeneratingResponse = false;
-                NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
-                    "the assistant message cannot be null and must contain a content and a role");
-                return;
-            }
-        
-            _currentChatSessionMessages.Add(assistantMessageDto);
-
-            _isGeneratingResponse = false;
-        
-            NotifyRefreshView();
+            await GenerateAssistantTextMessage(chatSessionInfoDto);
         }
+        
+        _isGeneratingResponse = false;
+        
+        NotifyRefreshView();
     }
 
     public async Task CreateNewChatSession(string title, string systemInstruction, string chatbotName, string chatbotModel)
@@ -416,5 +303,151 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         return messageDto.Content is not null
                && messageDto.Role is not null
                && messageDto.CreationDate is not null;
+    }
+
+    private async Task SendUserMessage(string text, List<ImageInput> imageInputs)
+    {
+        MessageDto userTextMessageDto = new MessageDto();
+        userTextMessageDto.Content = text;
+        
+        if (imageInputs.Count > 0)
+        {
+            userTextMessageDto.UserImageDtos = new();
+
+            foreach (var imageInput in imageInputs)
+            {
+                UserImageDto userImageDto = new();
+                userImageDto.Type = imageInput.Type;
+                
+                if (imageInput.Type == "image-file")
+                {
+                    IBrowserFile file = (IBrowserFile)imageInput.Data;
+                    var memoryStream = new MemoryStream();
+                    await file.OpenReadStream().CopyToAsync(memoryStream);
+                    var fileBytes = memoryStream.ToArray();
+                    var base64String = Convert.ToBase64String(fileBytes);
+                    
+                    userImageDto.Content = base64String;
+                }
+                else if (imageInput.Type == "image-url")
+                {
+                    userImageDto.Content = (string)imageInput.Data;
+                }
+
+                userTextMessageDto.UserImageDtos.Add(userImageDto);
+            }
+        }
+        
+        var userMessageResponse = await HttpClient
+            .PostAsJsonAsync($"chat-session/{_currentChatSession.Id}/new-user-message", 
+                userTextMessageDto);
+        var userMessageResponseContent = await userMessageResponse.Content.ReadAsStringAsync();
+
+        if (!userMessageResponse.IsSuccessStatusCode)
+        {
+            _isGeneratingResponse = false;
+            NotifyNavigateToErrorPage("Error occured while sending the message", 
+                userMessageResponseContent);
+            return;
+        }
+            
+        var userMessage = JsonSerializer.Deserialize<MessageDto>(userMessageResponseContent);
+
+        if (userMessage is not null)
+        {
+            _currentChatSessionMessages.Add(userMessage);
+        }
+    }
+    
+    private async Task GenerateAssistantTextMessage(ChatSessionInfoDto chatSessionInfoDto)
+    {
+        var assistantMessageResponse = await 
+            HttpClient.PostAsJsonAsync(
+                $"chat-session/{_currentChatSession.Id}/new-assistant-message", 
+                chatSessionInfoDto);
+        var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
+            
+        if (!assistantMessageResponse.IsSuccessStatusCode)
+        {
+            _isGeneratingResponse = false;
+            NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
+                assistantMessageResponseContent);
+            return;
+        }
+        
+        MessageDto? assistantMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantMessageResponseContent);
+        
+        if (assistantMessageDto is null || !IsMessageValid(assistantMessageDto))
+        {
+            _isGeneratingResponse = false;
+            NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
+                "the assistant message cannot be null and must contain a content and a role");
+            return;
+        }
+        
+        _currentChatSessionMessages.Add(assistantMessageDto);
+    }
+
+    private async Task GenerateAssistantTextMessageWithStreamEnabled(ChatSessionInfoDto chatSessionInfoDto)
+    {
+        var assistantEmptyMessageResponse = await 
+                HttpClient.PostAsJsonAsync(
+                $"chat-session/{_currentChatSession.Id}/new-assistant-empty-message", 
+                _currentChatSessionMessages);
+            var assistantEmptyMessageResponseContent = await assistantEmptyMessageResponse.Content.ReadAsStringAsync();
+            
+            if (!assistantEmptyMessageResponse.IsSuccessStatusCode)
+            {
+                _isGeneratingResponse = false;
+                NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
+                    assistantEmptyMessageResponseContent);
+                return;
+            }
+            
+            var assistantEmptyMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantEmptyMessageResponseContent);
+
+            if (assistantEmptyMessageDto is null || !IsMessageValid(assistantEmptyMessageDto))
+            {
+                _isGeneratingResponse = false;
+                NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
+                    "the assistant message cannot be null and must contain a content and a role");
+                return;
+            }
+            
+            _currentChatSessionMessages.Add(assistantEmptyMessageDto);
+            
+            using var assistantStreamMessageRequest = new HttpRequestMessage(HttpMethod.Post, 
+                $"chat-session/{_currentChatSession.Id}/generate-assistant-stream-message");
+            assistantStreamMessageRequest.Content = JsonContent.Create(chatSessionInfoDto);
+        
+            using var assistantStreamMessageResponse = await HttpClient.SendAsync(assistantStreamMessageRequest, 
+                HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+            var assistantStreamMessageResponseContent = await assistantStreamMessageResponse.Content.ReadAsStreamAsync()
+                .ConfigureAwait(false);
+            
+            if (!assistantStreamMessageResponse.IsSuccessStatusCode)
+            {
+                _isGeneratingResponse = false;
+                NotifyNavigateToErrorPage("Error occured while generating a new assistant text stream message", 
+                    assistantStreamMessageResponseContent.ToString() ?? "");
+                return;
+            }
+            
+            IAsyncEnumerable<string?> messageChunks =
+                JsonSerializer.DeserializeAsyncEnumerable<string>(assistantStreamMessageResponseContent);
+            
+            _isGeneratingResponse = false;
+            NotifyRefreshView();
+
+            await foreach (var messageChunk in messageChunks)
+            {
+                if (messageChunk != string.Empty)
+                {
+                    assistantEmptyMessageDto.Content += messageChunk;
+                    NotifyRefreshView();
+
+                    await Task.Delay(100);
+                }
+            }
     }
 }

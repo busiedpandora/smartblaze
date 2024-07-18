@@ -40,25 +40,46 @@
     {
     @foreach(var message in _chatStateService.CurrentChatSessionMessages)
     {
-    <div class="d-flex">
-        <div>
-            @switch (message.Role)
-            {
-            case "user":
-            <img src="icons/person-fill.svg" width="28" height="28" alt="user icon" title="user"/>
-            break;
-            case "assistant":
-            <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
-            break;
-            }
-        </div>
-        <div class="ps-3 pe-3 pb-5 pt-1">
+        <div class="d-flex">
+            <div>
+                @switch (message.Role)
+                {
+                    case "user":
+                        <img src="icons/person-fill.svg" width="28" height="28" alt="user icon" title="user"/>
+                        break;
+                    case "assistant":
+                        <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
+                        break;
+                }
+            </div>
+            <div class="ps-3 pe-3 pb-5 pt-1">
                 <span>
                     @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@message.Content ?? ""),
-                    "\r?\n|\r", "<br />"))
+                        "\r?\n|\r", "<br />"))
                 </span>
+            </div>
         </div>
-    </div>
+        
+        @if(message.UserImageDtos is not null)
+        {
+            <div class="row row-cols-4 align-items-center justify-content-start mb-5">
+            @foreach (var userImage in message.UserImageDtos)
+            {
+                @if (userImage.Type == "image-url")
+                {
+                    <div class="col py-2">
+                        <img src="@userImage.Content" alt="user image" width="300" class="img-thumbnail"/>
+                    </div>
+                }
+                else if (userImage.Type == "image-file")
+                {
+                    <div class="col" py-2>
+                        <img src="data:image/jpeg;base64, @userImage.Content" alt="user image" width="300" class="img-thumbnail"/>
+                    </div>
+                }
+            }
+            </div>
+        }
     }
 
     @if (_chatStateService.IsGeneratingResponse)

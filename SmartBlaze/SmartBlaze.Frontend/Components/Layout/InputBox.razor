@@ -1,3 +1,5 @@
+@using System.Text.RegularExpressions
+@using SmartBlaze.Frontend.Models
 @rendermode InteractiveServer
 
 @inject ChatStateService _chatStateService
@@ -23,11 +25,29 @@
             }
         </div>
     </div>
+    
+    <div class="d-flex justify-content-center align-items-center">
+        <div class="col-8">
+            <InputText @bind-Value="_imageUrls" class="form-control" placeholder="Insert image urls"></InputText>
+        </div>
+        <div>
+            <button @onclick="LoadImageUrl" class="btn btn-primary">Load image url</button>
+        </div>
+    </div>
+    
+    <div>
+        <div class="col-8">
+            <InputFile OnChange="LoadImageFile" multiple class="form-control" accept="image/*"></InputFile>
+        </div>
+    </div>
 }
 
 @code {
     private bool _applicationStarted = false;
     private ElementReference _textarea;
+
+    private List<ImageInput> _imageInputs = new();
+    private string _imageUrls = "";
     
     protected override async Task OnInitializedAsync()
     {
@@ -44,6 +64,14 @@
     
     private async void OnSendMessageClicked()
     {
+        string text = await _jsRuntime.InvokeAsync<string>("getTextareaValue", _textarea);
+        text = text.Trim();
+
+        if (text == string.Empty)
+        {
+            return;
+        }
+        
         if (_chatStateService.CanUserInteract())
         {
             var chatbotName = _chatStateService.CurrentChatSession?.ChatbotName;
@@ -59,13 +87,14 @@
             {
                 return;
             }
-            
-            string text = await _jsRuntime.InvokeAsync<string>("getTextareaValue", _textarea);
         
             await _jsRuntime.InvokeVoidAsync("setTextareaValue", _textarea, string.Empty);
             
-            await _chatStateService.SendUserMessage(text, chatbot.Apihost, 
+            await _chatStateService.SendUserMessage(text, _imageInputs, chatbot.Apihost, 
                 chatbot.ApiKey, _settingsService.TextStream);
+
+            _imageInputs = new();
+            _imageUrls = "";
         }
     }
 
@@ -80,5 +109,31 @@
     private void ReloadComponentState()
     {
         InvokeAsync(StateHasChanged);
+    }
+
+    private void LoadImageFile(InputFileChangeEventArgs e)
+    {
+        _imageInputs.Add(new ImageInput()
+        {
+            Name = e.File.Name,
+            Data = e.File,
+            Type = "image-file"
+        });
+    }
+
+    private void LoadImageUrl()
+    {
+        string[]? imageUrls = _imageUrls == string.Empty ? null : Regex.Split(_imageUrls, @"\s+");
+        if (imageUrls is not null)
+        {
+            foreach (var imageUrl in imageUrls)
+            {
+                _imageInputs.Add(new ImageInput()
+                {
+                    Data = imageUrl,
+                    Type = "image-url"
+                });
+            }
+        }
     }
 }

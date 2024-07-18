@@ -316,23 +316,11 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
 
             foreach (var imageInput in imageInputs)
             {
-                UserImageDto userImageDto = new();
-                userImageDto.Type = imageInput.Type;
-                
-                if (imageInput.Type == "image-file")
+                UserImageDto userImageDto = new()
                 {
-                    IBrowserFile file = (IBrowserFile)imageInput.Data;
-                    var memoryStream = new MemoryStream();
-                    await file.OpenReadStream().CopyToAsync(memoryStream);
-                    var fileBytes = memoryStream.ToArray();
-                    var base64String = Convert.ToBase64String(fileBytes);
-                    
-                    userImageDto.Content = base64String;
-                }
-                else if (imageInput.Type == "image-url")
-                {
-                    userImageDto.Content = (string)imageInput.Data;
-                }
+                    Type = imageInput.Type,
+                    Content = imageInput.Data
+                };
 
                 userTextMessageDto.UserImageDtos.Add(userImageDto);
             }

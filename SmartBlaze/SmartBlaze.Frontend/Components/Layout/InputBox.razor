@@ -9,45 +9,121 @@
 
 @if(_chatStateService.CurrentChatSession is not null)
 {
-    <div class="d-flex justify-content-center align-items-center">
+    <div class="d-flex justify-content-center">
         <div class="col-8">
-            <textarea @ref="_textarea" class="form-control border-3" rows="3" @onkeydown="HandleKeyPressed"
-                placeholder="Type your text here">
-            </textarea>
-        </div>
-        <div class="col-1 ms-1">
-            @if (_chatStateService.CanUserInteract())
+            
+            @if (!_imageUrlInputActive && !_imageFileInputActive)
             {
-                <button id="sendButton" class="btn btn-light d-flex align-items-center justify-content-center"
-                        @onclick="OnSendMessageClicked">
-                    <img src="icons/send-fill.svg" alt="send icon" width="20" height="20">
-                </button> 
+                <div class="row">
+                    <div class="col-auto px-1">
+                        <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-title="Insert image URL"
+                                @onclick="ShowImageUrlInput" style="container: body">
+                            <img src="icons/image-fill.svg" alt="image url icon"/>
+                        </button>
+                    </div>
+                    <div class="col-auto px-1">
+                        <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-title="Attach image file" style="position: relative"
+                                @onclick="ShowImageFileInput">
+                            <img src="icons/image.svg" alt="image file icon" style="opacity: 80%"/>
+                            <img src="icons/paperclip.svg" alt="image file icon" style="position: absolute;left: -1px;bottom: 9px"/>
+                        </button>
+                    </div>
+                </div>
             }
-        </div>
-    </div>
-    
-    <div class="d-flex justify-content-center align-items-center">
-        <div class="col-8">
-            <InputText @bind-Value="_imageUrls" class="form-control" placeholder="Insert image urls"></InputText>
-        </div>
-        <div>
-            <button @onclick="LoadImageUrl" class="btn btn-primary">Load image url</button>
-        </div>
-    </div>
-    
-    <div>
-        <div class="col-8">
-            <InputFile OnChange="LoadImageFile" multiple class="form-control" accept="image/*"></InputFile>
+            
+            @if (_imageUrlInputActive)
+            {
+                <div class="row">
+                    <div class="col-10 px-1">
+                        <InputText @bind-Value="_imageUrl" class="form-control" placeholder="Insert image URL"></InputText>
+                    </div>
+                    <div class="col-auto ps-0 pe-1">
+                        <button class="btn btn-light" @onclick="LoadImageUrl">
+                            Add
+                        </button>
+                    </div>
+                    <div class="col-auto px-0">
+                        <button class="btn btn-light" @onclick="HideImageUrlInput">
+                            Undo
+                        </button>
+                    </div>
+                </div>
+            }
+            
+            @if (_imageFileInputActive)
+            {
+                <div class="row">
+                    <div class="col-10 px-1">
+                        <InputFile OnChange="LoadImageFile" multiple class="form-control" accept="image/*"></InputFile>
+                    </div>
+                    <div class="col-auto px-0">
+                        <button class="btn btn-light" @onclick="HideImageFileInput">
+                            Undo
+                        </button>
+                    </div>
+                </div>
+            }
+
+            <div class="row align-items-center">
+                <div class="col px-1">
+                    <textarea @ref="_textarea" class="form-control border-3" rows="3" @onkeydown="HandleKeyPressed" 
+                        placeholder="Type your text here">
+                    </textarea>
+                </div>
+                <div class="col-1 px-0">
+                    @if (_chatStateService.CanUserInteract())
+                    {
+                        <button id="sendButton" class="btn btn-light d-flex align-items-center justify-content-center"
+                                @onclick="OnSendMessageClicked">
+                            <img src="icons/send-fill.svg" alt="send icon" height="20">
+                        </button>
+                    }
+                </div>
+            </div>
+            
+            <div>
+                <div class="row row-cols-4 align-items-center justify-content-start">
+                    @{
+                        var index = 0;
+                    }
+                    
+                    @foreach (var imageInput in _imageInputs)
+                    {
+                        var current = index;
+                        <div class="col-auto py-1">
+                            @if (imageInput.Type == "image-url")
+                            {
+                                <img src="@imageInput.Data" alt="user image" width="100" class="img-thumbnail"/>
+                            }
+                            else if (imageInput.Type == "image-file")
+                            {
+                                <img src="data:image/jpeg;base64, @imageInput.Data" alt="user image" width="100" class="img-thumbnail"/>
+                            }
+                            <button type="button" class="btn-close" aria-label="Close"
+                                    @onclick="() => RemoveInputImage(current)">
+                            </button>
+                        </div>
+
+                        ++index;
+                    }
+                </div>
+            </div>
         </div>
     </div>
 }
 
 @code {
     private bool _applicationStarted = false;
+    
     private ElementReference _textarea;
 
+    private bool _imageUrlInputActive = false;
+    private bool _imageFileInputActive = false;
+    
+    private string _imageUrl = "";
+
     private List<ImageInput> _imageInputs = new();
-    private string _imageUrls = "";
+    
     
     protected override async Task OnInitializedAsync()
     {
@@ -58,10 +134,17 @@
             _chatStateService.RefreshView += ReloadComponentState;
             _settingsService.RefreshView += ReloadComponentState;
         }
-
+        
         await base.OnInitializedAsync();
     }
-    
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await _jsRuntime.InvokeVoidAsync("initializeTooltips");
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
     private async void OnSendMessageClicked()
     {
         string text = await _jsRuntime.InvokeAsync<string>("getTextareaValue", _textarea);
@@ -89,12 +172,12 @@
             }
         
             await _jsRuntime.InvokeVoidAsync("setTextareaValue", _textarea, string.Empty);
-            
-            await _chatStateService.SendUserMessage(text, _imageInputs, chatbot.Apihost, 
-                chatbot.ApiKey, _settingsService.TextStream);
 
+            var imageInputs = _imageInputs;
             _imageInputs = new();
-            _imageUrls = "";
+            
+            await _chatStateService.SendUserMessage(text, imageInputs, chatbot.Apihost, 
+                chatbot.ApiKey, _settingsService.TextStream);
         }
     }
 
@@ -106,34 +189,78 @@
         }
     }
     
-    private void ReloadComponentState()
+    private async void ShowImageUrlInput()
     {
-        InvokeAsync(StateHasChanged);
+        await _jsRuntime.InvokeVoidAsync("deactivateTooltips");
+        _imageUrlInputActive = true;
+        ReloadComponentState();
     }
-
-    private void LoadImageFile(InputFileChangeEventArgs e)
+    
+    private void HideImageUrlInput()
     {
-        _imageInputs.Add(new ImageInput()
-        {
-            Name = e.File.Name,
-            Data = e.File,
-            Type = "image-file"
-        });
+        _imageUrlInputActive = false;
+        ReloadComponentState();
     }
 
     private void LoadImageUrl()
     {
-        string[]? imageUrls = _imageUrls == string.Empty ? null : Regex.Split(_imageUrls, @"\s+");
-        if (imageUrls is not null)
+        _imageUrl = _imageUrl.Trim();
+        _imageUrl = Regex.Split(_imageUrl, @"\s+")[0];
+
+        if (_imageUrl != string.Empty)
         {
-            foreach (var imageUrl in imageUrls)
+            _imageInputs.Add(new ImageInput()
             {
-                _imageInputs.Add(new ImageInput()
-                {
-                    Data = imageUrl,
-                    Type = "image-url"
-                });
-            }
+                Type = "image-url",
+                Data = _imageUrl
+            });
+
+            _imageUrl = "";
+            _imageUrlInputActive = false;
         }
+    }
+
+    private async void ShowImageFileInput()
+    {
+        await _jsRuntime.InvokeVoidAsync("deactivateTooltips");
+        _imageFileInputActive = true;
+        ReloadComponentState();
+    }
+
+    private void HideImageFileInput()
+    {
+        _imageFileInputActive = false;
+        ReloadComponentState();
+    }
+
+    private async void LoadImageFile(InputFileChangeEventArgs e)
+    {
+        var memoryStream = new MemoryStream();
+        await e.File.OpenReadStream().CopyToAsync(memoryStream);
+        var fileBytes = memoryStream.ToArray();
+        var base64String = Convert.ToBase64String(fileBytes);
+        
+        _imageInputs.Add(new ImageInput()
+        {
+            Name = e.File.Name,
+            Data = base64String,
+            Type = "image-file"
+        });
+        
+        HideImageFileInput();
+    }
+
+    private void RemoveInputImage(int index)
+    {
+        if (index < _imageInputs.Count)
+        {
+            _imageInputs.RemoveAt(index);
+            ReloadComponentState();
+        }
+    }
+    
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
     }
 }

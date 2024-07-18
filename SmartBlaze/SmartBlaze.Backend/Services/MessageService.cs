@@ -14,13 +14,14 @@ public class MessageService
         _messageRepository = messageRepository;
     }
 
-    public MessageDto CreateNewUserMessage(string content)
+    public MessageDto CreateNewUserMessage(string content, List<UserImageDto>? userImageDtos)
     {
         return new MessageDto()
         {
             Content = content,
             Role = Role.User,
-            CreationDate = DateTime.Now
+            CreationDate = DateTime.Now,
+            UserImageDtos = userImageDtos
         };
     }
     

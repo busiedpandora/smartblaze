@@ -20,7 +20,7 @@ public class MessageServiceTest
     [Fact]
     public void CreateNewUserMessage()
     {
-        MessageDto message = _messageService.CreateNewUserMessage("hello");
+        MessageDto message = _messageService.CreateNewUserMessage("hello", new());
         Assert.Equal("hello", message.Content);
         Assert.Equal(Role.User, message.Role);
     }

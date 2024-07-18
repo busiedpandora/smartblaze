@@ -10,6 +10,7 @@ public abstract class AbstractRepository
     protected const string MessageCollectionId = "6685339500109e79a0de";
     protected const string ChatbotConfigurationCollectionId = "66952f890014e29c653d";
     protected const string ChatSessionConfigurationCollectionId = "66966e320019828e16ae";
+    protected const string UserImageCollectionId = "6698237c001dfa64b074";
     
     private const string AppwriteEndpoint = "https://cloud.appwrite.io/v1";
     private const string AppwriteProjectId = "6674214b0022089a10cb";

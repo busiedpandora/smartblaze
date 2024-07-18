@@ -12,4 +12,7 @@ public class MessageDto
     
     [JsonPropertyName("creationDate")]
     public DateTime? CreationDate { get; set; }
+    
+    [JsonPropertyName("userImage")]
+    public List<UserImageDto>? UserImageDtos { get; set; }
 }

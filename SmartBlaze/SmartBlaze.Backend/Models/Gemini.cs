@@ -14,27 +14,51 @@ public class Gemini : Chatbot
     public override async Task<string?> GenerateText(ChatSessionDto chatSessionDto, 
         List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient)
     {
-        var contents = new List<Content>();
+        var contents = new List<RequestContent>();
 
-        foreach (var message in messageDtos)
+        foreach (var messageDto in messageDtos)
         {
-            var part = new Part
-            {
-                Text = message.Content
-            };
-
-            string? role = message.Role;
+            List<Part> parts = new();
             
+            TextPart textPart = new()
+            {
+                Text = messageDto.Content
+            };
+            
+            parts.Add(textPart);
+
+            if (messageDto.UserImageDtos is not null && messageDto.UserImageDtos.Count > 0)
+            {
+                foreach (var userImage in messageDto.UserImageDtos)
+                {
+                    InlineData inlineData = new()
+                    {
+                        MimeType = "image/jpeg",
+                        Data = userImage.Content
+                    };
+
+                    InlineDataPart inlineDataPart = new()
+                    {
+                        InlineData = inlineData
+                    };
+                    
+                    parts.Add(inlineDataPart);
+                }
+            }
+            
+            string? role = messageDto.Role;
+
             if (role == Role.Assistant)
             {
                 role = "model";
             }
-            
-            var content = new Content
+
+            RequestContent content = new()
             {
                 Role = role,
-                Parts = new List<Part>() {part}
+                Parts = (object[]) parts.ToArray()
             };
+            
             contents.Add(content);
         }
 
@@ -45,12 +69,14 @@ public class Gemini : Chatbot
 
         if (!String.IsNullOrEmpty(chatSessionDto.SystemInstruction))
         {
+            TextPart textPart = new()
+            {
+                Text = chatSessionDto.SystemInstruction
+            };
+            
             SystemInstruction systemInstruction = new SystemInstruction()
             {
-                Part = new Part()
-                {
-                    Text = chatSessionDto.SystemInstruction
-                }
+                Part = (object) textPart
             };
             
             chatRequest.SystemInstruction = systemInstruction;
@@ -91,27 +117,51 @@ public class Gemini : Chatbot
     public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionDto chatSessionDto, 
         List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient)
     {
-        var contents = new List<Content>();
+        var contents = new List<RequestContent>();
 
-        foreach (var message in messageDtos)
+        foreach (var messageDto in messageDtos)
         {
-            var part = new Part
+            List<Part> parts = new();
+            
+            TextPart textPart = new()
             {
-                Text = message.Content
+                Text = messageDto.Content
             };
+            
+            parts.Add(textPart);
 
-            string? role = message.Role;
+            if (messageDto.UserImageDtos is not null && messageDto.UserImageDtos.Count > 0)
+            {
+                foreach (var userImage in messageDto.UserImageDtos)
+                {
+                    InlineData inlineData = new()
+                    {
+                        MimeType = "image/jpeg",
+                        Data = userImage.Content
+                    };
+
+                    InlineDataPart inlineDataPart = new()
+                    {
+                        InlineData = inlineData
+                    };
+                    
+                    parts.Add(inlineDataPart);
+                }
+            }
+            
+            string? role = messageDto.Role;
 
             if (role == Role.Assistant)
             {
                 role = "model";
             }
-            
-            var content = new Content
+
+            RequestContent content = new()
             {
                 Role = role,
-                Parts = new List<Part>() {part}
+                Parts = (object[]) parts.ToArray()
             };
+            
             contents.Add(content);
         }
 
@@ -122,12 +172,14 @@ public class Gemini : Chatbot
 
         if (!String.IsNullOrEmpty(chatSessionDto.SystemInstruction))
         {
+            TextPart textPart = new()
+            {
+                Text = chatSessionDto.SystemInstruction
+            };
+            
             SystemInstruction systemInstruction = new SystemInstruction()
             {
-                Part = new Part()
-                {
-                    Text = chatSessionDto.SystemInstruction
-                }
+                Part = (object) textPart
             };
             
             chatRequest.SystemInstruction = systemInstruction;
@@ -162,7 +214,7 @@ public class Gemini : Chatbot
             if (line.StartsWith("\"text\":"))
             {
                 line = "{" + line + "}";
-                Part? part = JsonSerializer.Deserialize<Part>(line);
+                TextPart? part = JsonSerializer.Deserialize<TextPart>(line);
 
                 if (part is not null)
                 {
@@ -184,25 +236,51 @@ public class Gemini : Chatbot
         };
     }
 
-    private class Part
+    private class Part { }
+
+    private class TextPart : Part
     {
         [JsonPropertyName("text")]
         public string? Text { get; set; }
     }
+
+    private class InlineDataPart : Part
+    {
+        [JsonPropertyName("inlineData")]
+        public InlineData? InlineData { get; set; }
+    }
+
+    private class InlineData
+    {
+        [JsonPropertyName("mimeType")]
+        public string? MimeType { get; set; }
+        
+        [JsonPropertyName("data")]
+        public string? Data { get; set; }
+    }
     
-    private class Content
+    private class RequestContent
     {
         [JsonPropertyName("role")]
         public string? Role { get; set; }
         
         [JsonPropertyName("parts")]
-        public List<Part>? Parts { get; set; }
+        public object[]? Parts { get; set; }
+    }
+
+    private class ResponseContent
+    {
+        [JsonPropertyName("role")]
+        public string? Role { get; set; }
+        
+        [JsonPropertyName("parts")]
+        public List<TextPart>? Parts { get; set; }
     }
 
     private class SystemInstruction
     {
         [JsonPropertyName("parts")]
-        public Part? Part { get; set; }
+        public object? Part { get; set; }
     }
     
     private class ChatRequest
@@ -211,13 +289,13 @@ public class Gemini : Chatbot
         public SystemInstruction? SystemInstruction { get; set; }
         
         [JsonPropertyName("contents")]
-        public List<Content>? Contents { get; set; }
+        public List<RequestContent>? Contents { get; set; }
     }
 
     private class Candidate
     {
         [JsonPropertyName("content")]
-        public Content? Content { get; set; }
+        public ResponseContent? Content { get; set; }
         
         [JsonPropertyName("finish_reason")]
         public string? FinishReason { get; set; }

@@ -41,7 +41,7 @@ public class MessageController : ControllerBase
     [HttpPost("new-user-message")]
     public async Task<ActionResult<MessageDto>> AddNewUserMessageToChatSession(string id, [FromBody] MessageDto messageDto)
     {
-        if (messageDto is null || messageDto.Content is null)
+        if (messageDto.Text is null)
         {
             return BadRequest("Message not specified correctly");
         }
@@ -52,7 +52,7 @@ public class MessageController : ControllerBase
             return NotFound($"Chat session with id {id} not found");
         }
 
-        MessageDto userMessageDto = _messageService.CreateNewUserMessage(messageDto.Content);
+        MessageDto userMessageDto = _messageService.CreateNewUserMessage(messageDto.Text, messageDto.MediaDtos);
         await _messageService.AddNewMessageToChatSession(userMessageDto, chatSessionDto);
 
         return Ok(userMessageDto);

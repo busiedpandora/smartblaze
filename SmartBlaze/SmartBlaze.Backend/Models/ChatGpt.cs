@@ -13,21 +13,78 @@ public class ChatGpt : Chatbot
 
     public override async Task<string?> GenerateText(ChatSessionDto chatSessionDto, 
         List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient)
-    {
-        var messages = messageDtos
-            .Select(m => new Message
+    { 
+        List<Message> messages = new();
+        
+        foreach (var messageDto in messageDtos)
+        {
+            if (messageDto.Role == "assistant")
             {
-                Content = m.Content,
-                Role = m.Role
-            })
-            .ToList();
+                TextMessage assistantMessage = new()
+                {
+                    Contents = messageDto.Text,
+                    Role = "assistant"
+                };
+                
+                messages.Add(assistantMessage);
+            }
+            else if (messageDto.Role == "user")
+            {
+                if (messageDto.MediaDtos is null || messageDto.MediaDtos.Count == 0)
+                {
+                    TextMessage userMessage = new()
+                    {
+                        Contents = messageDto.Text,
+                        Role = "user"
+                    };
+                    
+                    messages.Add(userMessage);
+                }
+                else
+                {
+                    List<Content> contents = new();
+                    
+                    TextContent textContent = new ();
+                    textContent.Text = messageDto.Text;
+                    contents.Add(textContent);
+
+                    foreach (var mediaDto in messageDto.MediaDtos)
+                    {
+                        ImageContent imageContent = new();
+                        
+                        ImageUrl imageUrl = new();
+                        if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                        {
+                            imageUrl.Url = mediaDto.Data;
+                            
+                        }
+                        else
+                        {
+                            imageUrl.Url = $"data:{mediaDto.ContentType};base64,{mediaDto.Data}";
+                        }
+
+                        imageContent.ImageUrl = imageUrl;
+                        
+                        contents.Add(imageContent);
+                    }
+
+                    TextImagesMessage userMessage = new()
+                    {
+                        Contents = (object[]) contents.ToArray(),
+                        Role = "user"
+                    };
+                    
+                    messages.Add(userMessage);
+                }
+            }
+        }
 
         if (!String.IsNullOrEmpty(chatSessionDto.SystemInstruction))
         {
-            Message systemInstructionMessage = new Message()
+            TextMessage systemInstructionMessage = new()
             {
                 Role = "system",
-                Content = chatSessionDto.SystemInstruction
+                Contents = chatSessionDto.SystemInstruction
             };
 
             messages.Insert(0, systemInstructionMessage);
@@ -36,11 +93,16 @@ public class ChatGpt : Chatbot
         var chatRequest = new ChatRequest
         {
             Model = chatSessionDto.ChatbotModel,
-            Messages = messages,
+            Messages = (object[]) messages.ToArray(),
             Stream = false
         };
+        
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true
+        };
 
-        var chatRequestJson = JsonSerializer.Serialize(chatRequest);
+        var chatRequestJson = JsonSerializer.Serialize(chatRequest, options);
         
         var httpRequest = new HttpRequestMessage
         {
@@ -65,11 +127,11 @@ public class ChatGpt : Chatbot
         
         if (chatResponse is not null && chatResponse.Choices is not null && chatResponse.Choices.Count > 0)
         {
-            Message? message = chatResponse.Choices[0].Message;
+            TextMessage? message = chatResponse.Choices[0].Message;
 
             if (message is not null)
             {
-                return message.Content;
+                return message.Contents;
             }
         }
         
@@ -79,33 +141,94 @@ public class ChatGpt : Chatbot
     public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionDto chatSessionDto, 
         List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient)
     {
-        var messages = messageDtos
-            .Select(m => new Message
+        List<Message> messages = new();
+        
+        foreach (var messageDto in messageDtos)
+        {
+            if (messageDto.Role == "assistant")
             {
-                Content = m.Content,
-                Role = m.Role
-            })
-            .ToList();
+                TextMessage assistantMessage = new()
+                {
+                    Contents = messageDto.Text,
+                    Role = "assistant"
+                };
+                
+                messages.Add(assistantMessage);
+            }
+            else if (messageDto.Role == "user")
+            {
+                if (messageDto.MediaDtos is null || messageDto.MediaDtos.Count == 0)
+                {
+                    TextMessage userMessage = new()
+                    {
+                        Contents = messageDto.Text,
+                        Role = "user"
+                    };
+                    
+                    messages.Add(userMessage);
+                }
+                else
+                {
+                    List<Content> contents = new();
+                    
+                    TextContent textContent = new ();
+                    textContent.Text = messageDto.Text;
+                    contents.Add(textContent);
+
+                    foreach (var mediaDto in messageDto.MediaDtos)
+                    {
+                        ImageContent imageContent = new();
+                        
+                        ImageUrl imageUrl = new();
+                        if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                        {
+                            imageUrl.Url = mediaDto.Data;
+                        }
+                        else
+                        {
+                            imageUrl.Url = $"data:{mediaDto.ContentType};base64,{mediaDto.Data}";
+                        }
+
+                        imageContent.ImageUrl = imageUrl;
+                        
+                        contents.Add(imageContent);
+                    }
+
+                    TextImagesMessage userMessage = new()
+                    {
+                        Contents = (object[]) contents.ToArray(),
+                        Role = "user"
+                    };
+                    
+                    messages.Add(userMessage);
+                }
+            }
+        }
         
         if (!String.IsNullOrEmpty(chatSessionDto.SystemInstruction))
         {
-            Message systemInstructionMessage = new Message()
+            TextMessage systemInstructionMessage = new()
             {
                 Role = "system",
-                Content = chatSessionDto.SystemInstruction
+                Contents = chatSessionDto.SystemInstruction
             };
-            
+
             messages.Insert(0, systemInstructionMessage);
         }
 
         var chatRequest = new ChatRequest
         {
             Model = chatSessionDto.ChatbotModel,
-            Messages = messages,
+            Messages = (object[]) messages.ToArray(),
             Stream = true
         };
+        
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true
+        };
 
-        var chatRequestJson = JsonSerializer.Serialize(chatRequest);
+        var chatRequestJson = JsonSerializer.Serialize(chatRequest, options);
         
         var httpRequest = new HttpRequestMessage
         {
@@ -170,10 +293,47 @@ public class ChatGpt : Chatbot
         };
     }
 
-    private class Message
+    private class ImageUrl
+    {
+        [JsonPropertyName("url")] 
+        public string? Url { get; set; }
+    }
+    
+    private class Content {}
+
+    private class TextContent : Content
+    {
+        [JsonPropertyName("type")] 
+        public string Type { get; set; } = "text";
+
+        [JsonPropertyName("text")] 
+        public string? Text { get; set; }
+    }
+
+    private class ImageContent : Content
+    {
+        [JsonPropertyName("type")] 
+        public string Type { get; set; } = "image_url";
+        
+        [JsonPropertyName("image_url")]
+        public ImageUrl? ImageUrl { get; set; }
+    }
+
+    private class Message { }
+
+    private class TextMessage : Message
     {
         [JsonPropertyName("content")]
-        public string? Content { get; set; }
+        public string? Contents { get; set; }
+    
+        [JsonPropertyName("role")]
+        public string? Role { get; set; }
+    }
+
+    private class TextImagesMessage : Message
+    {
+        [JsonPropertyName("content")]
+        public object[]? Contents { get; set; }
     
         [JsonPropertyName("role")]
         public string? Role { get; set; }
@@ -194,7 +354,7 @@ public class ChatGpt : Chatbot
         public string? Model { get; set; }
 
         [JsonPropertyName("messages")]
-        public List<Message>? Messages { get; set; }
+        public object[]? Messages { get; set; }
         
         [JsonPropertyName("stream")]
         public bool? Stream { get; set; }
@@ -227,7 +387,7 @@ public class ChatGpt : Chatbot
         public int? Index { get; set; }
     
         [JsonPropertyName("message")]
-        public Message? Message { get; set; }
+        public TextMessage? Message { get; set; }
         
         [JsonPropertyName("delta")]
         public Delta? Delta { get; set; }

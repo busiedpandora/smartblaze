@@ -40,25 +40,46 @@
     {
     @foreach(var message in _chatStateService.CurrentChatSessionMessages)
     {
-    <div class="d-flex">
-        <div>
-            @switch (message.Role)
-            {
-            case "user":
-            <img src="icons/person-fill.svg" width="28" height="28" alt="user icon" title="user"/>
-            break;
-            case "assistant":
-            <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
-            break;
-            }
-        </div>
-        <div class="ps-3 pe-3 pb-5 pt-1">
+        <div class="d-flex">
+            <div>
+                @switch (message.Role)
+                {
+                    case "user":
+                        <img src="icons/person-fill.svg" width="28" height="28" alt="user icon" title="user"/>
+                        break;
+                    case "assistant":
+                        <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
+                        break;
+                }
+            </div>
+            <div class="ps-3 pe-3 pb-5 pt-1">
                 <span>
-                    @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@message.Content ?? ""),
-                    "\r?\n|\r", "<br />"))
+                    @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@message.Text ?? ""),
+                        "\r?\n|\r", "<br />"))
                 </span>
+            </div>
         </div>
-    </div>
+        
+        @if(message.MediaDtos is not null)
+        {
+            <div class="row row-cols-4 align-items-center justify-content-start mb-5">
+            @foreach (var mediaDto in message.MediaDtos)
+            {
+                @if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                {
+                    <div class="col py-2">
+                        <img src="@mediaDto.Data" alt="user image" width="300" class="img-thumbnail"/>
+                    </div>
+                }
+                else
+                {
+                    <div class="col" py-2>
+                        <img src="data:@mediaDto.ContentType;base64, @mediaDto.Data" alt="user image" width="300" class="img-thumbnail"/>
+                    </div>
+                }
+            }
+            </div>
+        }
     }
 
     @if (_chatStateService.IsGeneratingResponse)

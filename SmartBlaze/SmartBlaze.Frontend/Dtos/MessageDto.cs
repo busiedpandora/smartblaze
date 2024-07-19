@@ -4,8 +4,8 @@ namespace SmartBlaze.Frontend.Dtos;
 
 public class MessageDto
 {
-    [JsonPropertyName("content")]
-    public string? Content { get; set; }
+    [JsonPropertyName("text")]
+    public string? Text { get; set; }
     
     [JsonPropertyName("role")]
     public string? Role { get; set; }
@@ -13,12 +13,14 @@ public class MessageDto
     [JsonPropertyName("creationDate")]
     public DateTime? CreationDate { get; set; }
 
+    [JsonPropertyName("medias")]
+    public List<MediaDto>? MediaDtos { get; set; }
 
     public static MessageDto ToMessageDto(string? content, string? role, DateTime? creationDate)
     {
         MessageDto messageDto = new MessageDto()
         {
-            Content = content,
+            Text = content,
             Role = role,
             CreationDate = creationDate
         };

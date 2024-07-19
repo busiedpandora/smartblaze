@@ -21,7 +21,7 @@ public class MessageServiceTest
     public void CreateNewUserMessage()
     {
         MessageDto message = _messageService.CreateNewUserMessage("hello", new());
-        Assert.Equal("hello", message.Content);
+        Assert.Equal("hello", message.Text);
         Assert.Equal(Role.User, message.Role);
     }
     
@@ -29,7 +29,7 @@ public class MessageServiceTest
     public void CreateNewAssistantMessage()
     {
         MessageDto message = _messageService.CreateNewAssistantMessage("hello");
-        Assert.Equal("hello", message.Content);
+        Assert.Equal("hello", message.Text);
         Assert.Equal(Role.Assistant, message.Role);
     }
 }

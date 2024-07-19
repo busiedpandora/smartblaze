@@ -91,11 +91,11 @@
                     {
                         var current = index;
                         <div class="col-auto py-1">
-                            @if (imageInput.Type == "image-url")
+                            @if (imageInput.Data.StartsWith("http"))
                             {
                                 <img src="@imageInput.Data" alt="user image" width="100" class="img-thumbnail"/>
                             }
-                            else if (imageInput.Type == "image-file")
+                            else
                             {
                                 <img src="data:@imageInput.ContentType;base64, @imageInput.Data" alt="user image" width="100" class="img-thumbnail"/>
                             }
@@ -211,7 +211,6 @@
         {
             _imageInputs.Add(new ImageInput()
             {
-                Type = "image-url",
                 Data = _imageUrl
             });
 
@@ -242,9 +241,7 @@
         
         _imageInputs.Add(new ImageInput()
         {
-            Name = e.File.Name,
             Data = base64String,
-            Type = "image-file",
             ContentType = e.File.ContentType
         });
         

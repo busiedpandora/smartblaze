@@ -17,12 +17,12 @@ public class MessageRepository : AbstractRepository
 
           foreach (var messageDocument in messageDocuments.Documents)
           {
-               var userImageDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId, UserImageCollectionId,
+               var mediaDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId, MediaCollectionId,
                [
                     Query.Equal("message", messageDocument.Id)
                ]);
 
-               var message = ConvertToMessage(messageDocument, userImageDocuments.Documents);
+               var message = ConvertToMessage(messageDocument, mediaDocuments.Documents);
                
                messages.Add(message);
           }
@@ -37,7 +37,7 @@ public class MessageRepository : AbstractRepository
           
           var messageDocument = new Dictionary<string, object>()
           {
-               {"content", messageDto.Content},
+               {"text", messageDto.Text},
                {"role", messageDto.Role},
                {"creationDate", messageDto.CreationDate},
                {"chatSession", chatSessionDocument.Id}
@@ -46,50 +46,48 @@ public class MessageRepository : AbstractRepository
           var messageStoredDocument = await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, MessageCollectionId, 
                ID.Unique(), messageDocument);
 
-          if (messageDto.UserImageDtos is not null && messageDto.UserImageDtos.Count > 0)
+          if (messageDto.MediaDtos is not null && messageDto.MediaDtos.Count > 0)
           {
-               foreach (var userImageDto in messageDto.UserImageDtos)
+               foreach (var mediaDto in messageDto.MediaDtos)
                {
-                    var userImageDocument = new Dictionary<string, object>()
+                    var mediaDocument = new Dictionary<string, object>()
                     {
-                         { "content", userImageDto.Content },
-                         { "type", userImageDto.Type },
-                         { "contentType", userImageDto.ContentType },
+                         { "data", mediaDto.Data },
+                         { "contentType", mediaDto.ContentType },
                          { "message", messageStoredDocument.Id }
                     };
 
-                    await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, UserImageCollectionId, 
-                         ID.Unique(), userImageDocument);
+                    await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, MediaCollectionId, 
+                         ID.Unique(), mediaDocument);
                }
           }
      }
 
-     private MessageDto ConvertToMessage(Document messageDocument, List<Document> userImageDocuments)
+     private MessageDto ConvertToMessage(Document messageDocument, List<Document> mediaDocuments)
      {
           var messageDto = new MessageDto()
           {
-               Content = messageDocument.Data["content"].ToString(),
+               Text = messageDocument.Data["text"].ToString(),
                Role = messageDocument.Data["role"].ToString(),
                CreationDate = DateTime.Parse(messageDocument.Data["creationDate"].ToString() ?? "")
           };
 
-          if (userImageDocuments.Count > 0)
+          if (mediaDocuments.Count > 0)
           {
-               List<UserImageDto> userImageDtos = new();
+               List<MediaDto> mediaDtos = new();
                
-               foreach (var userImageDocument in userImageDocuments)
+               foreach (var mediaDocument in mediaDocuments)
                {
-                    var userImageDto = new UserImageDto()
+                    var mediaDto = new MediaDto()
                     {
-                         Type = userImageDocument.Data["type"].ToString(),
-                         Content = userImageDocument.Data["content"].ToString(),
-                         ContentType = userImageDocument.Data["contentType"].ToString()
+                         Data = mediaDocument.Data["data"].ToString(),
+                         ContentType = mediaDocument.Data["contentType"].ToString()
                     };
                     
-                    userImageDtos.Add(userImageDto);
+                    mediaDtos.Add(mediaDto);
                }
 
-               messageDto.UserImageDtos = userImageDtos;
+               messageDto.MediaDtos = mediaDtos;
           }
 
           return messageDto;

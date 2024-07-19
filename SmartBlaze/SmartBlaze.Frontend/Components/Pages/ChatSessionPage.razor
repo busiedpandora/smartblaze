@@ -54,27 +54,27 @@
             </div>
             <div class="ps-3 pe-3 pb-5 pt-1">
                 <span>
-                    @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@message.Content ?? ""),
+                    @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@message.Text ?? ""),
                         "\r?\n|\r", "<br />"))
                 </span>
             </div>
         </div>
         
-        @if(message.UserImageDtos is not null)
+        @if(message.MediaDtos is not null)
         {
             <div class="row row-cols-4 align-items-center justify-content-start mb-5">
-            @foreach (var userImage in message.UserImageDtos)
+            @foreach (var mediaDto in message.MediaDtos)
             {
-                @if (userImage.Type == "image-url")
+                @if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
                 {
                     <div class="col py-2">
-                        <img src="@userImage.Content" alt="user image" width="300" class="img-thumbnail"/>
+                        <img src="@mediaDto.Data" alt="user image" width="300" class="img-thumbnail"/>
                     </div>
                 }
-                else if (userImage.Type == "image-file")
+                else
                 {
                     <div class="col" py-2>
-                        <img src="data:@userImage.ContentType;base64, @userImage.Content" alt="user image" width="300" class="img-thumbnail"/>
+                        <img src="data:@mediaDto.ContentType;base64, @mediaDto.Data" alt="user image" width="300" class="img-thumbnail"/>
                     </div>
                 }
             }

@@ -22,7 +22,7 @@ public class ChatGpt : Chatbot
             {
                 TextMessage assistantMessage = new()
                 {
-                    Contents = messageDto.Content,
+                    Contents = messageDto.Text,
                     Role = "assistant"
                 };
                 
@@ -30,11 +30,11 @@ public class ChatGpt : Chatbot
             }
             else if (messageDto.Role == "user")
             {
-                if (messageDto.UserImageDtos is null || messageDto.UserImageDtos.Count == 0)
+                if (messageDto.MediaDtos is null || messageDto.MediaDtos.Count == 0)
                 {
                     TextMessage userMessage = new()
                     {
-                        Contents = messageDto.Content,
+                        Contents = messageDto.Text,
                         Role = "user"
                     };
                     
@@ -45,21 +45,22 @@ public class ChatGpt : Chatbot
                     List<Content> contents = new();
                     
                     TextContent textContent = new ();
-                    textContent.Text = messageDto.Content;
+                    textContent.Text = messageDto.Text;
                     contents.Add(textContent);
 
-                    foreach (var userImageDto in messageDto.UserImageDtos)
+                    foreach (var mediaDto in messageDto.MediaDtos)
                     {
                         ImageContent imageContent = new();
                         
                         ImageUrl imageUrl = new();
-                        if (userImageDto.Type == "image-file")
+                        if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
                         {
-                            imageUrl.Url = $"data:{userImageDto.ContentType};base64,{userImageDto.Content}";
+                            imageUrl.Url = mediaDto.Data;
+                            
                         }
                         else
                         {
-                            imageUrl.Url = userImageDto.Content;
+                            imageUrl.Url = $"data:{mediaDto.ContentType};base64,{mediaDto.Data}";
                         }
 
                         imageContent.ImageUrl = imageUrl;
@@ -148,7 +149,7 @@ public class ChatGpt : Chatbot
             {
                 TextMessage assistantMessage = new()
                 {
-                    Contents = messageDto.Content,
+                    Contents = messageDto.Text,
                     Role = "assistant"
                 };
                 
@@ -156,11 +157,11 @@ public class ChatGpt : Chatbot
             }
             else if (messageDto.Role == "user")
             {
-                if (messageDto.UserImageDtos is null || messageDto.UserImageDtos.Count == 0)
+                if (messageDto.MediaDtos is null || messageDto.MediaDtos.Count == 0)
                 {
                     TextMessage userMessage = new()
                     {
-                        Contents = messageDto.Content,
+                        Contents = messageDto.Text,
                         Role = "user"
                     };
                     
@@ -171,21 +172,21 @@ public class ChatGpt : Chatbot
                     List<Content> contents = new();
                     
                     TextContent textContent = new ();
-                    textContent.Text = messageDto.Content;
+                    textContent.Text = messageDto.Text;
                     contents.Add(textContent);
 
-                    foreach (var userImageDto in messageDto.UserImageDtos)
+                    foreach (var mediaDto in messageDto.MediaDtos)
                     {
                         ImageContent imageContent = new();
                         
                         ImageUrl imageUrl = new();
-                        if (userImageDto.Type == "image-file")
+                        if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
                         {
-                            imageUrl.Url = $"data:{userImageDto.ContentType};base64,{userImageDto.Content}";
+                            imageUrl.Url = mediaDto.Data;
                         }
                         else
                         {
-                            imageUrl.Url = userImageDto.Content;
+                            imageUrl.Url = $"data:{mediaDto.ContentType};base64,{mediaDto.Data}";
                         }
 
                         imageContent.ImageUrl = imageUrl;

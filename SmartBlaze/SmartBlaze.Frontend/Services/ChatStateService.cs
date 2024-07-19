@@ -300,7 +300,7 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
 
     private bool IsMessageValid(MessageDto messageDto)
     {
-        return messageDto.Content is not null
+        return messageDto.Text is not null
                && messageDto.Role is not null
                && messageDto.CreationDate is not null;
     }
@@ -308,22 +308,21 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
     private async Task SendUserMessage(string text, List<ImageInput> imageInputs)
     {
         MessageDto userTextMessageDto = new MessageDto();
-        userTextMessageDto.Content = text;
+        userTextMessageDto.Text = text;
         
         if (imageInputs.Count > 0)
         {
-            userTextMessageDto.UserImageDtos = new();
+            userTextMessageDto.MediaDtos = new();
 
             foreach (var imageInput in imageInputs)
             {
-                UserImageDto userImageDto = new()
+                MediaDto mediaDto = new()
                 {
-                    Type = imageInput.Type,
-                    Content = imageInput.Data,
+                    Data = imageInput.Data,
                     ContentType = imageInput.ContentType
                 };
 
-                userTextMessageDto.UserImageDtos.Add(userImageDto);
+                userTextMessageDto.MediaDtos.Add(mediaDto);
             }
         }
         
@@ -432,7 +431,7 @@ public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractSe
             {
                 if (messageChunk != string.Empty)
                 {
-                    assistantEmptyMessageDto.Content += messageChunk;
+                    assistantEmptyMessageDto.Text += messageChunk;
                     NotifyRefreshView();
 
                     await Task.Delay(100);

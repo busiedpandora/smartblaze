@@ -22,19 +22,19 @@ public class Gemini : Chatbot
             
             TextPart textPart = new()
             {
-                Text = messageDto.Content
+                Text = messageDto.Text
             };
             
             parts.Add(textPart);
 
-            if (messageDto.UserImageDtos is not null && messageDto.UserImageDtos.Count > 0)
+            if (messageDto.MediaDtos is not null && messageDto.MediaDtos.Count > 0)
             {
-                foreach (var userImageDto in messageDto.UserImageDtos)
+                foreach (var mediaDto in messageDto.MediaDtos)
                 {
                     InlineData inlineData = new()
                     {
-                        MimeType = userImageDto.Type == "image-file" ? userImageDto.ContentType : "",
-                        Data = userImageDto.Content
+                        MimeType = mediaDto.ContentType,
+                        Data = mediaDto.Data
                     };
 
                     InlineDataPart inlineDataPart = new()
@@ -125,19 +125,19 @@ public class Gemini : Chatbot
             
             TextPart textPart = new()
             {
-                Text = messageDto.Content
+                Text = messageDto.Text
             };
             
             parts.Add(textPart);
 
-            if (messageDto.UserImageDtos is not null && messageDto.UserImageDtos.Count > 0)
+            if (messageDto.MediaDtos is not null && messageDto.MediaDtos.Count > 0)
             {
-                foreach (var userImageDto in messageDto.UserImageDtos)
+                foreach (var mediaDto in messageDto.MediaDtos)
                 {
                     InlineData inlineData = new()
                     {
-                        MimeType = userImageDto.Type == "image-file" ? userImageDto.ContentType : "",
-                        Data = userImageDto.Content
+                        MimeType = mediaDto.ContentType,
+                        Data = mediaDto.Data
                     };
 
                     InlineDataPart inlineDataPart = new()

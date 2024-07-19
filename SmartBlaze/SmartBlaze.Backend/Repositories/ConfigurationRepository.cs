@@ -68,7 +68,8 @@ public class ConfigurationRepository : AbstractRepository
             { "chatbotModel", chatbotConfigurationDto.ChatbotModel ?? ""},
             { "apiHost", chatbotConfigurationDto.ApiHost ?? ""},
             { "apiKey", chatbotConfigurationDto.ApiKey ?? ""},
-            { "selected", chatbotConfigurationDto.Selected ?? false}
+            { "selected", chatbotConfigurationDto.Selected },
+            { "textStreamDelay", chatbotConfigurationDto.TextStreamDelay }
         };
 
         await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatbotConfigurationCollectionId, 
@@ -88,7 +89,8 @@ public class ConfigurationRepository : AbstractRepository
             { "chatbotModel", chatbotConfigurationDto.ChatbotModel ?? ""},
             { "apiHost", chatbotConfigurationDto.ApiHost ?? ""},
             { "apiKey", chatbotConfigurationDto.ApiKey ?? ""},
-            { "selected", chatbotConfigurationDto.Selected ?? false}
+            { "selected", chatbotConfigurationDto.Selected},
+            { "textStreamDelay", chatbotConfigurationDto.TextStreamDelay }
         };
         
         await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatbotConfigurationCollectionId, 
@@ -151,7 +153,8 @@ public class ConfigurationRepository : AbstractRepository
             ChatbotModel = chatbotConfigurationDocument.Data["chatbotModel"].ToString(),
             ApiHost = chatbotConfigurationDocument.Data["apiHost"].ToString(),
             ApiKey = chatbotConfigurationDocument.Data["apiKey"].ToString(),
-            Selected = bool.Parse(chatbotConfigurationDocument.Data["selected"].ToString() ?? "false") 
+            Selected = bool.Parse(chatbotConfigurationDocument.Data["selected"].ToString() ?? "false"),
+            TextStreamDelay = int.Parse(chatbotConfigurationDocument.Data["textStreamDelay"].ToString() ?? "100")
         };
 
         return chatbotConfigurationDto;

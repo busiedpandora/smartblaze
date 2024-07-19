@@ -7,15 +7,17 @@ public class Chatbot
     private string _apihost;
     private string _apiKey;
     private string _model;
+    private int _textStreamDelay;
     
     
-    public Chatbot(string name, List<string> models, string apihost, string apiKey, string model)
+    public Chatbot(string name, List<string> models, string apihost, string apiKey, string model, int textStreamDelay)
     {
         _name = name;
         _models = models;
         _apihost = apihost;
         _apiKey = apiKey;
         _model = model;
+        _textStreamDelay = textStreamDelay;
     }
 
     public string Name => _name;
@@ -38,5 +40,11 @@ public class Chatbot
     {
         get => _model;
         set => _model = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    public int TextStreamDelay
+    {
+        get => _textStreamDelay;
+        set => _textStreamDelay = value;
     }
 }

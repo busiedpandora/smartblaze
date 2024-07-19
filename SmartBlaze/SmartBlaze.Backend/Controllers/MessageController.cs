@@ -73,7 +73,7 @@ public class MessageController : ControllerBase
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
 
-        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.Apihost is null ||
+        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.ApiHost is null ||
             chatSessionInfoDto.ApiKey is null)
         {
             return BadRequest(
@@ -89,7 +89,7 @@ public class MessageController : ControllerBase
         }
         
         string? content = await _chatbotService.GenerateTextInChatSession(chatbot, chatSessionDto,
-            chatSessionInfoDto.Messages, chatSessionInfoDto.Apihost, chatSessionInfoDto.ApiKey);
+            chatSessionInfoDto.Messages, chatSessionInfoDto.ApiHost, chatSessionInfoDto.ApiKey);
         
         if (content is null)
         {
@@ -125,7 +125,7 @@ public class MessageController : ControllerBase
             yield break;
         }
         
-        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.Apihost is null ||
+        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.ApiHost is null ||
             chatSessionInfoDto.ApiKey is null)
         {
             yield break;
@@ -141,7 +141,7 @@ public class MessageController : ControllerBase
         var output = new StringBuilder();
         
         await foreach (var chunk in _chatbotService.GenerateTextStreamInChatSession(chatbot, chatSessionDto, 
-                           chatSessionInfoDto.Messages, chatSessionInfoDto.Apihost, chatSessionInfoDto.ApiKey))
+                           chatSessionInfoDto.Messages, chatSessionInfoDto.ApiHost, chatSessionInfoDto.ApiKey))
         {
             output.Append(chunk);
             yield return chunk;

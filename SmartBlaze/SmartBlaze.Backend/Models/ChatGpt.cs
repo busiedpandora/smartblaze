@@ -289,6 +289,7 @@ public class ChatGpt : Chatbot
             ChatbotModel = "gpt-4o",
             ApiHost = "https://api.openai.com",
             ApiKey = "",
+            TextStreamDelay = 100,
             Selected = true
         };
     }

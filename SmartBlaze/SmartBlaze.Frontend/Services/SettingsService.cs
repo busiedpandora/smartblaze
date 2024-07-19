@@ -80,16 +80,17 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             
             SelectChatbot(chatbot);
 
-            var chatbotDto = new ChatbotDto()
+            var chatbotConfigurationDto = new ChatbotConfigurationDto()
             {
-                Name = chatbot.Name,
-                Model = chatbot.Model,
+                ChatbotName = chatbot.Name,
+                ChatbotModel = chatbot.Model,
                 ApiHost = chatbot.Apihost,
                 ApiKey = chatbot.ApiKey,
+                TextStreamDelay = chatbot.TextStreamDelay,
                 Selected = true,
             };
 
-            var chatbotConfigurationResponse = await HttpClient.PostAsJsonAsync("configuration/chatbot", chatbotDto);
+            var chatbotConfigurationResponse = await HttpClient.PostAsJsonAsync("configuration/chatbot", chatbotConfigurationDto);
 
             if (!chatbotConfigurationResponse.IsSuccessStatusCode)
             {
@@ -143,26 +144,30 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             return;
         }
 
-        var chatbotDtos = await HttpClient.GetFromJsonAsync<List<ChatbotDto>>("configuration/chatbot");
+        var chatbotConfigurationDtos = await HttpClient.GetFromJsonAsync<List<ChatbotConfigurationDto>>("configuration/chatbot");
 
-        if (chatbotDtos is null || chatbotDtos.Count == 0)
+        if (chatbotConfigurationDtos is null || chatbotConfigurationDtos.Count == 0)
         {
-            NotifyNavigateToErrorPage("Error occured while loading the chatbots", "No chatbot found");
+            NotifyNavigateToErrorPage("Error occured while loading the chatbot configurations", 
+                "No chatbot configuration found");
             return;
         }
 
         var chatbots = new List<Chatbot>();
         Chatbot? chatbotToSelect = null;
 
-        foreach (var chatbotDto in chatbotDtos)
+        foreach (var chatbotConfigurationDto in chatbotConfigurationDtos)
         {
-            if (chatbotDto.Name is not null && chatbotDto.Models is not null && chatbotDto.ApiHost is not null 
-                && chatbotDto.ApiKey is not null && chatbotDto.Model is not null)
+            if (chatbotConfigurationDto.ChatbotName is not null && chatbotConfigurationDto.Models is not null 
+                && chatbotConfigurationDto.ApiHost is not null && chatbotConfigurationDto.ApiKey is not null 
+                && chatbotConfigurationDto.ChatbotModel is not null)
             {
-                var chatbot = new Chatbot(chatbotDto.Name, chatbotDto.Models, chatbotDto.ApiHost, chatbotDto.ApiKey, chatbotDto.Model);
+                var chatbot = new Chatbot(chatbotConfigurationDto.ChatbotName, chatbotConfigurationDto.Models, 
+                    chatbotConfigurationDto.ApiHost, chatbotConfigurationDto.ApiKey, 
+                    chatbotConfigurationDto.ChatbotModel, chatbotConfigurationDto.TextStreamDelay);
                 chatbots.Add(chatbot);
 
-                if (chatbotDto.Selected is not null && chatbotDto.Selected == true)
+                if (chatbotConfigurationDto.Selected)
                 {
                     chatbotToSelect = chatbot;
                 }

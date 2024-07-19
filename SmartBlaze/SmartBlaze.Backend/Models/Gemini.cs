@@ -232,6 +232,7 @@ public class Gemini : Chatbot
             ChatbotModel = "gemini-1.5-pro",
             ApiHost = "https://generativelanguage.googleapis.com",
             ApiKey = "",
+            TextStreamDelay = 400,
             Selected = false
         };
     }

@@ -137,7 +137,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
     }
 
-    public async Task SendUserMessage(string text, List<ImageInput> imageInputs, string apiHost, string apiKey, bool textStream)
+    public async Task SendUserMessage(string text, List<ImageInput> imageInputs, Chatbot chatbot, bool textStream)
     {
         if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null)
         {
@@ -158,8 +158,9 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         var chatSessionInfoDto = new ChatSessionInfoDto()
         {
             Messages = _currentChatSessionMessages,
-            Apihost = apiHost,
-            ApiKey = apiKey
+            ApiHost = chatbot.Apihost,
+            ApiKey = chatbot.ApiKey,
+            TextStreamDelay = chatbot.TextStreamDelay
         };
         
         if (textStream)
@@ -433,7 +434,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
                     assistantEmptyMessageDto.Text += messageChunk;
                     NotifyRefreshView();
 
-                    await Task.Delay(100);
+                    await Task.Delay(chatSessionInfoDto.TextStreamDelay);
                 }
             }
     }

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace SmartBlaze.Backend.Dtos;
+namespace SmartBlaze.Frontend.Dtos;
 
 public class ChatbotConfigurationDto
 {

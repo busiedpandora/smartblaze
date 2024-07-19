@@ -178,8 +178,7 @@
             var imageInputs = _imageInputs;
             _imageInputs = new();
             
-            await _chatSessionStateService.SendUserMessage(text, imageInputs, chatbot.Apihost, 
-                chatbot.ApiKey, _settingsService.TextStream);
+            await _chatSessionStateService.SendUserMessage(text, imageInputs, chatbot, _settingsService.TextStream);
         }
     }
 

@@ -1,11 +1,10 @@
 using System.Text.Json;
-using Microsoft.AspNetCore.Components.Forms;
 using SmartBlaze.Frontend.Dtos;
 using SmartBlaze.Frontend.Models;
 
 namespace SmartBlaze.Frontend.Services;
 
-public class ChatStateService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
+public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
 {
     private List<ChatSessionDto>? _chatSessions;
     private ChatSessionDto? _currentChatSession;

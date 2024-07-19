@@ -3,13 +3,13 @@ using SmartBlaze.Frontend.Services;
 
 namespace SmartBlaze.Frontend.Tests.Services;
 
-[TestSubject(typeof(ChatStateService))]
-public class ChatStateServiceTest
+[TestSubject(typeof(ChatSessionStateService))]
+public class ChatSessionStateServiceTest
 {
-    private ChatStateService _chatStateService;
+    private ChatSessionStateService _chatSessionStateService;
 
 
-    public ChatStateServiceTest()
+    public ChatSessionStateServiceTest()
     {
         //_chatStateService = new ChatStateService();
     }

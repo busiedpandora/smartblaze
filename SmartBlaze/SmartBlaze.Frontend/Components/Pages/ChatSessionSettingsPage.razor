@@ -5,8 +5,8 @@
 @rendermode InteractiveServer
 
 @inject SettingsService _settingsService
-@inject ChatStateService _chatStateService
-@inject RedirectService _redirectService
+@inject ChatSessionStateService _chatSessionStateService
+@inject RedirectionService _redirectionService
 
 <PageTitle>Chat settings - SmartBlaze</PageTitle>
 
@@ -59,7 +59,7 @@
             _applicationStarted = true;
             
             _settingsService.RefreshView += ReloadComponentState;
-            _chatStateService.RefreshView += ReloadComponentState;
+            _chatSessionStateService.RefreshView += ReloadComponentState;
         }
         
         _chatSessionSettings.SystemInstruction = _settingsService.SystemInstruction ?? "";
@@ -77,13 +77,13 @@
     {
         _settingsService.CloseSettings();
         
-        if (_chatStateService.ChatSessions?.Count > 0)
+        if (_chatSessionStateService.ChatSessions?.Count > 0)
         {
-            await _chatStateService.SelectChatSession(_chatStateService.ChatSessions.ElementAt(0));
+            await _chatSessionStateService.SelectChatSession(_chatSessionStateService.ChatSessions.ElementAt(0));
         }
         else
         {
-            _redirectService.Url = "/welcome";
+            _redirectionService.Url = "/welcome";
         }
     }
     

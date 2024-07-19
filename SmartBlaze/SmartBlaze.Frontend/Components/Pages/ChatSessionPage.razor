@@ -5,40 +5,40 @@
 
 @rendermode InteractiveServer
 
-@inject ChatStateService _chatStateService
+@inject ChatSessionStateService _chatSessionStateService
 @inject SettingsService _settingsService
 
 <PageTitle>SmartBlaze</PageTitle>
 
 <div id="pageRow">
-    @if (_chatStateService.CurrentChatSession is not null)
+    @if (_chatSessionStateService.CurrentChatSession is not null)
     {
         <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/>
         <span id="pageTitle">
-            @_chatStateService.CurrentChatSession.Title
+            @_chatSessionStateService.CurrentChatSession.Title
         </span>
     }
 </div>
 
 <div id="conversationContainer">
-    @if (_chatStateService.CurrentChatSession is not null 
-         && !string.IsNullOrEmpty(_chatStateService.CurrentChatSession.SystemInstruction))
+    @if (_chatSessionStateService.CurrentChatSession is not null 
+         && !string.IsNullOrEmpty(_chatSessionStateService.CurrentChatSession.SystemInstruction))
     {
     <div class="d-flex">
         <img src="icons/gear-wide.svg" width="25" height="25" alt="system icon" title="system"/>
 
         <div class="ps-3 pe-3 pb-5 pt-1">
         <span>
-            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@_chatStateService.CurrentChatSession.SystemInstruction),
+            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@_chatSessionStateService.CurrentChatSession.SystemInstruction),
             "\r?\n|\r", "<br />"))
         </span>
         </div>
     </div>
     }
 
-    @if (_chatStateService.CurrentChatSessionMessages is not null)
+    @if (_chatSessionStateService.CurrentChatSessionMessages is not null)
     {
-    @foreach(var message in _chatStateService.CurrentChatSessionMessages)
+    @foreach(var message in _chatSessionStateService.CurrentChatSessionMessages)
     {
         <div class="d-flex">
             <div>
@@ -82,7 +82,7 @@
         }
     }
 
-    @if (_chatStateService.IsGeneratingResponse)
+    @if (_chatSessionStateService.IsGeneratingResponse)
     {
     <div class="d-flex">
         <div>
@@ -110,7 +110,7 @@
         {
             _applicationStarted = true;
             
-            _chatStateService.RefreshView += ReloadComponentState;
+            _chatSessionStateService.RefreshView += ReloadComponentState;
             _settingsService.RefreshView += ReloadComponentState;
         }
 

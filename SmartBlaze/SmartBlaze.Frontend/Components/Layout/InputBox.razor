@@ -2,12 +2,12 @@
 @using SmartBlaze.Frontend.Models
 @rendermode InteractiveServer
 
-@inject ChatStateService _chatStateService
+@inject ChatSessionStateService _chatSessionStateService
 @inject SettingsService _settingsService
 @inject IJSRuntime _jsRuntime
 
 
-@if(_chatStateService.CurrentChatSession is not null)
+@if(_chatSessionStateService.CurrentChatSession is not null)
 {
     <div class="d-flex justify-content-center">
         <div class="col-8">
@@ -73,7 +73,7 @@
                     </textarea>
                 </div>
                 <div class="col-1 px-0">
-                    @if (_chatStateService.CanUserInteract())
+                    @if (_chatSessionStateService.CanUserInteract())
                     {
                         <button id="sendButton" class="btn btn-light d-flex align-items-center justify-content-center"
                                 @onclick="OnSendMessageClicked">
@@ -133,7 +133,7 @@
         {
             _applicationStarted = true;
             
-            _chatStateService.RefreshView += ReloadComponentState;
+            _chatSessionStateService.RefreshView += ReloadComponentState;
             _settingsService.RefreshView += ReloadComponentState;
         }
         
@@ -157,9 +157,9 @@
             return;
         }
         
-        if (_chatStateService.CanUserInteract())
+        if (_chatSessionStateService.CanUserInteract())
         {
-            var chatbotName = _chatStateService.CurrentChatSession?.ChatbotName;
+            var chatbotName = _chatSessionStateService.CurrentChatSession?.ChatbotName;
 
             if (chatbotName is null)
             {
@@ -178,7 +178,7 @@
             var imageInputs = _imageInputs;
             _imageInputs = new();
             
-            await _chatStateService.SendUserMessage(text, imageInputs, chatbot.Apihost, 
+            await _chatSessionStateService.SendUserMessage(text, imageInputs, chatbot.Apihost, 
                 chatbot.ApiKey, _settingsService.TextStream);
         }
     }

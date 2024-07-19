@@ -14,8 +14,8 @@ builder.Services.AddHttpClient("_httpClient", client =>
     client.BaseAddress = new Uri(backendUrl);
 });
 
-builder.Services.AddSingleton<ChatStateService>();
-builder.Services.AddSingleton<RedirectService>();
+builder.Services.AddSingleton<ChatSessionStateService>();
+builder.Services.AddSingleton<RedirectionService>();
 builder.Services.AddSingleton<SettingsService>();
 
 var app = builder.Build();

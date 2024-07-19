@@ -1,8 +1,8 @@
 @rendermode InteractiveServer
 
 @inject NavigationManager _navigationManager
-@inject RedirectService _redirectService
-@inject ChatStateService _chatStateService
+@inject RedirectionService _redirectionService
+@inject ChatSessionStateService _chatSessionStateService
 @inject SettingsService _settingsService
 
 @code {
@@ -12,9 +12,9 @@
     {
         if (!_applicationStarted)
         {
-            _chatStateService.RefreshView += ReloadComponentState;
-            _chatStateService.NavigateToPage += UpdatePageUrl;
-            _chatStateService.NavigateToErrorPage += UpdateErrorInfo;
+            _chatSessionStateService.RefreshView += ReloadComponentState;
+            _chatSessionStateService.NavigateToPage += UpdatePageUrl;
+            _chatSessionStateService.NavigateToErrorPage += UpdateErrorInfo;
             
             _settingsService.RefreshView += ReloadComponentState;
             _settingsService.NavigateToPage += UpdatePageUrl;
@@ -31,7 +31,7 @@
             _applicationStarted = true;
             
             await _settingsService.SetUpConfiguration();
-            await _chatStateService.LoadChats();
+            await _chatSessionStateService.LoadChats();
         }
         
         if (_navigationManager.Uri.EndsWith("/error"))
@@ -39,9 +39,9 @@
             return;
         }
 
-        if (!_navigationManager.Uri.EndsWith(_redirectService.Url))
+        if (!_navigationManager.Uri.EndsWith(_redirectionService.Url))
         {
-            _navigationManager.NavigateTo(_redirectService.Url);
+            _navigationManager.NavigateTo(_redirectionService.Url);
         }
         
         await base.OnAfterRenderAsync(firstRender);
@@ -54,18 +54,18 @@
     
     private void UpdateErrorInfo(string errorTitle, string errorMessage)
     {
-        _redirectService.Url = "/error";
-        _redirectService.ErrorTitle = errorTitle;
-        _redirectService.ErrorMessage = errorMessage;
+        _redirectionService.Url = "/error";
+        _redirectionService.ErrorTitle = errorTitle;
+        _redirectionService.ErrorMessage = errorMessage;
     }
 
     private void UpdatePageUrl(string url)
     {
-        if (_redirectService.Url == "/error")
+        if (_redirectionService.Url == "/error")
         {
             return;
         }
 
-        _redirectService.Url = url;
+        _redirectionService.Url = url;
     }
 }

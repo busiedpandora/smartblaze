@@ -1,6 +1,6 @@
 namespace SmartBlaze.Frontend.Services;
 
-public class RedirectService
+public class RedirectionService
 {
     private string _url = "/";
     private string _errorTitle = string.Empty;

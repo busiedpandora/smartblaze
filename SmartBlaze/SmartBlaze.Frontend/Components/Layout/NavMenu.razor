@@ -2,8 +2,8 @@
 @rendermode InteractiveServer
 
 @inject NavigationManager _navigationManager
-@inject ChatStateService _chatStateService
-@inject RedirectService _redirectService
+@inject ChatSessionStateService _chatSessionStateService
+@inject RedirectionService _redirectionService
 @inject SettingsService _settingsService
 
 <div class="top-row ps-3 navbar navbar-dark">
@@ -16,7 +16,7 @@
 
 <div id="chatList" class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
-        @if (_chatStateService.ChatSessions is null)
+        @if (_chatSessionStateService.ChatSessions is null)
         {
             <div class="nav-item px-3">
                 <NavLink class="nav-link">
@@ -26,7 +26,7 @@
         }
         else
         {
-            @foreach (var chatSession in _chatStateService.ChatSessions)
+            @foreach (var chatSession in _chatSessionStateService.ChatSessions)
             {
                 <div class="nav-item px-3">
                     
@@ -69,7 +69,7 @@
         {
             _applicationStarted = true;
             
-            _chatStateService.RefreshView += ReloadComponentState;
+            _chatSessionStateService.RefreshView += ReloadComponentState;
             _settingsService.RefreshView += ReloadComponentState;
         }
         
@@ -88,7 +88,7 @@
             _settingsService.CloseSettings();
         }
         
-        await _chatStateService.SelectChatSession(chatSession);
+        await _chatSessionStateService.SelectChatSession(chatSession);
     }
 
     private async void OnNewChatClicked()
@@ -100,14 +100,14 @@
                 _settingsService.CloseSettings();
             }
         
-            await _chatStateService.CreateNewChatSession("Undefined", _settingsService.SystemInstruction,
+            await _chatSessionStateService.CreateNewChatSession("Undefined", _settingsService.SystemInstruction,
                 _settingsService.ChatbotSelected.Name, _settingsService.ChatbotSelected.Model);
         }
     }
 
     private void OnSettingsClicked()
     {
-        _chatStateService.DeselectCurrentChatSession();
+        _chatSessionStateService.DeselectCurrentChatSession();
         
         _settingsService.OpenChatbotSettings();
     }

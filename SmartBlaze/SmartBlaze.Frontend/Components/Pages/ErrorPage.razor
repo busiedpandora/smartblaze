@@ -1,6 +1,6 @@
 @page "/error"
 
-@inject RedirectService _redirectService
+@inject RedirectionService _redirectionService
 
 <PageTitle>Error</PageTitle>
 
@@ -11,8 +11,8 @@
 </div>
 
 <div id="errorPageContainer">
-    <h2 class="text-danger">@_redirectService.ErrorTitle</h2>
-    <p class="text-danger">@_redirectService.ErrorMessage</p>
+    <h2 class="text-danger">@_redirectionService.ErrorTitle</h2>
+    <p class="text-danger">@_redirectionService.ErrorMessage</p>
 </div>
 
 @code {

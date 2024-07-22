@@ -68,9 +68,14 @@ public class MessageController : ControllerBase
             return NotFound($"Chat session with id {id} not found");
         }
 
-        if (chatSessionDto.ChatbotName is null)
+        if (chatSessionInfoDto.ChatbotName is null)
         {
             return NotFound($"Chat session with id {id} has no chatbot specified");
+        }
+
+        if (chatSessionInfoDto.ChatbotModel is null)
+        {
+            return BadRequest($"No model specified for chatbot {chatSessionInfoDto.ChatbotName}");
         }
 
         if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.ApiHost is null ||
@@ -81,15 +86,14 @@ public class MessageController : ControllerBase
                 $"for generating the assistant message");
         }
 
-        Chatbot? chatbot = _chatbotService.GetChatbotByName(chatSessionDto.ChatbotName);
+        Chatbot? chatbot = _chatbotService.GetChatbotByName(chatSessionInfoDto.ChatbotName);
         
         if (chatbot is null)
         {
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
         
-        string? content = await _chatbotService.GenerateTextInChatSession(chatbot, chatSessionDto,
-            chatSessionInfoDto.Messages, chatSessionInfoDto.ApiHost, chatSessionInfoDto.ApiKey);
+        string? content = await _chatbotService.GenerateTextInChatSession(chatbot, chatSessionInfoDto);
         
         if (content is null)
         {
@@ -120,7 +124,12 @@ public class MessageController : ControllerBase
             yield break;
         }
 
-        if (chatSessionDto.ChatbotName is null)
+        if (chatSessionInfoDto.ChatbotName is null)
+        {
+            yield break;
+        }
+        
+        if (chatSessionInfoDto.ChatbotModel is null)
         {
             yield break;
         }
@@ -131,7 +140,7 @@ public class MessageController : ControllerBase
             yield break;
         }
 
-        Chatbot? chatbot = _chatbotService.GetChatbotByName(chatSessionDto.ChatbotName);
+        Chatbot? chatbot = _chatbotService.GetChatbotByName(chatSessionInfoDto.ChatbotName);
         
         if (chatbot is null)
         {
@@ -140,8 +149,7 @@ public class MessageController : ControllerBase
         
         var output = new StringBuilder();
         
-        await foreach (var chunk in _chatbotService.GenerateTextStreamInChatSession(chatbot, chatSessionDto, 
-                           chatSessionInfoDto.Messages, chatSessionInfoDto.ApiHost, chatSessionInfoDto.ApiKey))
+        await foreach (var chunk in _chatbotService.GenerateTextStreamInChatSession(chatbot, chatSessionInfoDto))
         {
             output.Append(chunk);
             yield return chunk;

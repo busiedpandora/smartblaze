@@ -11,12 +11,11 @@ public class Gemini : Chatbot
     {
     }
 
-    public override async Task<string?> GenerateText(ChatSessionDto chatSessionDto, 
-        List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient)
+    public override async Task<string?> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
     {
         var contents = new List<RequestContent>();
 
-        foreach (var messageDto in messageDtos)
+        foreach (var messageDto in chatSessionInfoDto.Messages)
         {
             List<Part> parts = new();
             
@@ -67,11 +66,11 @@ public class Gemini : Chatbot
             Contents = contents
         };
 
-        if (!String.IsNullOrEmpty(chatSessionDto.SystemInstruction))
+        if (!String.IsNullOrEmpty(chatSessionInfoDto.SystemInstruction))
         {
             TextPart textPart = new()
             {
-                Text = chatSessionDto.SystemInstruction
+                Text = chatSessionInfoDto.SystemInstruction
             };
             
             SystemInstruction systemInstruction = new SystemInstruction()
@@ -87,7 +86,8 @@ public class Gemini : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{apiHost}/v1beta/models/{chatSessionDto.ChatbotModel}:generateContent?key={apiKey}"),
+            RequestUri = new Uri($"{chatSessionInfoDto.ApiHost}/v1beta/models/" +
+                                 $"{chatSessionInfoDto.ChatbotModel}:generateContent?key={chatSessionInfoDto.ApiKey}"),
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
         
@@ -114,12 +114,12 @@ public class Gemini : Chatbot
         return null;
     }
 
-    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionDto chatSessionDto, 
-        List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient)
+    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto,
+        HttpClient httpClient)
     {
         var contents = new List<RequestContent>();
 
-        foreach (var messageDto in messageDtos)
+        foreach (var messageDto in chatSessionInfoDto.Messages)
         {
             List<Part> parts = new();
             
@@ -170,11 +170,11 @@ public class Gemini : Chatbot
             Contents = contents
         };
 
-        if (!String.IsNullOrEmpty(chatSessionDto.SystemInstruction))
+        if (!String.IsNullOrEmpty(chatSessionInfoDto.SystemInstruction))
         {
             TextPart textPart = new()
             {
-                Text = chatSessionDto.SystemInstruction
+                Text = chatSessionInfoDto.SystemInstruction
             };
             
             SystemInstruction systemInstruction = new SystemInstruction()
@@ -190,7 +190,8 @@ public class Gemini : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{apiHost}/v1beta/models/{chatSessionDto.ChatbotModel}:streamGenerateContent?key={apiKey}"),
+            RequestUri = new Uri($"{chatSessionInfoDto.ApiHost}/v1beta/models/" +
+                                 $"{chatSessionInfoDto.ChatbotModel}:streamGenerateContent?key={chatSessionInfoDto.ApiKey}"),
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
         

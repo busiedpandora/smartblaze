@@ -137,7 +137,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
     }
 
-    public async Task SendUserMessage(string text, List<ImageInput> imageInputs, Chatbot chatbot, bool textStream)
+    public async Task SendUserMessage(string text, List<ImageInput> imageInputs, Chatbot chatbot, string systemInstruction, bool textStream)
     {
         if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null)
         {
@@ -158,8 +158,11 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         var chatSessionInfoDto = new ChatSessionInfoDto()
         {
             Messages = _currentChatSessionMessages,
+            ChatbotName = chatbot.Name,
+            ChatbotModel = chatbot.Model,
             ApiHost = chatbot.Apihost,
             ApiKey = chatbot.ApiKey,
+            SystemInstruction = systemInstruction,
             TextStreamDelay = chatbot.TextStreamDelay
         };
         
@@ -177,7 +180,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         NotifyRefreshView();
     }
 
-    public async Task CreateNewChatSession(string title, string systemInstruction, string chatbotName, string chatbotModel)
+    public async Task CreateNewChatSession(string title)
     {
         if (!CanUserInteract())
         {
@@ -194,9 +197,6 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         
         ChatSessionDto? chatSessionDto = new ChatSessionDto();
         chatSessionDto.Title = title;
-        chatSessionDto.SystemInstruction = systemInstruction;
-        chatSessionDto.ChatbotName = chatbotName;
-        chatSessionDto.ChatbotModel = chatbotModel;
         
         var newChatSessionResponse = await HttpClient.PostAsJsonAsync("chat-sessions/new", chatSessionDto);
         var newChatSessionResponseContent = await newChatSessionResponse.Content.ReadAsStringAsync();

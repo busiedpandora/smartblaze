@@ -27,16 +27,14 @@ public class ChatbotService
         return _chatbots.Find(c => c.Name == name);
     }
 
-    public async Task<string?> GenerateTextInChatSession(Chatbot chatbot, ChatSessionDto chatSessionDto,
-        List<MessageDto> messageDtos, string apiHost, string apiKey)
+    public async Task<string?> GenerateTextInChatSession(Chatbot chatbot, ChatSessionInfoDto chatSessionInfoDto)
     {
-        return await chatbot.GenerateText(chatSessionDto, messageDtos, apiHost, apiKey, _httpClient);
+        return await chatbot.GenerateText(chatSessionInfoDto, _httpClient);
     }
     
-    public async IAsyncEnumerable<string> GenerateTextStreamInChatSession(Chatbot chatbot, ChatSessionDto chatSessionDto,
-        List<MessageDto> messageDtos, string apiHost, string apiKey)
+    public async IAsyncEnumerable<string> GenerateTextStreamInChatSession(Chatbot chatbot, ChatSessionInfoDto chatSessionInfoDto)
     {
-        await foreach (var chunk in chatbot.GenerateTextStreamEnabled(chatSessionDto, messageDtos, apiHost, apiKey, _httpClient))
+        await foreach (var chunk in chatbot.GenerateTextStreamEnabled(chatSessionInfoDto, _httpClient))
         {
             yield return chunk;
         }

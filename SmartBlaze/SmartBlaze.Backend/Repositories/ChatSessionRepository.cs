@@ -33,9 +33,6 @@ public class ChatSessionRepository : AbstractRepository
         {
             {"title", chatSessionDto.Title ?? ""},
             {"creationDate", chatSessionDto.CreationDate ?? DateTime.MinValue},
-            {"chatbotName", chatSessionDto.ChatbotName ?? ""},
-            {"chatbotModel", chatSessionDto.ChatbotModel ?? ""},
-            {"systemInstruction", chatSessionDto.SystemInstruction ?? ""}
         };
         
         var csd = await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatSessionCollectionId, 
@@ -50,9 +47,6 @@ public class ChatSessionRepository : AbstractRepository
         {
             {"title", chatSessionDto.Title ?? ""},
             {"creationDate", chatSessionDto.CreationDate ?? DateTime.MinValue},
-            {"chatbotName", chatSessionDto.ChatbotName ?? ""},
-            {"chatbotModel", chatSessionDto.ChatbotModel ?? ""},
-            {"systemInstruction", chatSessionDto.SystemInstruction ?? ""}
         };
         
         var csd = await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatSessionCollectionId, 
@@ -69,9 +63,6 @@ public class ChatSessionRepository : AbstractRepository
             Title = chatSessionDocument.Data["title"].ToString(),
             CreationDate = DateTime.Parse(chatSessionDocument.Data["creationDate"].ToString() 
                                           ?? DateTime.MinValue.ToString(CultureInfo.InvariantCulture)),
-            ChatbotName = chatSessionDocument.Data["chatbotName"].ToString(),
-            ChatbotModel = chatSessionDocument.Data["chatbotModel"].ToString(),
-            SystemInstruction = chatSessionDocument.Data["systemInstruction"].ToString()
         };
 
         return chatSessionDto;

@@ -22,14 +22,14 @@
 
 <div id="conversationContainer">
     @if (_chatSessionStateService.CurrentChatSession is not null 
-         && !string.IsNullOrEmpty(_chatSessionStateService.CurrentChatSession.SystemInstruction))
+         && !string.IsNullOrEmpty(_settingsService.SystemInstruction))
     {
     <div class="d-flex">
         <img src="icons/gear-wide.svg" width="25" height="25" alt="system icon" title="system"/>
 
         <div class="ps-3 pe-3 pb-5 pt-1">
         <span>
-            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@_chatSessionStateService.CurrentChatSession.SystemInstruction),
+            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(_settingsService.SystemInstruction),
             "\r?\n|\r", "<br />"))
         </span>
         </div>

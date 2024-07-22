@@ -18,11 +18,10 @@ public abstract class Chatbot
     
     public List<string> Models => _models;
 
-    public abstract Task<string?> GenerateText(ChatSessionDto chatSessionDto, 
-        List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient);
+    public abstract Task<string?> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient);
     
-    public abstract IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionDto chatSessionDto, 
-        List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient);
+    public abstract IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto, 
+        HttpClient httpClient);
 
     public abstract ChatbotConfigurationDto GetDefaultConfiguration();
 }

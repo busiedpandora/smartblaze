@@ -13,13 +13,4 @@ public class ChatSessionDto
     
     [JsonPropertyName("creationDate")]
     public DateTime? CreationDate { get; set; }
-    
-    [JsonPropertyName("chatbotName")]
-    public string? ChatbotName { get; set; }
-    
-    [JsonPropertyName("chatbotModel")]
-    public string? ChatbotModel { get; set; }
-    
-    [JsonPropertyName("systemInstruction")]
-    public string? SystemInstruction { get; set; }
 }

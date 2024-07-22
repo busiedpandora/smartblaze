@@ -27,15 +27,12 @@ public class ChatSessionService
         return chatSessionDto;
     }
 
-    public ChatSessionDto CreateNewChatSession(string title, Chatbot chatbot, string chatbotModel, string systemInstruction)
+    public ChatSessionDto CreateNewChatSession(string title)
     {
         return new ChatSessionDto()
         {
             Title = title,
             CreationDate = DateTime.Now,
-            ChatbotName = chatbot.Name,
-            ChatbotModel = chatbotModel,
-            SystemInstruction = systemInstruction
         };
     }
 

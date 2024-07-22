@@ -11,12 +11,11 @@ public class ChatGpt : Chatbot
     {
     }
 
-    public override async Task<string?> GenerateText(ChatSessionDto chatSessionDto, 
-        List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient)
+    public override async Task<string?> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
     { 
         List<Message> messages = new();
         
-        foreach (var messageDto in messageDtos)
+        foreach (var messageDto in chatSessionInfoDto.Messages)
         {
             if (messageDto.Role == "assistant")
             {
@@ -79,12 +78,12 @@ public class ChatGpt : Chatbot
             }
         }
 
-        if (!String.IsNullOrEmpty(chatSessionDto.SystemInstruction))
+        if (!String.IsNullOrEmpty(chatSessionInfoDto.SystemInstruction))
         {
             TextMessage systemInstructionMessage = new()
             {
                 Role = "system",
-                Contents = chatSessionDto.SystemInstruction
+                Contents = chatSessionInfoDto.SystemInstruction
             };
 
             messages.Insert(0, systemInstructionMessage);
@@ -92,7 +91,7 @@ public class ChatGpt : Chatbot
 
         var chatRequest = new ChatRequest
         {
-            Model = chatSessionDto.ChatbotModel,
+            Model = chatSessionInfoDto.ChatbotModel,
             Messages = (object[]) messages.ToArray(),
             Stream = false
         };
@@ -107,10 +106,10 @@ public class ChatGpt : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{apiHost}/v1/chat/completions"),
+            RequestUri = new Uri($"{chatSessionInfoDto.ApiHost}/v1/chat/completions"),
             Headers =
             {
-                { "Authorization", $"Bearer {apiKey}" },
+                { "Authorization", $"Bearer {chatSessionInfoDto.ApiKey}" },
             },
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
@@ -138,12 +137,12 @@ public class ChatGpt : Chatbot
         return null;
     }
 
-    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionDto chatSessionDto, 
-        List<MessageDto> messageDtos, string apiHost, string apiKey, HttpClient httpClient)
+    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto, 
+        HttpClient httpClient)
     {
         List<Message> messages = new();
         
-        foreach (var messageDto in messageDtos)
+        foreach (var messageDto in chatSessionInfoDto.Messages)
         {
             if (messageDto.Role == "assistant")
             {
@@ -205,12 +204,12 @@ public class ChatGpt : Chatbot
             }
         }
         
-        if (!String.IsNullOrEmpty(chatSessionDto.SystemInstruction))
+        if (!String.IsNullOrEmpty(chatSessionInfoDto.SystemInstruction))
         {
             TextMessage systemInstructionMessage = new()
             {
                 Role = "system",
-                Contents = chatSessionDto.SystemInstruction
+                Contents = chatSessionInfoDto.SystemInstruction
             };
 
             messages.Insert(0, systemInstructionMessage);
@@ -218,7 +217,7 @@ public class ChatGpt : Chatbot
 
         var chatRequest = new ChatRequest
         {
-            Model = chatSessionDto.ChatbotModel,
+            Model = chatSessionInfoDto.ChatbotModel,
             Messages = (object[]) messages.ToArray(),
             Stream = true
         };
@@ -233,10 +232,10 @@ public class ChatGpt : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{apiHost}/v1/chat/completions"),
+            RequestUri = new Uri($"{chatSessionInfoDto.ApiHost}/v1/chat/completions"),
             Headers =
             {
-                { "Authorization", $"Bearer {apiKey}" },
+                { "Authorization", $"Bearer {chatSessionInfoDto.ApiKey}" },
             },
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };

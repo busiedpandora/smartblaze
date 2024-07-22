@@ -10,13 +10,11 @@ namespace SmartBlaze.Backend.Controllers;
 public class ChatSessionController : ControllerBase
 {
     private ChatSessionService _chatSessionService;
-    private ChatbotService _chatbotService;
 
 
-    public ChatSessionController(ChatSessionService chatSessionService, ChatbotService chatbotService)
+    public ChatSessionController(ChatSessionService chatSessionService)
     {
         _chatSessionService = chatSessionService;
-        _chatbotService = chatbotService;
     }
 
     [HttpGet("")]
@@ -52,30 +50,8 @@ public class ChatSessionController : ControllerBase
         {
             return BadRequest("Chat session not specified correctly");
         }
-
-        if (chatSessionDto.ChatbotName is null)
-        {
-            return BadRequest("No chatbot specified for the chat session");
-        }
-
-        string chatbotName = chatSessionDto.ChatbotName;
-
-        Chatbot? chatbot = _chatbotService.GetChatbotByName(chatbotName);
-
-        if (chatbot is null)
-        {
-            return NotFound($"Chatbot with name {chatbotName} not found");
-        }
-
-        string? chatbotModel = chatSessionDto.ChatbotModel;
-
-        if (chatbotModel is null || !chatbot.Models.Contains(chatbotModel))
-        {
-            return NotFound($"Unknown model {chatbotModel ?? ""} for chatbot {chatbot.Name}");
-        }
         
-        chatSessionDto = _chatSessionService.CreateNewChatSession(chatSessionDto.Title, chatbot, chatbotModel,
-            chatSessionDto.SystemInstruction ?? "");
+        chatSessionDto = _chatSessionService.CreateNewChatSession(chatSessionDto.Title);
         chatSessionDto = await _chatSessionService.AddChatSession(chatSessionDto);
         
         return Ok(chatSessionDto);

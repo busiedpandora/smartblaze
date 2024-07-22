@@ -159,14 +159,8 @@
         
         if (_chatSessionStateService.CanUserInteract())
         {
-            var chatbotName = _chatSessionStateService.CurrentChatSession?.ChatbotName;
 
-            if (chatbotName is null)
-            {
-                return;
-            }
-
-            var chatbot = _settingsService.GetChatbotByName(chatbotName);
+            var chatbot = _settingsService.ChatbotSelected;
 
             if (chatbot is null)
             {
@@ -178,7 +172,8 @@
             var imageInputs = _imageInputs;
             _imageInputs = new();
             
-            await _chatSessionStateService.SendUserMessage(text, imageInputs, chatbot, _settingsService.TextStream);
+            await _chatSessionStateService.SendUserMessage(text, imageInputs, chatbot, 
+                _settingsService.SystemInstruction, _settingsService.TextStream);
         }
     }
 

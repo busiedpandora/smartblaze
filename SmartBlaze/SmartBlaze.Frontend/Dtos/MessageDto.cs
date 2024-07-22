@@ -15,7 +15,14 @@ public class MessageDto
 
     [JsonPropertyName("medias")]
     public List<MediaDto>? MediaDtos { get; set; }
+    
+    [JsonPropertyName("chatbotName")]
+    public string? ChatbotName { get; set; }
+    
+    [JsonPropertyName("chatbotModel")]
+    public string? ChatbotModel { get; set; }
 
+    
     public static MessageDto ToMessageDto(string? content, string? role, DateTime? creationDate)
     {
         MessageDto messageDto = new MessageDto()

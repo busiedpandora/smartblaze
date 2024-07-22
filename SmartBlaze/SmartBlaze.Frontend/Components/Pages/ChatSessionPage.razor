@@ -53,11 +53,22 @@
                 }
             </div>
             <div class="ps-3 pe-3 pb-5 pt-1">
-                <span>
-                    @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@message.Text ?? ""),
-                        "\r?\n|\r", "<br />"))
-                </span>
+                <div>
+                    <span>
+                        @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@message.Text ?? ""),
+                            "\r?\n|\r", "<br />"))
+                    </span>
+                </div>
+                <div>
+                    @if (!string.IsNullOrEmpty(message.ChatbotName) && !string.IsNullOrEmpty(message.ChatbotModel))
+                    {
+                        <span class="text-secondary chatbot-info">@message.ChatbotName</span>
+                        <span>  -  </span>
+                        <span class="text-secondary chatbot-info">@message.ChatbotModel</span>
+                    }
+                </div>
             </div>
+            
         </div>
         
         @if(message.MediaDtos is not null)

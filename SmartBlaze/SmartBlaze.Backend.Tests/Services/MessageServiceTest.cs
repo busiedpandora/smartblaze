@@ -28,8 +28,10 @@ public class MessageServiceTest
     [Fact]
     public void CreateNewAssistantMessage()
     {
-        MessageDto message = _messageService.CreateNewAssistantMessage("hello");
+        MessageDto message = _messageService.CreateNewAssistantMessage("hello", "ChatGPT", "gpt-4o");
         Assert.Equal("hello", message.Text);
         Assert.Equal(Role.Assistant, message.Role);
+        Assert.Equal("ChatGPT", message.ChatbotName);
+        Assert.Equal("gpt-4o", message.ChatbotModel);
     }
 }

@@ -381,7 +381,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         var assistantEmptyMessageResponse = await 
                 HttpClient.PostAsJsonAsync(
                 $"chat-session/{_currentChatSession.Id}/new-assistant-empty-message", 
-                _currentChatSessionMessages);
+                chatSessionInfoDto);
             var assistantEmptyMessageResponseContent = await assistantEmptyMessageResponse.Content.ReadAsStringAsync();
             
             if (!assistantEmptyMessageResponse.IsSuccessStatusCode)

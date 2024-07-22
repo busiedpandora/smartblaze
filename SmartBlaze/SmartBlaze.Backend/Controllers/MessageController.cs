@@ -100,16 +100,28 @@ public class MessageController : ControllerBase
             return Problem("Problem occured while generating the assistant message");
         }
 
-        MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage(content);
+        MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage(content, 
+            chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel);
         await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
 
         return Ok(assistantMessageDto);
     }
     
     [HttpPost("new-assistant-empty-message")]
-    public ActionResult<MessageDto> GetNewAssistantMessageWithEmptyContent(string id)
+    public ActionResult<MessageDto> GetNewAssistantMessageWithEmptyContent(string id, [FromBody] ChatSessionInfoDto chatSessionInfoDto)
     {
-        MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage("");
+        if (chatSessionInfoDto.ChatbotName is null)
+        {
+            return NotFound($"Chat session with id {id} has no chatbot specified");
+        }
+
+        if (chatSessionInfoDto.ChatbotModel is null)
+        {
+            return BadRequest($"No model specified for chatbot {chatSessionInfoDto.ChatbotName}");
+        }
+        
+        MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage("", 
+            chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel);
 
         return Ok(assistantMessageDto);
     }
@@ -155,7 +167,8 @@ public class MessageController : ControllerBase
             yield return chunk;
         }
 
-        MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage(output.ToString());
+        MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage(output.ToString(), 
+            chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel);
         await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
     }
 }

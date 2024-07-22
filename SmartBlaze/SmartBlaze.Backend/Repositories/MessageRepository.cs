@@ -40,6 +40,8 @@ public class MessageRepository : AbstractRepository
                {"text", messageDto.Text},
                {"role", messageDto.Role},
                {"creationDate", messageDto.CreationDate},
+               {"chatbotName", messageDto.ChatbotName ?? ""},
+               {"chatbotModel", messageDto.ChatbotModel ?? ""},
                {"chatSession", chatSessionDocument.Id}
           };
 
@@ -69,7 +71,9 @@ public class MessageRepository : AbstractRepository
           {
                Text = messageDocument.Data["text"].ToString(),
                Role = messageDocument.Data["role"].ToString(),
-               CreationDate = DateTime.Parse(messageDocument.Data["creationDate"].ToString() ?? "")
+               CreationDate = DateTime.Parse(messageDocument.Data["creationDate"].ToString() ?? ""),
+               ChatbotName = messageDocument.Data["chatbotName"].ToString(),
+               ChatbotModel = messageDocument.Data["chatbotModel"].ToString()
           };
 
           if (mediaDocuments.Count > 0)

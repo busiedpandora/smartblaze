@@ -21,4 +21,7 @@ public class ChatSessionInfoDto
     
     [JsonPropertyName("systemInstruction")]
     public string? SystemInstruction { get; set; }
+    
+    [JsonPropertyName("temperature")]
+    public float Temperature { get; set; }
 }

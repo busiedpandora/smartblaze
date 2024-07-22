@@ -69,7 +69,10 @@ public class ConfigurationRepository : AbstractRepository
             { "apiHost", chatbotConfigurationDto.ApiHost ?? ""},
             { "apiKey", chatbotConfigurationDto.ApiKey ?? ""},
             { "selected", chatbotConfigurationDto.Selected },
-            { "textStreamDelay", chatbotConfigurationDto.TextStreamDelay }
+            { "textStreamDelay", chatbotConfigurationDto.TextStreamDelay },
+            { "temperature" , chatbotConfigurationDto.Temperature },
+            { "minTemperature", chatbotConfigurationDto.MinTemperature },
+            { "maxTemperature", chatbotConfigurationDto.MaxTemperature }
         };
 
         await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatbotConfigurationCollectionId, 
@@ -90,7 +93,10 @@ public class ConfigurationRepository : AbstractRepository
             { "apiHost", chatbotConfigurationDto.ApiHost ?? ""},
             { "apiKey", chatbotConfigurationDto.ApiKey ?? ""},
             { "selected", chatbotConfigurationDto.Selected},
-            { "textStreamDelay", chatbotConfigurationDto.TextStreamDelay }
+            { "textStreamDelay", chatbotConfigurationDto.TextStreamDelay },
+            { "temperature" , chatbotConfigurationDto.Temperature },
+            { "minTemperature", chatbotConfigurationDto.MinTemperature },
+            { "maxTemperature", chatbotConfigurationDto.MaxTemperature }
         };
         
         await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatbotConfigurationCollectionId, 
@@ -154,7 +160,10 @@ public class ConfigurationRepository : AbstractRepository
             ApiHost = chatbotConfigurationDocument.Data["apiHost"].ToString(),
             ApiKey = chatbotConfigurationDocument.Data["apiKey"].ToString(),
             Selected = bool.Parse(chatbotConfigurationDocument.Data["selected"].ToString() ?? "false"),
-            TextStreamDelay = int.Parse(chatbotConfigurationDocument.Data["textStreamDelay"].ToString() ?? "100")
+            TextStreamDelay = int.Parse(chatbotConfigurationDocument.Data["textStreamDelay"].ToString() ?? "100"),
+            Temperature = float.Parse(chatbotConfigurationDocument.Data["temperature"].ToString() ?? "0.0"),
+            MinTemperature = float.Parse(chatbotConfigurationDocument.Data["minTemperature"].ToString() ?? "0.0"),
+            MaxTemperature = float.Parse(chatbotConfigurationDocument.Data["maxTemperature"].ToString() ?? "0.0")
         };
 
         return chatbotConfigurationDto;

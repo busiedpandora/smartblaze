@@ -163,6 +163,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             ApiHost = chatbot.Apihost,
             ApiKey = chatbot.ApiKey,
             SystemInstruction = systemInstruction,
+            Temperature = chatbot.Temperature,
             TextStreamDelay = chatbot.TextStreamDelay
         };
         

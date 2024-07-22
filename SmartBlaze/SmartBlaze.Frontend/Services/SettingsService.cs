@@ -77,6 +77,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             chatbot.Model = chatbotSettings.ChatbotModel;
             chatbot.Apihost = chatbotSettings.ApiHost;
             chatbot.ApiKey = chatbotSettings.ApiKey;
+            chatbot.Temperature = (float)Math.Round(chatbotSettings.Temperature, 1);
             
             SelectChatbot(chatbot);
 
@@ -87,6 +88,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
                 ApiHost = chatbot.Apihost,
                 ApiKey = chatbot.ApiKey,
                 TextStreamDelay = chatbot.TextStreamDelay,
+                Temperature = chatbot.Temperature,
                 Selected = true,
             };
 
@@ -162,9 +164,14 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
                 && chatbotConfigurationDto.ApiHost is not null && chatbotConfigurationDto.ApiKey is not null 
                 && chatbotConfigurationDto.ChatbotModel is not null)
             {
-                var chatbot = new Chatbot(chatbotConfigurationDto.ChatbotName, chatbotConfigurationDto.Models, 
-                    chatbotConfigurationDto.ApiHost, chatbotConfigurationDto.ApiKey, 
-                    chatbotConfigurationDto.ChatbotModel, chatbotConfigurationDto.TextStreamDelay);
+                var chatbot = new Chatbot(chatbotConfigurationDto.ChatbotName, chatbotConfigurationDto.Models,
+                    chatbotConfigurationDto.MinTemperature, chatbotConfigurationDto.MaxTemperature);
+                chatbot.Apihost = chatbotConfigurationDto.ApiHost;
+                chatbot.ApiKey = chatbotConfigurationDto.ApiKey;
+                chatbot.Model = chatbotConfigurationDto.ChatbotModel;
+                chatbot.TextStreamDelay = chatbotConfigurationDto.TextStreamDelay;
+                chatbot.Temperature = chatbotConfigurationDto.Temperature;
+                
                 chatbots.Add(chatbot);
 
                 if (chatbotConfigurationDto.Selected)

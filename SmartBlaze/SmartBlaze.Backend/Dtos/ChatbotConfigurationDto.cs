@@ -27,4 +27,13 @@ public class ChatbotConfigurationDto
     
     [JsonPropertyName("models")]
     public List<string>? Models { get; set; }
+    
+    [JsonPropertyName("temperature")]
+    public float Temperature { get; set; }
+    
+    [JsonPropertyName("minTemperature")]
+    public float MinTemperature { get; set; }
+    
+    [JsonPropertyName("maxTemperature")]
+    public float MaxTemperature { get; set; }
 }

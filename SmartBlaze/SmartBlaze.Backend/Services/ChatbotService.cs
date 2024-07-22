@@ -45,7 +45,7 @@ public class ChatbotService
         var chatGpt = new ChatGpt("ChatGPT", ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]);
         _chatbots.Add(chatGpt);
         
-        var gemini = new Gemini("Google Gemini", ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"]);
+        var gemini = new Gemini("Google Gemini", ["gemini-1.5-pro", "gemini-1.5-flash"]);
         _chatbots.Add(gemini);
     }
 }

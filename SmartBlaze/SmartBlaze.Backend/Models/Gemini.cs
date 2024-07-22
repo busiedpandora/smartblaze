@@ -81,6 +81,13 @@ public class Gemini : Chatbot
             chatRequest.SystemInstruction = systemInstruction;
         }
         
+        GenerationConfig generationConfig = new()
+        {
+            Temperature = chatSessionInfoDto.Temperature
+        };
+
+        chatRequest.GenerationConfig = generationConfig;
+        
         var chatRequestJson = JsonSerializer.Serialize(chatRequest);
         
         var httpRequest = new HttpRequestMessage
@@ -184,6 +191,13 @@ public class Gemini : Chatbot
             
             chatRequest.SystemInstruction = systemInstruction;
         }
+
+        GenerationConfig generationConfig = new()
+        {
+            Temperature = chatSessionInfoDto.Temperature
+        };
+
+        chatRequest.GenerationConfig = generationConfig;
         
         var chatRequestJson = JsonSerializer.Serialize(chatRequest);
         
@@ -234,7 +248,10 @@ public class Gemini : Chatbot
             ApiHost = "https://generativelanguage.googleapis.com",
             ApiKey = "",
             TextStreamDelay = 400,
-            Selected = false
+            Selected = false,
+            Temperature = 1.0f,
+            MinTemperature = 0.0f,
+            MaxTemperature = 2.0f
         };
     }
 
@@ -259,6 +276,12 @@ public class Gemini : Chatbot
         
         [JsonPropertyName("data")]
         public string? Data { get; set; }
+    }
+
+    private class GenerationConfig
+    {
+        [JsonPropertyName("temperature")]
+        public float Temperature { get; set; }
     }
     
     private class RequestContent
@@ -292,6 +315,9 @@ public class Gemini : Chatbot
         
         [JsonPropertyName("contents")]
         public List<RequestContent>? Contents { get; set; }
+        
+        [JsonPropertyName("generationConfig")]
+        public GenerationConfig? GenerationConfig { get; set; }
     }
 
     private class Candidate

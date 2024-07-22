@@ -42,7 +42,10 @@ public class ConfigurationController : ControllerBase
                 ApiKey = chatbotConfiguration.ApiKey,
                 Selected = chatbotConfiguration.Selected,
                 Models = chatbot.Models,
-                TextStreamDelay = chatbotConfiguration.TextStreamDelay
+                TextStreamDelay = chatbotConfiguration.TextStreamDelay,
+                Temperature = chatbotConfiguration.Temperature,
+                MinTemperature = chatbotConfiguration.MinTemperature,
+                MaxTemperature = chatbotConfiguration.MaxTemperature
             };
                 
             chatbotConfigurationDtos.Add(chatbotConfigurationDto);
@@ -76,6 +79,7 @@ public class ConfigurationController : ControllerBase
         chatbotConfiguration.ApiKey = chatbotConfigurationDto.ApiKey ?? "";
         chatbotConfigurationDto.TextStreamDelay = chatbotConfigurationDto.TextStreamDelay;
         chatbotConfiguration.Selected = true;
+        chatbotConfiguration.Temperature = chatbotConfigurationDto.Temperature;
 
         await _configurationService.EditChatbotConfiguration(chatbotConfiguration);
 

@@ -93,7 +93,8 @@ public class ChatGpt : Chatbot
         {
             Model = chatSessionInfoDto.ChatbotModel,
             Messages = (object[]) messages.ToArray(),
-            Stream = false
+            Stream = false,
+            Temperature = chatSessionInfoDto.Temperature
         };
         
         var options = new JsonSerializerOptions
@@ -219,7 +220,8 @@ public class ChatGpt : Chatbot
         {
             Model = chatSessionInfoDto.ChatbotModel,
             Messages = (object[]) messages.ToArray(),
-            Stream = true
+            Stream = true,
+            Temperature = chatSessionInfoDto.Temperature
         };
         
         var options = new JsonSerializerOptions
@@ -289,7 +291,10 @@ public class ChatGpt : Chatbot
             ApiHost = "https://api.openai.com",
             ApiKey = "",
             TextStreamDelay = 100,
-            Selected = true
+            Selected = true,
+            Temperature = 1.0f,
+            MinTemperature = 0.0f,
+            MaxTemperature = 2.0f
         };
     }
 
@@ -358,6 +363,9 @@ public class ChatGpt : Chatbot
         
         [JsonPropertyName("stream")]
         public bool? Stream { get; set; }
+        
+        [JsonPropertyName("temperature")]
+        public float Temperature { get; set; }
     }
 
     private class ChatResponse

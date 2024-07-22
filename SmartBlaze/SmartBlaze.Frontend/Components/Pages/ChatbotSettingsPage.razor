@@ -40,7 +40,7 @@
 
             <div class="border border1 mt-5 mb-4 col-6"></div>
 
-            <div class="mb-3">
+            <div class="mb-4">
                 <label for="apiHost" class="form-label">API Host</label>
                 <div class="col-4">
                     <InputText id="apiHost" @bind-Value="_chatbotSettings.ApiHost" class="form-control">
@@ -49,7 +49,7 @@
                 </div>
             </div>
             
-            <div class="mb-3">
+            <div class="mb-4">
                 <label for="apiKey" class="form-label">API Key</label>
                 <div class="row align-items-center">
                     <div class="col-4">
@@ -58,12 +58,12 @@
                         </InputText>
                     </div>
                     <div class="col">
-                        <img src="icons/eye-fill.svg" width="21" height="21" alt="eye icon" class=""/>
+                        <!--<img src="icons/eye-fill.svg" width="21" height="21" alt="eye icon" class=""/>-->
                     </div>
                 </div>
             </div>
 
-            <div class="mb-3">
+            <div class="mb-4">
                 <label for="chatbotModel" class="form-label">Model</label>
                 <div class="col-2">
                     <InputSelect id="chatbotModel" @bind-Value="_chatbotSettings.ChatbotModel" class="form-select">
@@ -72,6 +72,20 @@
                             <option value="@chatbotModel">@chatbotModel</option>
                         }
                     </InputSelect>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="temperature" class="form-label">Temperature</label>
+                <div class="d-flex">
+                    <div class="col-4">
+                        <input id="temperature" type="range" class="form-range" step="0.1" @bind-value="_chatbotSettings.Temperature"
+                               @oninput="OnTemperatureChanged"
+                               min="@_chatbotSettings.MinTemperature" max="@_chatbotSettings.MaxTemperature"/>
+                    </div>
+                    <div class="ms-4">
+                        <span class="badge bg-primary">@_badgeTemperature</span>
+                    </div>
                 </div>
             </div>
 
@@ -93,6 +107,8 @@
     private bool _applicationStarted = false;
 
     private ChatbotSettings _chatbotSettings = new();
+
+    private float _badgeTemperature;
     
     
     protected override Task OnInitializedAsync()
@@ -110,7 +126,12 @@
         _chatbotSettings.ChatbotModels = _settingsService.ChatbotSelected?.Models ?? [];
         _chatbotSettings.ApiHost = _settingsService.ChatbotSelected?.Apihost ?? "";
         _chatbotSettings.ApiKey = _settingsService.ChatbotSelected?.ApiKey ?? "";
-
+        _chatbotSettings.Temperature = _settingsService.ChatbotSelected?.Temperature ?? 0.0f;
+        _chatbotSettings.MinTemperature = _settingsService.ChatbotSelected?.MinTemperature ?? 0.0f;
+        _chatbotSettings.MaxTemperature = _settingsService.ChatbotSelected?.Maxtemperature ?? 1.0f;
+        
+        _badgeTemperature = _settingsService.ChatbotSelected?.Temperature ?? 0.0f;
+        
         return base.OnInitializedAsync();
     }
 
@@ -125,6 +146,9 @@
             _chatbotSettings.ChatbotModel = chatbotSelected.Model;
             _chatbotSettings.ApiHost = chatbotSelected.Apihost;
             _chatbotSettings.ApiKey = chatbotSelected.ApiKey;
+            _chatbotSettings.Temperature = chatbotSelected.Temperature;
+
+            _badgeTemperature = chatbotSelected.Temperature;
         }
     }
 
@@ -146,7 +170,12 @@
             _redirectionService.Url = "/welcome";
         }
     }
-    
+
+    private void OnTemperatureChanged(ChangeEventArgs e)
+    {
+        _badgeTemperature = Convert.ToSingle(e.Value);
+    }
+
     private void ReloadComponentState()
     {
         InvokeAsync(StateHasChanged);

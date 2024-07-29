@@ -19,108 +19,96 @@ public class ConfigurationController : ControllerBase
     }
 
     [HttpGet("chatbot")]
-    public async Task<ActionResult<List<ChatbotConfigurationDto>>> GetChatbotConfiguration()
+    public async Task<ActionResult<List<ChatbotDefaultConfigurationDto>>> GetChatbotDefaultConfigurations()
     {
         var chatbots = _chatbotService.GetAllChatbots();
-        var chatbotConfigurationDtos = new List<ChatbotConfigurationDto>();
+        var chatbotConfigurationDtos = new List<ChatbotDefaultConfigurationDto>();
 
         foreach (var chatbot in chatbots)
         {
-            var chatbotConfiguration = await _configurationService.GetChatbotConfiguration(chatbot.Name);
+            var chatbotDefaultConfiguration = await _configurationService.GetChatbotDefaultConfiguration(chatbot.Name);
 
-            if (chatbotConfiguration is null)
+            if (chatbotDefaultConfiguration is null)
             {
-                chatbotConfiguration = chatbot.GetDefaultConfiguration();
-                await _configurationService.AddChatbotConfiguration(chatbotConfiguration);
+                chatbotDefaultConfiguration = chatbot.GetDefaultConfiguration();
+                await _configurationService.AddChatbotDefaultConfiguration(chatbotDefaultConfiguration);
             }
-            
-            var chatbotConfigurationDto = new ChatbotConfigurationDto()
-            {
-                ChatbotName = chatbot.Name,
-                ChatbotModel = chatbotConfiguration.ChatbotModel,
-                ApiHost = chatbotConfiguration.ApiHost,
-                ApiKey = chatbotConfiguration.ApiKey,
-                Selected = chatbotConfiguration.Selected,
-                Models = chatbot.Models,
-                TextStreamDelay = chatbotConfiguration.TextStreamDelay,
-                Temperature = chatbotConfiguration.Temperature,
-                MinTemperature = chatbotConfiguration.MinTemperature,
-                MaxTemperature = chatbotConfiguration.MaxTemperature
-            };
+
+            chatbotDefaultConfiguration.ChatbotModels = chatbot.Models;
                 
-            chatbotConfigurationDtos.Add(chatbotConfigurationDto);
+            chatbotConfigurationDtos.Add(chatbotDefaultConfiguration);
         }
 
         return Ok(chatbotConfigurationDtos);
     }
 
     [HttpPost("chatbot")]
-    public async Task<ActionResult> UpdateChatbotConfiguration([FromBody] ChatbotConfigurationDto chatbotConfigurationDto)
+    public async Task<ActionResult> UpdateChatbotDefaultConfiguration([FromBody] ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
     {
-        if (chatbotConfigurationDto.ChatbotName is null || chatbotConfigurationDto.ChatbotModel is null)
+        if (chatbotDefaultConfigurationDto.ChatbotName is null || chatbotDefaultConfigurationDto.ChatbotModel is null)
         {
             return BadRequest("The chatbot name and model cannot be null");
         }
         
-        var chatbotConfiguration = await _configurationService.GetChatbotConfiguration(chatbotConfigurationDto.ChatbotName);
+        var chatbotDefaultConfiguration = await _configurationService.GetChatbotDefaultConfiguration(chatbotDefaultConfigurationDto.ChatbotName);
 
-        if (chatbotConfiguration is null)
+        if (chatbotDefaultConfiguration is null)
         {
-            return NotFound($"Cannot found configuration for chatbot {chatbotConfigurationDto.ChatbotName}");
+            return NotFound($"Cannot found configuration for chatbot {chatbotDefaultConfigurationDto.ChatbotName}");
         }
 
-        if (chatbotConfiguration.Selected == false)
+        if (chatbotDefaultConfiguration.Selected == false)
         {
-            await _configurationService.DeselectCurrentChatbotConfiguration();
+            await _configurationService.DeselectCurrentChatbotDefaultConfiguration();
         }
 
-        chatbotConfiguration.ChatbotModel = chatbotConfigurationDto.ChatbotModel;
-        chatbotConfiguration.ApiHost = chatbotConfigurationDto.ApiHost ?? "";
-        chatbotConfiguration.ApiKey = chatbotConfigurationDto.ApiKey ?? "";
-        chatbotConfigurationDto.TextStreamDelay = chatbotConfigurationDto.TextStreamDelay;
-        chatbotConfiguration.Selected = true;
-        chatbotConfiguration.Temperature = chatbotConfigurationDto.Temperature;
+        chatbotDefaultConfiguration.ChatbotModel = chatbotDefaultConfigurationDto.ChatbotModel;
+        chatbotDefaultConfiguration.ApiHost = chatbotDefaultConfigurationDto.ApiHost ?? "";
+        chatbotDefaultConfiguration.ApiKey = chatbotDefaultConfigurationDto.ApiKey ?? "";
+        chatbotDefaultConfigurationDto.TextStreamDelay = chatbotDefaultConfigurationDto.TextStreamDelay;
+        chatbotDefaultConfiguration.Selected = true;
+        chatbotDefaultConfiguration.Temperature = chatbotDefaultConfigurationDto.Temperature;
 
-        await _configurationService.EditChatbotConfiguration(chatbotConfiguration);
+        await _configurationService.EditChatbotDefaultConfiguration(chatbotDefaultConfiguration);
 
         return Ok();
     }
 
     [HttpGet("chat-session")]
-    public async Task<ActionResult<ChatSessionConfigurationDto>> GetChatSessionConfiguration()
+    public async Task<ActionResult<ChatSessionDefaultConfigurationDto>> GetChatSessionDefaultConfiguration()
     {
-        var chatSessionConfiguration = await _configurationService.GetChatSessionConfiguration();
+        var chatSessionDefaultConfiguration = await _configurationService.GetChatSessionDefaultConfiguration();
 
-        if (chatSessionConfiguration is null)
+        if (chatSessionDefaultConfiguration is null)
         {
-            chatSessionConfiguration = _configurationService.GetDefaultChatSessionConfiguration();
-            await _configurationService.SaveChatSessionConfiguration(chatSessionConfiguration);
+            chatSessionDefaultConfiguration = _configurationService.CreateChatSessionDefaultConfiguration();
+            await _configurationService.SaveChatSessionDefaultConfiguration(chatSessionDefaultConfiguration);
         }
 
-        return Ok(chatSessionConfiguration);
+        return Ok(chatSessionDefaultConfiguration);
     }
 
     [HttpPost("chat-session")]
-    public async Task<ActionResult> UpdateChatSessionConfiguration(
-        [FromBody] ChatSessionConfigurationDto chatSessionConfigurationDto)
+    public async Task<ActionResult> UpdateChatSessionDefaultConfiguration(
+        [FromBody] ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto)
     {
-        if (chatSessionConfigurationDto.SystemInstruction is null || chatSessionConfigurationDto.TextStream is null)
+        if (chatSessionDefaultConfigurationDto.SystemInstruction is null)
         {
             return BadRequest(
-                $"Properties of chat session configuration with id {chatSessionConfigurationDto.Id} specified incorrectly");
+                $"Properties of chat session configuration with id {chatSessionDefaultConfigurationDto.Id} specified incorrectly");
         }
 
-        var chatSessionConfiguration = await _configurationService.GetChatSessionConfiguration();
+        var chatSessionDefaultConfiguration = await _configurationService.GetChatSessionDefaultConfiguration();
 
-        if (chatSessionConfiguration is null)
+        if (chatSessionDefaultConfiguration is null)
         {
             return NotFound("Cannot find the chat session configuration");
         }
         
-        chatSessionConfiguration.SystemInstruction = chatSessionConfigurationDto.SystemInstruction;
-        chatSessionConfiguration.TextStream = chatSessionConfigurationDto.TextStream;
+        chatSessionDefaultConfiguration.SystemInstruction = chatSessionDefaultConfigurationDto.SystemInstruction;
+        chatSessionDefaultConfiguration.TextStream = chatSessionDefaultConfigurationDto.TextStream;
 
-        await _configurationService.EditChatSessionConfiguration(chatSessionConfiguration);
+        await _configurationService.EditChatSessionDefaultConfiguration(chatSessionDefaultConfiguration);
 
         return Ok();
     }

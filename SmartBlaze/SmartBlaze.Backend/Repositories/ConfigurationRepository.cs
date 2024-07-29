@@ -6,178 +6,168 @@ namespace SmartBlaze.Backend.Repositories;
 
 public class ConfigurationRepository : AbstractRepository
 {
-    public async Task<List<ChatbotConfigurationDto>> GetAllChatbotConfigurations()
+    public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration(string chatbotName)
     {
-        var chatbotConfigurationDocuments =
-            await AppwriteDatabase.ListDocuments(AppwriteDatabaseId, ChatbotConfigurationCollectionId);
-
-        var chatbotConfigurationDtos = chatbotConfigurationDocuments.Documents
-            .Select(ConvertToChatbotConfiguration)
-            .ToList();
-
-        return chatbotConfigurationDtos;
-    }
-
-    public async Task<ChatbotConfigurationDto?> GetChatbotConfiguration(string chatbotName)
-    {
-        var chatbotConfigurationDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId,
-            ChatbotConfigurationCollectionId,
+        var chatbotDefaultConfigurationDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId,
+            ChatbotDefaultConfigurationCollectionId,
             [
                 Query.Equal("chatbotName", chatbotName)
             ]);
 
-        var chatbotConfigurationDocument = chatbotConfigurationDocuments.Documents.Count > 0 
-            ? chatbotConfigurationDocuments.Documents.First() : null;
+        var chatbotDefaultConfigurationDocument = chatbotDefaultConfigurationDocuments.Documents.Count > 0 
+            ? chatbotDefaultConfigurationDocuments.Documents.First() : null;
 
-        if (chatbotConfigurationDocument is null)
+        if (chatbotDefaultConfigurationDocument is null)
         {
             return null;
         }
+        
+        var chatbotDefaultConfiguration = ConvertToChatbotDefaultConfiguration(chatbotDefaultConfigurationDocument);
 
-        var chatbotConfiguration = ConvertToChatbotConfiguration(chatbotConfigurationDocument);
-
-        return chatbotConfiguration;
+        return chatbotDefaultConfiguration;
     }
-
-    public async Task<ChatbotConfigurationDto?> GetSelectedChatbotConfiguration()
+    
+    public async Task<ChatbotDefaultConfigurationDto?> GetSelectedChatbotDefaultConfiguration()
     {
-        var chatbotConfigurationDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId,
-            ChatbotConfigurationCollectionId,
+        var chatbotDefaultConfigurationDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId,
+            ChatbotDefaultConfigurationCollectionId,
             [
                 Query.Equal("selected", true)
             ]);
         
-        var selectedChatbotConfigurationDocument = chatbotConfigurationDocuments.Documents.Count > 0 
-            ? chatbotConfigurationDocuments.Documents.First() : null;
+        var selectedChatbotDefaultConfigurationDocument = chatbotDefaultConfigurationDocuments.Documents.Count > 0 
+            ? chatbotDefaultConfigurationDocuments.Documents.First() : null;
 
-        if (selectedChatbotConfigurationDocument is null)
+        if (selectedChatbotDefaultConfigurationDocument is null)
         {
             return null;
         }
 
-        var selectedChatbotConfiguration = ConvertToChatbotConfiguration(selectedChatbotConfigurationDocument);
+        var selectedChatbotDefaultConfiguration = ConvertToChatbotDefaultConfiguration(selectedChatbotDefaultConfigurationDocument);
 
-        return selectedChatbotConfiguration;
+        return selectedChatbotDefaultConfiguration;
     }
-
-    public async Task SaveChatbotConfiguration(ChatbotConfigurationDto chatbotConfigurationDto)
+    
+    public async Task SaveChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
     {
-        var chatbotConfigurationDocument = new Dictionary<string, object>()
+        var chatbotDefaultConfigurationDocument = new Dictionary<string, object>()
         {
-            { "chatbotName", chatbotConfigurationDto.ChatbotName ?? ""},
-            { "chatbotModel", chatbotConfigurationDto.ChatbotModel ?? ""},
-            { "apiHost", chatbotConfigurationDto.ApiHost ?? ""},
-            { "apiKey", chatbotConfigurationDto.ApiKey ?? ""},
-            { "selected", chatbotConfigurationDto.Selected },
-            { "textStreamDelay", chatbotConfigurationDto.TextStreamDelay },
-            { "temperature" , chatbotConfigurationDto.Temperature },
-            { "minTemperature", chatbotConfigurationDto.MinTemperature },
-            { "maxTemperature", chatbotConfigurationDto.MaxTemperature }
+            { "chatbotName", chatbotDefaultConfigurationDto.ChatbotName ?? ""},
+            { "chatbotModel", chatbotDefaultConfigurationDto.ChatbotModel ?? ""},
+            { "apiHost", chatbotDefaultConfigurationDto.ApiHost ?? ""},
+            { "apiKey", chatbotDefaultConfigurationDto.ApiKey ?? ""},
+            { "selected", chatbotDefaultConfigurationDto.Selected },
+            { "textStreamDelay", chatbotDefaultConfigurationDto.TextStreamDelay },
+            { "temperature" , chatbotDefaultConfigurationDto.Temperature },
+            { "minTemperature", chatbotDefaultConfigurationDto.MinTemperature },
+            { "maxTemperature", chatbotDefaultConfigurationDto.MaxTemperature }
         };
 
-        await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatbotConfigurationCollectionId, 
-            ID.Unique(), chatbotConfigurationDocument);
+        await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
+            ID.Unique(), chatbotDefaultConfigurationDocument);
     }
-
-    public async Task EditChatbotConfiguration(ChatbotConfigurationDto chatbotConfigurationDto)
+    
+    public async Task EditChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
     {
-        if (string.IsNullOrEmpty(chatbotConfigurationDto.Id))
+        if (string.IsNullOrEmpty(chatbotDefaultConfigurationDto.Id))
         {
-            throw new ArgumentException("The document ID must be provided.", nameof(chatbotConfigurationDto.Id));
+            throw new ArgumentException("The document ID must be provided.", nameof(chatbotDefaultConfigurationDto.Id));
         }
         
         var chatbotConfigurationDocument = new Dictionary<string, object>()
         {
-            { "chatbotName", chatbotConfigurationDto.ChatbotName ?? ""},
-            { "chatbotModel", chatbotConfigurationDto.ChatbotModel ?? ""},
-            { "apiHost", chatbotConfigurationDto.ApiHost ?? ""},
-            { "apiKey", chatbotConfigurationDto.ApiKey ?? ""},
-            { "selected", chatbotConfigurationDto.Selected},
-            { "textStreamDelay", chatbotConfigurationDto.TextStreamDelay },
-            { "temperature" , chatbotConfigurationDto.Temperature },
-            { "minTemperature", chatbotConfigurationDto.MinTemperature },
-            { "maxTemperature", chatbotConfigurationDto.MaxTemperature }
+            { "chatbotName", chatbotDefaultConfigurationDto.ChatbotName ?? ""},
+            { "chatbotModel", chatbotDefaultConfigurationDto.ChatbotModel ?? ""},
+            { "apiHost", chatbotDefaultConfigurationDto.ApiHost ?? ""},
+            { "apiKey", chatbotDefaultConfigurationDto.ApiKey ?? ""},
+            { "selected", chatbotDefaultConfigurationDto.Selected},
+            { "textStreamDelay", chatbotDefaultConfigurationDto.TextStreamDelay },
+            { "temperature" , chatbotDefaultConfigurationDto.Temperature },
+            { "minTemperature", chatbotDefaultConfigurationDto.MinTemperature },
+            { "maxTemperature", chatbotDefaultConfigurationDto.MaxTemperature }
         };
         
-        await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatbotConfigurationCollectionId, 
-            chatbotConfigurationDto.Id, chatbotConfigurationDocument);
+        await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
+            chatbotDefaultConfigurationDto.Id, chatbotConfigurationDocument);
     }
-
-    public async Task<ChatSessionConfigurationDto?> GetChatSessionConfiguration()
+    
+    public async Task<ChatSessionDefaultConfigurationDto?> GetChatSessionDefaultConfiguration()
     {
-        var chatSessionConfigurationDocuments =
-            await AppwriteDatabase.ListDocuments(AppwriteDatabaseId, ChatSessionConfigurationCollectionId);
+        var chatSessionDefaultConfigurationDocuments =
+            await AppwriteDatabase.ListDocuments(AppwriteDatabaseId, ChatSessionDefaultConfigurationCollectionId);
 
-        var chatSessionConfigurationDocument =
-            chatSessionConfigurationDocuments.Documents.Count > 0 ? chatSessionConfigurationDocuments.Documents.First() : null;
+        var chatSessionDefaultConfigurationDocument =
+            chatSessionDefaultConfigurationDocuments.Documents.Count > 0 ? chatSessionDefaultConfigurationDocuments.Documents.First() : null;
 
-        if (chatSessionConfigurationDocument is null)
+        if (chatSessionDefaultConfigurationDocument is null)
         {
             return null;
         }
 
-        var chatSessionConfiguration = ConvertToChatSessionConfiguration(chatSessionConfigurationDocument);
+        var chatSessionConfiguration = ConvertToChatSessionDefaultConfiguration(chatSessionDefaultConfigurationDocument);
 
         return chatSessionConfiguration;
     }
-
-    public async Task SaveChatSessionConfiguration(ChatSessionConfigurationDto chatSessionConfigurationDto)
+    
+    public async Task SaveChatSessionDefaultConfiguration(ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto)
     {
         var chatSessionConfigurationDocument = new Dictionary<string, object>()
         {
-            { "systemInstruction", chatSessionConfigurationDto.SystemInstruction ?? "" },
-            { "textStream", chatSessionConfigurationDto.TextStream ?? false}
+            { "systemInstruction", chatSessionDefaultConfigurationDto.SystemInstruction ?? "" },
+            { "textStream", chatSessionDefaultConfigurationDto.TextStream}
         };
 
-        await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatSessionConfigurationCollectionId,
+        await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatSessionDefaultConfigurationCollectionId,
             ID.Unique(), chatSessionConfigurationDocument);
     }
     
-    public async Task EditChatSessionConfiguration(ChatSessionConfigurationDto chatSessionConfigurationDto)
+    public async Task EditChatSessionDefaultConfiguration(ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto)
     {
-        if (string.IsNullOrEmpty(chatSessionConfigurationDto.Id))
+        if (string.IsNullOrEmpty(chatSessionDefaultConfigurationDto.Id))
         {
-            throw new ArgumentException("The document ID must be provided.", nameof(chatSessionConfigurationDto.Id));
+            throw new ArgumentException("The document ID must be provided.", nameof(chatSessionDefaultConfigurationDto.Id));
         }
         
         var chatSessionConfigurationDocument = new Dictionary<string, object>()
         {
-            { "systemInstruction", chatSessionConfigurationDto.SystemInstruction ?? "" },
-            { "textStream", chatSessionConfigurationDto.TextStream ?? false}
+            { "systemInstruction", chatSessionDefaultConfigurationDto.SystemInstruction ?? "" },
+            { "textStream", chatSessionDefaultConfigurationDto.TextStream}
         };
 
-        await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatSessionConfigurationCollectionId,
-            chatSessionConfigurationDto.Id, chatSessionConfigurationDocument);
-    }
-        
-    private ChatbotConfigurationDto ConvertToChatbotConfiguration(Document chatbotConfigurationDocument)
-    {
-        var chatbotConfigurationDto = new ChatbotConfigurationDto()
-        {
-            Id = chatbotConfigurationDocument.Id,
-            ChatbotName = chatbotConfigurationDocument.Data["chatbotName"].ToString(),
-            ChatbotModel = chatbotConfigurationDocument.Data["chatbotModel"].ToString(),
-            ApiHost = chatbotConfigurationDocument.Data["apiHost"].ToString(),
-            ApiKey = chatbotConfigurationDocument.Data["apiKey"].ToString(),
-            Selected = bool.Parse(chatbotConfigurationDocument.Data["selected"].ToString() ?? "false"),
-            TextStreamDelay = int.Parse(chatbotConfigurationDocument.Data["textStreamDelay"].ToString() ?? "100"),
-            Temperature = float.Parse(chatbotConfigurationDocument.Data["temperature"].ToString() ?? "0.0"),
-            MinTemperature = float.Parse(chatbotConfigurationDocument.Data["minTemperature"].ToString() ?? "0.0"),
-            MaxTemperature = float.Parse(chatbotConfigurationDocument.Data["maxTemperature"].ToString() ?? "0.0")
-        };
-
-        return chatbotConfigurationDto;
+        await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatSessionDefaultConfigurationCollectionId,
+            chatSessionDefaultConfigurationDto.Id, chatSessionConfigurationDocument);
     }
 
-    private ChatSessionConfigurationDto ConvertToChatSessionConfiguration(Document chatSessionConfigurationDocument)
+    private ChatbotDefaultConfigurationDto ConvertToChatbotDefaultConfiguration(
+        Document chatbotDefaultConfigurationDocument)
     {
-        var chatSessionConfigurationDto = new ChatSessionConfigurationDto()
+        var chatbotDefaultConfigurationDto = new ChatbotDefaultConfigurationDto()
         {
-            Id = chatSessionConfigurationDocument.Id,
-            SystemInstruction = chatSessionConfigurationDocument.Data["systemInstruction"].ToString(),
-            TextStream = bool.Parse(chatSessionConfigurationDocument.Data["textStream"].ToString() ?? "false")
+            Id = chatbotDefaultConfigurationDocument.Id,
+            ChatbotName = chatbotDefaultConfigurationDocument.Data["chatbotName"].ToString(),
+            ChatbotModel = chatbotDefaultConfigurationDocument.Data["chatbotModel"].ToString(),
+            ApiHost = chatbotDefaultConfigurationDocument.Data["apiHost"].ToString(),
+            ApiKey = chatbotDefaultConfigurationDocument.Data["apiKey"].ToString(),
+            Selected = bool.Parse(chatbotDefaultConfigurationDocument.Data["selected"].ToString() ?? "false"),
+            TextStreamDelay = int.Parse(chatbotDefaultConfigurationDocument.Data["textStreamDelay"].ToString() ?? "100"),
+            Temperature = float.Parse(chatbotDefaultConfigurationDocument.Data["temperature"].ToString() ?? "0.0"),
+            MinTemperature = float.Parse(chatbotDefaultConfigurationDocument.Data["minTemperature"].ToString() ?? "0.0"),
+            MaxTemperature = float.Parse(chatbotDefaultConfigurationDocument.Data["maxTemperature"].ToString() ?? "0.0")
         };
 
-        return chatSessionConfigurationDto;
+        return chatbotDefaultConfigurationDto;
+    }
+
+    private ChatSessionDefaultConfigurationDto ConvertToChatSessionDefaultConfiguration(
+        Document chatSessionDefaultConfigurationDocument)
+    {
+        var chatSessionDefaultConfigurationDto = new ChatSessionDefaultConfigurationDto()
+        {
+            Id = chatSessionDefaultConfigurationDocument.Id,
+            SystemInstruction = chatSessionDefaultConfigurationDocument.Data["systemInstruction"].ToString(),
+            TextStream = bool.Parse(chatSessionDefaultConfigurationDocument.Data["textStream"].ToString() ?? "false")
+        };
+
+        return chatSessionDefaultConfigurationDto;
     }
 }

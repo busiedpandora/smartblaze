@@ -8,8 +8,8 @@ public abstract class AbstractRepository
     protected const string AppwriteDatabaseId = "667422240010ed7f3097";
     protected const string ChatSessionCollectionId = "6685332600286e5a6976";
     protected const string MessageCollectionId = "6685339500109e79a0de";
-    protected const string ChatbotConfigurationCollectionId = "66952f890014e29c653d";
-    protected const string ChatSessionConfigurationCollectionId = "66966e320019828e16ae";
+    protected const string ChatbotDefaultConfigurationCollectionId = "66a77ffb000a103dc358";
+    protected const string ChatSessionDefaultConfigurationCollectionId = "66a78568002206c7fa03";
     protected const string MediaCollectionId = "669a269a001398d916bc";
     
     private const string AppwriteEndpoint = "https://cloud.appwrite.io/v1";

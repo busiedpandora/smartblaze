@@ -68,7 +68,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         NotifyRefreshView();
     }
 
-    public async Task SaveChatbotSettings(ChatbotSettings chatbotSettings)
+    public async Task SaveChatbotDefaultSettings(ChatbotSettings chatbotSettings)
     {
         var chatbot = _chatbots?.Find(c => c.Name == chatbotSettings.ChatbotName);
 
@@ -81,7 +81,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             
             SelectChatbot(chatbot);
 
-            var chatbotConfigurationDto = new ChatbotConfigurationDto()
+            var chatbotConfigurationDto = new ChatbotDefaultConfigurationDto()
             {
                 ChatbotName = chatbot.Name,
                 ChatbotModel = chatbot.Model,
@@ -103,17 +103,23 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         }
     }
 
-    public async Task SaveChatSessionSettings(ChatSessionSettings chatSessionSettings)
+    public async Task SaveChatSessionDefaultSettings(ChatSessionSettings chatSessionSettings)
     {
-        var chatSessionConfigurationResponse = await HttpClient.PostAsJsonAsync("configuration/chat-session", 
-            chatSessionSettings);
-
-        if (!chatSessionConfigurationResponse.IsSuccessStatusCode)
+        var chatSessionDefaultConfiguration = new ChatSessionDefaultConfigurationDto()
         {
-            var chatSessionConfigurationResponseContent =
-                await chatSessionConfigurationResponse.Content.ReadAsStringAsync();
+            SystemInstruction = chatSessionSettings.SystemInstruction,
+            TextStream = chatSessionSettings.TextStream
+        };
+        
+        var chatSessionDefaultConfigurationResponse = await HttpClient.PostAsJsonAsync("configuration/chat-session", 
+            chatSessionDefaultConfiguration);
+
+        if (!chatSessionDefaultConfigurationResponse.IsSuccessStatusCode)
+        {
+            var chatSessionDefaultConfigurationResponseContent =
+                await chatSessionDefaultConfigurationResponse.Content.ReadAsStringAsync();
             NotifyNavigateToErrorPage("Error occured while configuring the chat session", 
-                chatSessionConfigurationResponseContent);
+                chatSessionDefaultConfigurationResponseContent);
             return;
         }
         
@@ -146,7 +152,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             return;
         }
 
-        var chatbotConfigurationDtos = await HttpClient.GetFromJsonAsync<List<ChatbotConfigurationDto>>("configuration/chatbot");
+        var chatbotConfigurationDtos = await HttpClient.GetFromJsonAsync<List<ChatbotDefaultConfigurationDto>>("configuration/chatbot");
 
         if (chatbotConfigurationDtos is null || chatbotConfigurationDtos.Count == 0)
         {
@@ -160,11 +166,11 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
         foreach (var chatbotConfigurationDto in chatbotConfigurationDtos)
         {
-            if (chatbotConfigurationDto.ChatbotName is not null && chatbotConfigurationDto.Models is not null 
+            if (chatbotConfigurationDto.ChatbotName is not null && chatbotConfigurationDto.ChatbotModels is not null 
                 && chatbotConfigurationDto.ApiHost is not null && chatbotConfigurationDto.ApiKey is not null 
                 && chatbotConfigurationDto.ChatbotModel is not null)
             {
-                var chatbot = new Chatbot(chatbotConfigurationDto.ChatbotName, chatbotConfigurationDto.Models,
+                var chatbot = new Chatbot(chatbotConfigurationDto.ChatbotName, chatbotConfigurationDto.ChatbotModels,
                     chatbotConfigurationDto.MinTemperature, chatbotConfigurationDto.MaxTemperature);
                 chatbot.Apihost = chatbotConfigurationDto.ApiHost;
                 chatbot.ApiKey = chatbotConfigurationDto.ApiKey;
@@ -206,23 +212,23 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
     private async Task LoadChatSessionConfiguration()
     {
-        var chatSessionSettings = await HttpClient.GetFromJsonAsync<ChatSessionSettingsDto>("configuration/chat-session");
+        var chatSessionDefaultConfigurationDto = await HttpClient.GetFromJsonAsync<ChatSessionDefaultConfigurationDto>("configuration/chat-session");
 
-        if (chatSessionSettings is null)
+        if (chatSessionDefaultConfigurationDto is null)
         {
             NotifyNavigateToErrorPage("Error occured while loading the chat session configuration", 
                 "No configuration found");
             return;
         }
 
-        if (chatSessionSettings.SystemInstruction is null || chatSessionSettings.TextStream is null)
+        if (chatSessionDefaultConfigurationDto.SystemInstruction is null)
         {
             NotifyNavigateToErrorPage("Error occured while loading the chat session configuration", 
                 "The system instruction and text stream must be specified");
             return;
         }
         
-        _systemInstruction = chatSessionSettings.SystemInstruction;
-        _textStream = chatSessionSettings.TextStream.Value;
+        _systemInstruction = chatSessionDefaultConfigurationDto.SystemInstruction;
+        _textStream = chatSessionDefaultConfigurationDto.TextStream;
     }
 }

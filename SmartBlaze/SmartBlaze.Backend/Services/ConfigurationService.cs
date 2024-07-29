@@ -14,53 +14,53 @@ public class ConfigurationService
         _configurationRepository = configurationRepository;
     }
 
-    public async Task<ChatbotConfigurationDto?> GetChatbotConfiguration(string chatbotName)
+    public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration(string chatbotName)
     {
-        return await _configurationRepository.GetChatbotConfiguration(chatbotName);
+        return await _configurationRepository.GetChatbotDefaultConfiguration(chatbotName);
+    }
+    
+    public async Task AddChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
+    {
+        await _configurationRepository.SaveChatbotDefaultConfiguration(chatbotDefaultConfigurationDto);
+    }
+    
+    public async Task EditChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
+    {
+        await _configurationRepository.EditChatbotDefaultConfiguration(chatbotDefaultConfigurationDto);
     }
 
-    public async Task AddChatbotConfiguration(ChatbotConfigurationDto chatbotConfigurationDto)
+    public async Task DeselectCurrentChatbotDefaultConfiguration()
     {
-        await _configurationRepository.SaveChatbotConfiguration(chatbotConfigurationDto);
-    }
+        var selectedChatbotDefaultConfiguration = await _configurationRepository.GetSelectedChatbotDefaultConfiguration();
 
-    public async Task EditChatbotConfiguration(ChatbotConfigurationDto chatbotConfigurationDto)
-    {
-        await _configurationRepository.EditChatbotConfiguration(chatbotConfigurationDto);
-    }
-
-    public async Task DeselectCurrentChatbotConfiguration()
-    {
-        var selectedChatbotConfiguration = await _configurationRepository.GetSelectedChatbotConfiguration();
-
-        if (selectedChatbotConfiguration is not null)
+        if (selectedChatbotDefaultConfiguration is not null)
         {
-            selectedChatbotConfiguration.Selected = false;
-            await _configurationRepository.EditChatbotConfiguration(selectedChatbotConfiguration);
+            selectedChatbotDefaultConfiguration.Selected = false;
+            await _configurationRepository.EditChatbotDefaultConfiguration(selectedChatbotDefaultConfiguration);
         }
     }
     
-    public ChatSessionConfigurationDto GetDefaultChatSessionConfiguration()
+    public ChatSessionDefaultConfigurationDto CreateChatSessionDefaultConfiguration()
     {
-        return new ChatSessionConfigurationDto()
+        return new ChatSessionDefaultConfigurationDto()
         {
             SystemInstruction = "You are a helpful assistant. You can help me by answering my questions.",
             TextStream = true
         };
     }
-
-    public async Task<ChatSessionConfigurationDto?> GetChatSessionConfiguration()
+    
+    public async Task<ChatSessionDefaultConfigurationDto?> GetChatSessionDefaultConfiguration()
     {
-        return await _configurationRepository.GetChatSessionConfiguration();
-    }
-
-    public async Task SaveChatSessionConfiguration(ChatSessionConfigurationDto chatSessionConfigurationDto)
-    {
-        await _configurationRepository.SaveChatSessionConfiguration(chatSessionConfigurationDto);
+        return await _configurationRepository.GetChatSessionDefaultConfiguration();
     }
     
-    public async Task EditChatSessionConfiguration(ChatSessionConfigurationDto chatSessionConfigurationDto)
+    public async Task SaveChatSessionDefaultConfiguration(ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto)
     {
-        await _configurationRepository.EditChatSessionConfiguration(chatSessionConfigurationDto);
+        await _configurationRepository.SaveChatSessionDefaultConfiguration(chatSessionDefaultConfigurationDto);
+    }
+    
+    public async Task EditChatSessionDefaultConfiguration(ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto)
+    {
+        await _configurationRepository.EditChatSessionDefaultConfiguration(chatSessionDefaultConfigurationDto);
     }
 }

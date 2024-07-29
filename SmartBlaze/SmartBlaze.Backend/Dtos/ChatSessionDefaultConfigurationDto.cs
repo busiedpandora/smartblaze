@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace SmartBlaze.Backend.Dtos;
 
-public class ChatSessionConfigurationDto
+public class ChatSessionDefaultConfigurationDto
 {
     [JsonPropertyName("id")]
     public string? Id { get; set; }
@@ -11,5 +11,5 @@ public class ChatSessionConfigurationDto
     public string? SystemInstruction { get; set; }
     
     [JsonPropertyName("textStream")]
-    public bool? TextStream { get; set; }
+    public bool TextStream { get; set; }
 }

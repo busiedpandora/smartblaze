@@ -239,9 +239,9 @@ public class Gemini : Chatbot
         }
     }
 
-    public override ChatbotConfigurationDto GetDefaultConfiguration()
+    public override ChatbotDefaultConfigurationDto GetDefaultConfiguration()
     {
-        return new ChatbotConfigurationDto()
+        return new ChatbotDefaultConfigurationDto()
         {
             ChatbotName = "Google Gemini",
             ChatbotModel = "gemini-1.5-pro",

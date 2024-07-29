@@ -23,5 +23,5 @@ public abstract class Chatbot
     public abstract IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto, 
         HttpClient httpClient);
 
-    public abstract ChatbotConfigurationDto GetDefaultConfiguration();
+    public abstract ChatbotDefaultConfigurationDto GetDefaultConfiguration();
 }

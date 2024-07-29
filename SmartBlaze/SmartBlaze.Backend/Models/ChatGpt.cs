@@ -282,9 +282,9 @@ public class ChatGpt : Chatbot
         }
     }
 
-    public override ChatbotConfigurationDto GetDefaultConfiguration()
+    public override ChatbotDefaultConfigurationDto GetDefaultConfiguration()
     {
-        return new ChatbotConfigurationDto()
+        return new ChatbotDefaultConfigurationDto()
         {
             ChatbotName = "ChatGPT",
             ChatbotModel = "gpt-4o",

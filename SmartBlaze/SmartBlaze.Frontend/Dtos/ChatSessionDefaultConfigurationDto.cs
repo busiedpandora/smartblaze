@@ -2,11 +2,14 @@ using System.Text.Json.Serialization;
 
 namespace SmartBlaze.Frontend.Dtos;
 
-public class ChatSessionSettingsDto
+public class ChatSessionDefaultConfigurationDto
 {
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+    
     [JsonPropertyName("systemInstruction")]
     public string? SystemInstruction { get; set; }
     
     [JsonPropertyName("textStream")]
-    public bool? TextStream { get; set; }
+    public bool TextStream { get; set; }
 }

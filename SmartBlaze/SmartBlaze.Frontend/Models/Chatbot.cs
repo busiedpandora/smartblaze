@@ -4,7 +4,7 @@ public class Chatbot
 {
     private string _name;
     private List<string> _models;
-    private string _apihost;
+    private string _apiHost;
     private string _apiKey;
     private string _model;
     private int _textStreamDelay;
@@ -25,10 +25,10 @@ public class Chatbot
 
     public List<string> Models => _models;
 
-    public string Apihost
+    public string ApiHost
     {
-        get => _apihost;
-        set => _apihost = value ?? throw new ArgumentNullException(nameof(value));
+        get => _apiHost;
+        set => _apiHost = value ?? throw new ArgumentNullException(nameof(value));
     }
 
     public string ApiKey

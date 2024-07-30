@@ -62,7 +62,7 @@ public class ChatSessionRepository : AbstractRepository
             Id = chatSessionDocument.Id,
             Title = chatSessionDocument.Data["title"].ToString(),
             CreationDate = DateTime.Parse(chatSessionDocument.Data["creationDate"].ToString() 
-                                          ?? DateTime.MinValue.ToString(CultureInfo.InvariantCulture)),
+                                          ?? DateTime.MinValue.ToString(CultureInfo.InvariantCulture))
         };
 
         return chatSessionDto;

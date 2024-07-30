@@ -124,7 +124,7 @@
         _chatbotSettings.ChatbotName = _settingsService.ChatbotSelected?.Name ?? "";
         _chatbotSettings.ChatbotModel = _settingsService.ChatbotSelected?.Model ?? "";
         _chatbotSettings.ChatbotModels = _settingsService.ChatbotSelected?.Models ?? [];
-        _chatbotSettings.ApiHost = _settingsService.ChatbotSelected?.Apihost ?? "";
+        _chatbotSettings.ApiHost = _settingsService.ChatbotSelected?.ApiHost ?? "";
         _chatbotSettings.ApiKey = _settingsService.ChatbotSelected?.ApiKey ?? "";
         _chatbotSettings.Temperature = _settingsService.ChatbotSelected?.Temperature ?? 0.0f;
         _chatbotSettings.MinTemperature = _settingsService.ChatbotSelected?.MinTemperature ?? 0.0f;
@@ -144,7 +144,7 @@
             _chatbotSettings.ChatbotName = chatbotSelected.Name;
             _chatbotSettings.ChatbotModels = chatbotSelected.Models;
             _chatbotSettings.ChatbotModel = chatbotSelected.Model;
-            _chatbotSettings.ApiHost = chatbotSelected.Apihost;
+            _chatbotSettings.ApiHost = chatbotSelected.ApiHost;
             _chatbotSettings.ApiKey = chatbotSelected.ApiKey;
             _chatbotSettings.Temperature = chatbotSelected.Temperature;
 

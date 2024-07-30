@@ -100,7 +100,9 @@
                 _settingsService.CloseSettings();
             }
         
-            await _chatSessionStateService.CreateNewChatSession("Undefined");
+            await _chatSessionStateService.CreateNewChatSession("Undefined", _settingsService.ChatbotSelected.Name,
+                _settingsService.ChatbotSelected.Model, _settingsService.ChatbotSelected.Temperature, 
+                _settingsService.SystemInstruction, _settingsService.TextStream);
         }
     }
 

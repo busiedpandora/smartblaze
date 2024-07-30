@@ -39,8 +39,8 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
     public async Task SetUpConfiguration()
     {
-        await LoadChatbotConfiguration();
-        await LoadChatSessionConfiguration();
+        await LoadChatbotDefaultConfiguration();
+        await LoadChatSessionDefaultConfiguration();
     }
     
     public void OpenChatbotSettings()
@@ -75,7 +75,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         if (chatbot is not null)
         {
             chatbot.Model = chatbotSettings.ChatbotModel;
-            chatbot.Apihost = chatbotSettings.ApiHost;
+            chatbot.ApiHost = chatbotSettings.ApiHost;
             chatbot.ApiKey = chatbotSettings.ApiKey;
             chatbot.Temperature = (float)Math.Round(chatbotSettings.Temperature, 1);
             
@@ -85,7 +85,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             {
                 ChatbotName = chatbot.Name,
                 ChatbotModel = chatbot.Model,
-                ApiHost = chatbot.Apihost,
+                ApiHost = chatbot.ApiHost,
                 ApiKey = chatbot.ApiKey,
                 TextStreamDelay = chatbot.TextStreamDelay,
                 Temperature = chatbot.Temperature,
@@ -145,7 +145,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         _chatbotSelected = chatbot;
     }
     
-    private async Task LoadChatbotConfiguration()
+    private async Task LoadChatbotDefaultConfiguration()
     {
         if (_chatbots is not null)
         {
@@ -172,7 +172,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             {
                 var chatbot = new Chatbot(chatbotConfigurationDto.ChatbotName, chatbotConfigurationDto.ChatbotModels,
                     chatbotConfigurationDto.MinTemperature, chatbotConfigurationDto.MaxTemperature);
-                chatbot.Apihost = chatbotConfigurationDto.ApiHost;
+                chatbot.ApiHost = chatbotConfigurationDto.ApiHost;
                 chatbot.ApiKey = chatbotConfigurationDto.ApiKey;
                 chatbot.Model = chatbotConfigurationDto.ChatbotModel;
                 chatbot.TextStreamDelay = chatbotConfigurationDto.TextStreamDelay;
@@ -210,7 +210,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         SelectChatbot(chatbotToSelect);
     }
 
-    private async Task LoadChatSessionConfiguration()
+    private async Task LoadChatSessionDefaultConfiguration()
     {
         var chatSessionDefaultConfigurationDto = await HttpClient.GetFromJsonAsync<ChatSessionDefaultConfigurationDto>("configuration/chat-session");
 

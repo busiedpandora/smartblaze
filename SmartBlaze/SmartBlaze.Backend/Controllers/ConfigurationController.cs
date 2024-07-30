@@ -10,12 +10,15 @@ public class ConfigurationController : ControllerBase
 {
     private ConfigurationService _configurationService;
     private ChatbotService _chatbotService;
+    private ChatSessionService _chatSessionService;
 
 
-    public ConfigurationController(ConfigurationService configurationService, ChatbotService chatbotService)
+    public ConfigurationController(ConfigurationService configurationService, ChatbotService chatbotService,
+        ChatSessionService chatSessionService)
     {
         _configurationService = configurationService;
         _chatbotService = chatbotService;
+        _chatSessionService = chatSessionService;
     }
 
     [HttpGet("chatbot")]
@@ -109,6 +112,42 @@ public class ConfigurationController : ControllerBase
         chatSessionDefaultConfiguration.TextStream = chatSessionDefaultConfigurationDto.TextStream;
 
         await _configurationService.EditChatSessionDefaultConfiguration(chatSessionDefaultConfiguration);
+
+        return Ok();
+    }
+
+    [HttpGet("chat-session/{id}")]
+    public async Task<ActionResult<ChatSessionConfigurationDto>> GetChatSessionConfiguration(string id)
+    {
+        ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
+        
+        if (chatSessionDto is null)
+        {
+            return NotFound($"Chat session with id {id} not found");
+        }
+
+        var chatSessionConfiguration = await _configurationService.GetChatSessionConfiguration(id);
+
+        return Ok(chatSessionConfiguration);
+    }
+
+    [HttpPost("chat-session/{id}")]
+    public async Task<ActionResult> AddChatSessionConfiguration(string id, 
+        [FromBody] ChatSessionConfigurationDto chatSessionConfigurationDto)
+    {
+        ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
+        
+        if (chatSessionDto is null)
+        {
+            return NotFound($"Chat session with id {id} not found");
+        }
+        
+        if (chatSessionConfigurationDto.ChatbotName is null || chatSessionConfigurationDto.ChatbotModel is null)
+        {
+            return BadRequest($"No chatbot specified for chat session with id {id}");
+        }
+
+        await _configurationService.SaveChatSessionConfiguration(chatSessionConfigurationDto, id);
 
         return Ok();
     }

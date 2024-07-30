@@ -31,7 +31,7 @@
             _applicationStarted = true;
             
             await _settingsService.SetUpConfiguration();
-            await _chatSessionStateService.LoadChats();
+            await _chatSessionStateService.LoadChatSessions();
         }
         
         if (_navigationManager.Uri.EndsWith("/error"))

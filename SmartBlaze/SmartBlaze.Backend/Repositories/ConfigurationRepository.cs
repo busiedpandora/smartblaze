@@ -104,21 +104,21 @@ public class ConfigurationRepository : AbstractRepository
             return null;
         }
 
-        var chatSessionConfiguration = ConvertToChatSessionDefaultConfiguration(chatSessionDefaultConfigurationDocument);
+        var chatSessionDefaultConfiguration = ConvertToChatSessionDefaultConfiguration(chatSessionDefaultConfigurationDocument);
 
-        return chatSessionConfiguration;
+        return chatSessionDefaultConfiguration;
     }
     
     public async Task SaveChatSessionDefaultConfiguration(ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto)
     {
-        var chatSessionConfigurationDocument = new Dictionary<string, object>()
+        var chatSessionDefaultConfigurationDocument = new Dictionary<string, object>()
         {
             { "systemInstruction", chatSessionDefaultConfigurationDto.SystemInstruction ?? "" },
             { "textStream", chatSessionDefaultConfigurationDto.TextStream}
         };
 
         await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatSessionDefaultConfigurationCollectionId,
-            ID.Unique(), chatSessionConfigurationDocument);
+            ID.Unique(), chatSessionDefaultConfigurationDocument);
     }
     
     public async Task EditChatSessionDefaultConfiguration(ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto)
@@ -136,6 +136,39 @@ public class ConfigurationRepository : AbstractRepository
 
         await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatSessionDefaultConfigurationCollectionId,
             chatSessionDefaultConfigurationDto.Id, chatSessionConfigurationDocument);
+    }
+
+    public async Task<ChatSessionConfigurationDto?> GetChatSessionConfiguration(string chatSessionId)
+    {
+        var chatSessionConfigurationDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId, 
+            ChatSessionConfigurationCollectionId, 
+            [
+                Query.Equal("chatSession", chatSessionId)
+            ]);
+
+        if (chatSessionConfigurationDocuments.Documents.Count > 0) 
+        {
+            var chatSessionConfiguration = ConvertToChatSessionConfiguration(chatSessionConfigurationDocuments.Documents.ElementAt(0));
+            return chatSessionConfiguration;
+        }
+
+        return null;
+    }
+
+    public async Task SaveChatSessionConfiguration(ChatSessionConfigurationDto chatSessionConfigurationDto, string chatSessionId)
+    {
+        var chatSessionConfigurationDocument = new Dictionary<string, object>()
+        {
+            { "chatbotName", chatSessionConfigurationDto.ChatbotName ?? ""},
+            { "chatbotModel", chatSessionConfigurationDto.ChatbotModel ?? ""},
+            { "temperature", chatSessionConfigurationDto.Temperature },
+            { "systemInstruction", chatSessionConfigurationDto.SystemInstruction ?? ""},
+            { "textStream", chatSessionConfigurationDto.TextStream },
+            { "chatSession", chatSessionId}
+        };
+
+        await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatSessionConfigurationCollectionId,
+            ID.Unique(), chatSessionConfigurationDocument);
     }
 
     private ChatbotDefaultConfigurationDto ConvertToChatbotDefaultConfiguration(
@@ -169,5 +202,20 @@ public class ConfigurationRepository : AbstractRepository
         };
 
         return chatSessionDefaultConfigurationDto;
+    }
+
+    private ChatSessionConfigurationDto ConvertToChatSessionConfiguration(Document chatSessionConfigurationDocument)
+    {
+        var chatSessionConfigurationDto = new ChatSessionConfigurationDto()
+        {
+            Id = chatSessionConfigurationDocument.Id,
+            ChatbotName = chatSessionConfigurationDocument.Data["chatbotName"].ToString(),
+            ChatbotModel = chatSessionConfigurationDocument.Data["chatbotModel"].ToString(),
+            Temperature = float.Parse(chatSessionConfigurationDocument.Data["temperature"].ToString() ?? "0.0"),
+            SystemInstruction = chatSessionConfigurationDocument.Data["systemInstruction"].ToString(),
+            TextStream = bool.Parse(chatSessionConfigurationDocument.Data["textStream"].ToString() ?? "false")
+        };
+
+        return chatSessionConfigurationDto;
     }
 }

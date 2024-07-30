@@ -9,6 +9,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     private List<ChatSessionDto>? _chatSessions;
     private ChatSessionDto? _currentChatSession;
     private List<MessageDto>? _currentChatSessionMessages;
+    private ChatSessionConfigurationDto? _currentChatSessionConfiguration;
 
     private bool _areChatSessionsLoadingOnStartup;
     private bool _isNewChatSessionBeingCreated;
@@ -30,6 +31,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     {
         get => _currentChatSessionMessages;
     }
+
+    public ChatSessionConfigurationDto? CurrentChatSessionConfiguration => _currentChatSessionConfiguration;
 
     public bool AreChatSessionsLoadingOnStartup
     {
@@ -72,9 +75,9 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         _isChatSessionBeingSelected = true;
         NotifyRefreshView();
         
-        ChatSessionDto? newSelectedChat = _chatSessions.Find(c => c.Id == chatSession.Id);
+        ChatSessionDto? newSelectedChatSession = _chatSessions.Find(c => c.Id == chatSession.Id);
 
-        if (newSelectedChat is null)
+        if (newSelectedChatSession is null)
         {
             _isChatSessionBeingSelected = false;
             NotifyNavigateToErrorPage("Error occured while selecting the chat session", 
@@ -82,7 +85,24 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             return;
         }
         
-        var response = await HttpClient.GetAsync($"chat-session/{newSelectedChat.Id}/messages");
+        var chatSessionConfigurationResponse = await HttpClient.GetAsync($"configuration/chat-session/{newSelectedChatSession.Id}");
+        var chatSessionConfigurationResponseContent =
+            await chatSessionConfigurationResponse.Content.ReadAsStringAsync();
+
+        if (!chatSessionConfigurationResponse.IsSuccessStatusCode)
+        {
+            _isChatSessionBeingSelected = false;
+            NotifyNavigateToErrorPage("Error occured while selecting the chat session", 
+                chatSessionConfigurationResponseContent);
+            return;
+        }
+
+        var chatSessionConfiguration =
+            JsonSerializer.Deserialize<ChatSessionConfigurationDto>(chatSessionConfigurationResponseContent);
+
+        _currentChatSessionConfiguration = chatSessionConfiguration;
+        
+        var response = await HttpClient.GetAsync($"chat-session/{newSelectedChatSession.Id}/messages");
         var responseContent = await response.Content.ReadAsStringAsync();
         
         if (!response.IsSuccessStatusCode)
@@ -104,14 +124,14 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             _currentChatSessionMessages = messagesDto;
         }
         
-        newSelectedChat.Selected = true;
+        newSelectedChatSession.Selected = true;
 
         if (_currentChatSession is not null)
         {
             _currentChatSession.Selected = false;
         }
 
-        _currentChatSession = newSelectedChat;
+        _currentChatSession = newSelectedChatSession;
         
         NotifyNavigateToPage("/");
 
@@ -132,14 +152,17 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             _currentChatSession.Selected = false;
 
             _currentChatSession = null;
+            _currentChatSessionMessages = null;
+            _currentChatSessionConfiguration = null;
             
             NotifyRefreshView();
         }
     }
 
-    public async Task SendUserMessage(string text, List<ImageInput> imageInputs, Chatbot chatbot, string systemInstruction, bool textStream)
+    public async Task SendUserMessage(string text, List<ImageInput> imageInputs, string apiHost, string apiKey, int textStreamDelay)
     {
-        if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null)
+        if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null 
+            || _currentChatSessionConfiguration is null)
         {
             return;
         }
@@ -158,16 +181,16 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         var chatSessionInfoDto = new ChatSessionInfoDto()
         {
             Messages = _currentChatSessionMessages,
-            ChatbotName = chatbot.Name,
-            ChatbotModel = chatbot.Model,
-            ApiHost = chatbot.Apihost,
-            ApiKey = chatbot.ApiKey,
-            SystemInstruction = systemInstruction,
-            Temperature = chatbot.Temperature,
-            TextStreamDelay = chatbot.TextStreamDelay
+            ChatbotName = _currentChatSessionConfiguration.ChatbotName,
+            ChatbotModel = _currentChatSessionConfiguration.ChatbotModel,
+            ApiHost = apiHost,
+            ApiKey = apiKey,
+            SystemInstruction = _currentChatSessionConfiguration.SystemInstruction,
+            Temperature = _currentChatSessionConfiguration.Temperature,
+            TextStreamDelay = textStreamDelay
         };
         
-        if (textStream)
+        if (_currentChatSessionConfiguration.TextStream)
         {
             await GenerateAssistantTextMessageWithStreamEnabled(chatSessionInfoDto);
         }
@@ -181,7 +204,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         NotifyRefreshView();
     }
 
-    public async Task CreateNewChatSession(string title)
+    public async Task CreateNewChatSession(string title, string chatbotName, string chatbotModel, float temperature,
+        string systemInstruction, bool textStream)
     {
         if (!CanUserInteract())
         {
@@ -220,6 +244,28 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             return;
         }
         
+        ChatSessionConfigurationDto chatSessionConfigurationDto = new()
+        {
+            ChatbotName = chatbotName,
+            ChatbotModel = chatbotModel,
+            Temperature = temperature,
+            SystemInstruction = systemInstruction,
+            TextStream = textStream
+        };
+
+        var chatSessionConfigurationResponse = await HttpClient.PostAsJsonAsync($"configuration/chat-session/{chatSessionDto.Id}", 
+            chatSessionConfigurationDto);
+        
+        if (!chatSessionConfigurationResponse.IsSuccessStatusCode)
+        {
+            var chatSessionConfigurationResponseContent =
+                await chatSessionConfigurationResponse.Content.ReadAsStringAsync();
+            _isNewChatSessionBeingCreated = false;
+            NotifyNavigateToErrorPage("Error occured while creating a new chat session", 
+                chatSessionConfigurationResponseContent);
+            return;
+        }
+        
         NotifyNavigateToPage("/");
         
         _chatSessions.Insert(0, chatSessionDto);
@@ -238,7 +284,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         NotifyRefreshView();
     }
 
-    public async Task LoadChats()
+    public async Task LoadChatSessions()
     {
         if (_chatSessions is not null)
         {

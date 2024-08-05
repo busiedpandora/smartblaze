@@ -15,6 +15,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     private bool _isNewChatSessionBeingCreated;
     private bool _isChatSessionBeingSelected;
     private bool _isGeneratingResponse;
+    private bool _isChatSessionBeingDeleted;
 
     
     public List<ChatSessionDto>? ChatSessions
@@ -54,7 +55,9 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     {
         get => _isGeneratingResponse;
     }
-    
+
+    public bool IsChatSessionBeingDeleted => _isChatSessionBeingDeleted;
+
     public async Task SelectChatSession(ChatSessionDto chatSession)
     {
         if (_chatSessions is null)
@@ -284,6 +287,56 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         NotifyRefreshView();
     }
 
+    public async Task DeleteChatSession(ChatSessionDto chatSessionDto)
+    {
+        if (_chatSessions is null)
+        {
+            return;
+        }
+        
+        if (!CanUserInteract())
+        {
+            return;
+        }
+
+        if (!IsChatSessionValid(chatSessionDto))
+        {
+            return;
+        }
+
+        _isChatSessionBeingDeleted = true;
+
+        var deleteChatSessionResponse = await HttpClient.DeleteAsync($"chat-sessions/{chatSessionDto.Id}/delete");
+
+        if (!deleteChatSessionResponse.IsSuccessStatusCode)
+        {
+            var deleteChatSessionResponseContent = await deleteChatSessionResponse.Content.ReadAsStringAsync();
+            NotifyNavigateToErrorPage("Error occured while deleting the chat session", 
+                deleteChatSessionResponseContent);
+            _isChatSessionBeingDeleted = false;
+            return;
+        }
+        
+        _chatSessions.Remove(chatSessionDto);
+        _isChatSessionBeingDeleted = false;
+
+        if (chatSessionDto == _currentChatSession)
+        {
+            DeselectCurrentChatSession();
+            
+            if (_chatSessions.Count > 0)
+            {
+                await SelectChatSession(_chatSessions.ElementAt(0));
+            }
+            else
+            {
+                NotifyNavigateToPage("/welcome");
+            }
+        }
+        
+        NotifyRefreshView();
+    }
+
     public async Task LoadChatSessions()
     {
         if (_chatSessions is not null)
@@ -332,10 +385,11 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     
     public bool CanUserInteract()
     {
-        return !_areChatSessionsLoadingOnStartup 
-               && !_isNewChatSessionBeingCreated 
-               && !_isChatSessionBeingSelected 
-               && !_isGeneratingResponse;
+        return !_areChatSessionsLoadingOnStartup
+               && !_isNewChatSessionBeingCreated
+               && !_isChatSessionBeingSelected
+               && !_isGeneratingResponse
+               && !_isChatSessionBeingDeleted;
     }
 
     private bool IsChatSessionValid(ChatSessionDto chatSessionDto)

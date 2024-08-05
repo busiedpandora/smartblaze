@@ -10,11 +10,13 @@ namespace SmartBlaze.Backend.Controllers;
 public class ChatSessionController : ControllerBase
 {
     private ChatSessionService _chatSessionService;
+    private ConfigurationService _configurationService;
 
 
-    public ChatSessionController(ChatSessionService chatSessionService)
+    public ChatSessionController(ChatSessionService chatSessionService, ConfigurationService configurationService)
     {
         _chatSessionService = chatSessionService;
+        _configurationService = configurationService;
     }
 
     [HttpGet("")]
@@ -56,4 +58,20 @@ public class ChatSessionController : ControllerBase
         
         return Ok(chatSessionDto);
     }
+
+    [HttpDelete("{id}/delete")]
+    public async Task<ActionResult> DeleteChatSession(string id)
+    {
+        var chatSessionDto = await _chatSessionService.GetChatSessionById(id);
+
+        if (chatSessionDto is null)
+        {
+            return NotFound($"Chat session with id {id} not found");
+        }
+
+        await _configurationService.DeleteChatSessionAndItsConfiguration(id);
+        
+        return Ok();
+    }
+    
 }

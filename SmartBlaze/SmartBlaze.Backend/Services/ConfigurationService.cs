@@ -73,4 +73,14 @@ public class ConfigurationService
     {
         await _configurationRepository.SaveChatSessionConfiguration(chatSessionConfigurationDto, chatSessionId);
     }
+
+    public async Task DeleteChatSessionAndItsConfiguration(string chatSessionId)
+    {
+        var chatSessionConfiguration = await GetChatSessionConfiguration(chatSessionId);
+
+        if (chatSessionConfiguration is not null && chatSessionConfiguration.Id is not null)
+        {
+            await _configurationRepository.DeleteChatSessionConfiguration(chatSessionConfiguration.Id);
+        }
+    }
 }

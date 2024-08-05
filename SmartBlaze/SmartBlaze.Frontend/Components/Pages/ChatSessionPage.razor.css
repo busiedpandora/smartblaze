@@ -1,3 +1,11 @@
 .chatbot-info {
     font-size: 12px;
 }
+
+.edit-icon {
+    cursor: pointer;
+}
+
+.delete-icon {
+    cursor: pointer;
+}

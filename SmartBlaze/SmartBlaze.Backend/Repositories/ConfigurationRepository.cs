@@ -171,6 +171,11 @@ public class ConfigurationRepository : AbstractRepository
             ID.Unique(), chatSessionConfigurationDocument);
     }
 
+    public async Task DeleteChatSessionConfiguration(string id)
+    {
+        await AppwriteDatabase.DeleteDocument(AppwriteDatabaseId, ChatSessionConfigurationCollectionId, id);
+    }
+
     private ChatbotDefaultConfigurationDto ConvertToChatbotDefaultConfiguration(
         Document chatbotDefaultConfigurationDocument)
     {

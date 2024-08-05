@@ -29,11 +29,14 @@
             @foreach (var chatSession in _chatSessionStateService.ChatSessions)
             {
                 <div class="nav-item px-3">
-                    
-                    <NavLink class="@(chatSession.Selected ? "nav-link active" : "nav-link")"
+                    <NavLink class="@(chatSession.Selected ? "nav-link active" : "nav-link")" 
                              @onclick="() => OnChatClicked(chatSession)">
-                        <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/>
-                        <span class="user-select-none">@chatSession.Title</span>
+                        <div class="d-flex col-12 justify-content-between">
+                            <div>
+                                <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2" data-bs-toggle="dropdown" />
+                                <span class="user-select-none">@chatSession.Title</span>
+                            </div>
+                        </div>
                     </NavLink>
                 </div>
             }

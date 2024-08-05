@@ -13,10 +13,20 @@
 <div id="pageRow">
     @if (_chatSessionStateService.CurrentChatSession is not null)
     {
-        <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/>
-        <span id="pageTitle">
-            @_chatSessionStateService.CurrentChatSession.Title
-        </span>
+        <div class="d-flex align-items-center">
+            <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/>
+            <span id="pageTitle" class="user-select-none">
+                @_chatSessionStateService.CurrentChatSession.Title
+            </span>
+        </div>
+        
+        <div class="ms-4">
+            <img src="icons/pen-fill.svg" width="20" height="20" alt="edit icon" class="me-2 edit-icon" 
+                 @onclick="OnEditChatSessionClicked" />
+
+            <img src="icons/trash3-fill.svg" width="20" height="20" alt="delete icon" class="me-2 delete-icon" 
+                 @onclick="OnDeleteChatSessionClicked"/>
+        </div>
     }
 </div>
 
@@ -126,6 +136,21 @@
         }
 
         await base.OnInitializedAsync();
+    }
+
+    private void OnEditChatSessionClicked()
+    {
+        
+    }
+
+    private async void OnDeleteChatSessionClicked()
+    {
+        var chatSession = _chatSessionStateService.CurrentChatSession;
+
+        if (chatSession is not null)
+        {
+            await _chatSessionStateService.DeleteChatSession(chatSession);
+        }
     }
 
     private void ReloadComponentState()

@@ -16,6 +16,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     private bool _isChatSessionBeingSelected;
     private bool _isGeneratingResponse;
     private bool _isChatSessionBeingDeleted;
+    private bool _isChatSessionBeingEdited;
 
     
     public List<ChatSessionDto>? ChatSessions
@@ -287,6 +288,82 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         NotifyRefreshView();
     }
 
+    public void OpenChatSessionSettings()
+    {
+        if(_currentChatSession is not null)
+        {
+            NotifyNavigateToPage($"chat/{_currentChatSession.Id}");
+            NotifyRefreshView();
+        }
+    }
+
+    public void CloseChatSessionSettings()
+    {
+        NotifyNavigateToPage("/");
+        NotifyRefreshView();
+    }
+
+    public async Task EditCurrentChatSession(ChatSessionSettings chatSessionSettings)
+    {
+        if (_chatSessions is null)
+        {
+            return;
+        }
+
+        if (_currentChatSession is null || _currentChatSessionConfiguration is null)
+        {
+            return;
+        }
+        
+        _isChatSessionBeingEdited = true;
+        
+        ChatSessionConfigurationDto chatSessionConfigurationDto = new()
+        {
+            ChatbotName = chatSessionSettings.ChatbotName,
+            ChatbotModel = chatSessionSettings.ChatbotModel,
+            Temperature = chatSessionSettings.Temperature,
+            SystemInstruction = chatSessionSettings.SystemInstruction,
+            TextStream = chatSessionSettings.TextStream
+        };
+
+        var title = chatSessionSettings.Title.Trim();
+        if (title == string.Empty)
+        {
+            title = "Undefined";
+        }
+        else if (title.Length > 20)
+        {
+            title = title.Substring(0, 20);
+        }
+
+        ChatSessionEditDto chatSessionEditDto = new()
+        {
+            Title = title,
+            ChatSessionConfigurationDto = chatSessionConfigurationDto
+        };
+
+        var editChatSessionResponse = await HttpClient.PutAsJsonAsync($"chat-sessions/{_currentChatSession.Id}/edit", chatSessionEditDto);
+
+        if (!editChatSessionResponse.IsSuccessStatusCode)
+        {
+            _isChatSessionBeingEdited = false;
+            var editChatSessionResponseContent = await editChatSessionResponse.Content.ReadAsStringAsync();
+            NotifyNavigateToErrorPage("Error occured while editing the chat session", editChatSessionResponseContent);
+            return;
+        }
+        
+        _currentChatSession.Title = title;
+        _currentChatSessionConfiguration.ChatbotName = chatSessionSettings.ChatbotName;
+        _currentChatSessionConfiguration.ChatbotModel = chatSessionSettings.ChatbotModel;
+        _currentChatSessionConfiguration.Temperature = chatSessionSettings.Temperature;
+        _currentChatSessionConfiguration.SystemInstruction = chatSessionSettings.SystemInstruction;
+        _currentChatSessionConfiguration.TextStream = chatSessionSettings.TextStream;
+        
+        _isChatSessionBeingEdited = false;
+        NotifyNavigateToPage("/");
+        NotifyRefreshView();
+    }
+
     public async Task DeleteChatSession(ChatSessionDto chatSessionDto)
     {
         if (_chatSessions is null)
@@ -389,7 +466,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
                && !_isNewChatSessionBeingCreated
                && !_isChatSessionBeingSelected
                && !_isGeneratingResponse
-               && !_isChatSessionBeingDeleted;
+               && !_isChatSessionBeingDeleted
+               && !_isChatSessionBeingEdited;
     }
 
     private bool IsChatSessionValid(ChatSessionDto chatSessionDto)

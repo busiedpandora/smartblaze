@@ -43,10 +43,8 @@ public class ChatSessionService
         return csDto;
     }
 
-    public async Task<ChatSessionDto> EditChatSession(ChatSessionDto chatSessionDto)
+    public async Task EditChatSession(ChatSessionDto chatSessionDto)
     {
-        var csDto = await _chatSessionRepository.SaveChatSession(chatSessionDto);
-        
-        return csDto;
+        await _chatSessionRepository.EditChatSession(chatSessionDto);
     }
 }

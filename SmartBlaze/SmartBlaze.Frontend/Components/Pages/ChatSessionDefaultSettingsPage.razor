@@ -8,7 +8,7 @@
 @inject ChatSessionStateService _chatSessionStateService
 @inject RedirectionService _redirectionService
 
-<PageTitle>Chat settings - SmartBlaze</PageTitle>
+<PageTitle>Chat default settings - SmartBlaze</PageTitle>
 
 <div id="pageRow">
     <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
@@ -21,17 +21,17 @@
     
     <SettingsMenu/>
 
-    <EditForm Model="_chatSessionSettings" OnSubmit="@OnSaveClicked" autocomplete="off">
+    <EditForm Model="_chatSessionDefaultSettings" OnSubmit="@OnSaveClicked" autocomplete="off">
         <div class="mb-3">
             <label for="systemInstruction" class="form-label">System instruction</label>
             <div class="col-6">
-                <InputTextArea id="systemInstruction" class="form-control" @bind-Value="_chatSessionSettings.SystemInstruction"></InputTextArea>
+                <InputTextArea id="systemInstruction" class="form-control" @bind-Value="_chatSessionDefaultSettings.SystemInstruction"></InputTextArea>
             </div>
         </div>
 
         <div class="mb-3">
             <label for="textStream" class="form-label">Text stream</label>
-            <InputCheckbox id="textStream" class="form-check" @bind-Value="_chatSessionSettings.TextStream"></InputCheckbox>
+            <InputCheckbox id="textStream" class="form-check" @bind-Value="_chatSessionDefaultSettings.TextStream"></InputCheckbox>
         </div>
 
         <div class="mt-5">
@@ -49,7 +49,7 @@
 @code {
     private bool _applicationStarted = false;
     
-    private ChatSessionSettings _chatSessionSettings = new();
+    private ChatSessionDefaultSettings _chatSessionDefaultSettings = new();
 
     
     protected override Task OnInitializedAsync()
@@ -62,15 +62,15 @@
             _chatSessionStateService.RefreshView += ReloadComponentState;
         }
         
-        _chatSessionSettings.SystemInstruction = _settingsService.SystemInstruction ?? "";
-        _chatSessionSettings.TextStream = _settingsService.TextStream;
+        _chatSessionDefaultSettings.SystemInstruction = _settingsService.SystemInstruction ?? "";
+        _chatSessionDefaultSettings.TextStream = _settingsService.TextStream;
         
         return base.OnInitializedAsync();
     }
     
     private async void OnSaveClicked()
     {
-        await _settingsService.SaveChatSessionDefaultSettings(_chatSessionSettings);
+        await _settingsService.SaveChatSessionDefaultSettings(_chatSessionDefaultSettings);
     }
     
     private async void OnCancelClicked()

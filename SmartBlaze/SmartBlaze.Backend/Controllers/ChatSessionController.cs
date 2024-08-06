@@ -48,9 +48,9 @@ public class ChatSessionController : ControllerBase
     [HttpPost("new")]
     public async Task<ActionResult<ChatSessionDto>> AddNewChatSession([FromBody] ChatSessionDto chatSessionDto)
     {
-        if (chatSessionDto is null || chatSessionDto.Title is null)
+        if (chatSessionDto.Title is null)
         {
-            return BadRequest("Chat session not specified correctly");
+            return BadRequest("Chat session not specified correctly. Title must be provided");
         }
         
         chatSessionDto = _chatSessionService.CreateNewChatSession(chatSessionDto.Title);
@@ -73,5 +73,39 @@ public class ChatSessionController : ControllerBase
         
         return Ok();
     }
-    
+
+    [HttpPut("{id}/edit")]
+    public async Task<ActionResult> EditChatSession(string id, [FromBody] ChatSessionEditDto chatSessionEditDto)
+    {
+        ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
+        
+        if (chatSessionDto is null)
+        {
+            return NotFound($"Chat session with id {id} not found");
+        }
+        
+        if (chatSessionEditDto.Title is null)
+        {
+            return BadRequest("Chat session not specified correctly. Title must be provided");
+        }
+
+        if (chatSessionDto.Title != chatSessionEditDto.Title)
+        {
+            chatSessionDto.Title = chatSessionEditDto.Title;
+            await _chatSessionService.EditChatSession(chatSessionDto);
+        }
+
+        if (chatSessionEditDto.ChatSessionConfigurationDto is not null)
+        {
+            var chatSessionConfiguration = await _configurationService.GetChatSessionConfiguration(id);
+
+            if (chatSessionConfiguration is not null)
+            {
+                chatSessionEditDto.ChatSessionConfigurationDto.Id = chatSessionConfiguration.Id;
+                await _configurationService.EditChatSessionConfiguration(chatSessionEditDto.ChatSessionConfigurationDto, id);
+            }
+        }
+
+        return Ok();
+    }
 }

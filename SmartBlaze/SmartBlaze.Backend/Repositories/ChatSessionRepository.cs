@@ -43,6 +43,11 @@ public class ChatSessionRepository : AbstractRepository
 
     public async Task<ChatSessionDto> EditChatSession(ChatSessionDto chatSessionDto)
     {
+        if (string.IsNullOrEmpty(chatSessionDto.Id))
+        {
+            throw new ArgumentException("The document ID must be provided.", nameof(chatSessionDto.Id));
+        }
+        
         var chatSessionDocument = new Dictionary<string, object>()
         {
             {"title", chatSessionDto.Title ?? ""},
@@ -50,7 +55,7 @@ public class ChatSessionRepository : AbstractRepository
         };
         
         var csd = await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatSessionCollectionId, 
-            ID.Unique(), chatSessionDocument);
+            chatSessionDto.Id, chatSessionDocument);
 
         return ConvertToChatSession(csd);
     }

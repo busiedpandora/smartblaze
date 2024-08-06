@@ -1,0 +1,174 @@
+@page "/chat/{Id}"
+@using SmartBlaze.Frontend.Models
+
+@rendermode InteractiveServer
+
+@inject ChatSessionStateService _chatSessionStateService
+@inject SettingsService _settingsService
+
+<PageTitle>Chat settings - SmartBlaze</PageTitle>
+
+<div id="pageRow">
+    <img src="icons/chat-dots-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
+    <span id="pageTitle">
+        
+    </span>
+</div>
+
+<div id="settingsPagesContainer">
+    <EditForm Model="_chatSessionSettings" OnSubmit="@OnSaveClicked" autocomplete="off">
+        <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <div class="col-6">
+                <InputText id="title" class="form-control" @bind-Value="_chatSessionSettings.Title"></InputText>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label for="chatbot" class="form-label">Chatbot</label>
+            <div class="col-2">
+                <InputSelect id="chatbot" class="form-select"
+                             Value="_chatSessionSettings.ChatbotName" ValueExpression="() => _chatSessionSettings.ChatbotName" TValue="string"
+                             ValueChanged="(string chatbotName) => OnChatbotSelected(chatbotName)">
+                    @foreach (var chatbot in _settingsService.Chatbots)
+                    {
+                        <option value="@chatbot.Name">@chatbot.Name</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="chatbotModel" class="form-label">Model</label>
+            <div class="col-2">
+                <InputSelect id="chatbotModel" @bind-Value="_chatSessionSettings.ChatbotModel" class="form-select">
+                    @foreach (var chatbotModel in _chatSessionSettings.ChatbotModels)
+                    {
+                        <option value="@chatbotModel">@chatbotModel</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="temperature" class="form-label">Temperature</label>
+            <div class="d-flex">
+                <div class="col-4">
+                    <input id="temperature" type="range" class="form-range" step="0.1" @bind-value="_chatSessionSettings.Temperature"
+                           @oninput="OnTemperatureChanged"
+                           min="@_chatbotMinTemperature" max="@_chatbotMaxTemperature"/>
+                </div>
+                <div class="ms-4">
+                    <span class="badge bg-primary">@_badgeTemperature</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label for="systemInstruction" class="form-label">System instruction</label>
+            <div class="col-6">
+                <InputTextArea id="systemInstruction" class="form-control" @bind-Value="_chatSessionSettings.SystemInstruction"></InputTextArea>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="textStream" class="form-label">Text stream</label>
+            <InputCheckbox id="textStream" class="form-check" @bind-Value="_chatSessionSettings.TextStream"></InputCheckbox>
+        </div>
+
+        <div class="mt-5">
+            <button class="btn btn-primary" type="button" @onclick="OnCancelClicked">
+                Cancel
+            </button>
+
+            <button class="btn btn-primary ms-2" type="submit" value="Submit">
+                Save
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+
+    private bool _applicationStarted = false;
+    private ChatSessionSettings _chatSessionSettings = new();
+
+    private float _chatbotMinTemperature;
+    private float _chatbotMaxTemperature;
+    private float _badgeTemperature;
+
+    protected override Task OnInitializedAsync()
+    {
+        if (!_applicationStarted)
+        {
+            _applicationStarted = true;
+            
+            _chatSessionStateService.RefreshView += ReloadComponentState;
+        }
+
+        var chatSession = _chatSessionStateService.CurrentChatSession;
+        var chatSessionConfiguration = _chatSessionStateService.CurrentChatSessionConfiguration;
+
+        if (chatSession is not null && chatSessionConfiguration is not null)
+        {
+            _chatSessionSettings.Title = chatSession.Title ?? "";
+            _chatSessionSettings.ChatbotName = chatSessionConfiguration.ChatbotName ?? "";
+            _chatSessionSettings.ChatbotModel = chatSessionConfiguration.ChatbotModel ?? "";
+            
+            var chatbot = _settingsService.Chatbots?.Find(c => c.Name == chatSessionConfiguration.ChatbotName);
+
+            if (chatbot is not null)
+            {
+                _chatSessionSettings.ChatbotModels = chatbot.Models;
+                _chatbotMinTemperature = chatbot.MinTemperature;
+                _chatbotMaxTemperature = chatbot.Maxtemperature;
+            }
+
+            _chatSessionSettings.Temperature = chatSessionConfiguration.Temperature;
+            
+            _chatSessionSettings.SystemInstruction = chatSessionConfiguration.SystemInstruction ?? "";
+            _chatSessionSettings.TextStream = chatSessionConfiguration.TextStream;
+
+            _badgeTemperature = chatSessionConfiguration.Temperature;
+        }
+        
+        return base.OnInitializedAsync();
+    }
+    
+    private void OnChatbotSelected(string chatbotName)
+    {
+        var chatbotSelected = _settingsService.Chatbots?.Find(c => c.Name == chatbotName);
+
+        if (chatbotSelected is not null)
+        {
+            _chatSessionSettings.ChatbotName = chatbotSelected.Name;
+            _chatSessionSettings.ChatbotModels = chatbotSelected.Models;
+            _chatSessionSettings.ChatbotModel = chatbotSelected.Model;
+            _chatSessionSettings.Temperature = chatbotSelected.Temperature;
+
+            _badgeTemperature = chatbotSelected.Temperature;
+        }
+    }
+    
+    private void OnTemperatureChanged(ChangeEventArgs e)
+    {
+        _badgeTemperature = Convert.ToSingle(e.Value);
+    }
+    
+    private async void OnSaveClicked()
+    {
+        await _chatSessionStateService.EditCurrentChatSession(_chatSessionSettings);
+    }
+    
+    private void OnCancelClicked()
+    {
+        _chatSessionStateService.CloseChatSessionSettings();
+    }
+    
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}

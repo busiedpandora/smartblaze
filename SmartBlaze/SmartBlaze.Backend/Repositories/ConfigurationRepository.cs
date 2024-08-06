@@ -171,6 +171,27 @@ public class ConfigurationRepository : AbstractRepository
             ID.Unique(), chatSessionConfigurationDocument);
     }
 
+    public async Task EditChatSessionConfiguration(ChatSessionConfigurationDto chatSessionConfigurationDto, string chatSessionId)
+    {
+        if (string.IsNullOrEmpty(chatSessionConfigurationDto.Id))
+        {
+            throw new ArgumentException("The document ID must be provided.", nameof(chatSessionConfigurationDto.Id));
+        }
+        
+        var chatSessionConfigurationDocument = new Dictionary<string, object>()
+        {
+            { "chatbotName", chatSessionConfigurationDto.ChatbotName ?? ""},
+            { "chatbotModel", chatSessionConfigurationDto.ChatbotModel ?? ""},
+            { "temperature", chatSessionConfigurationDto.Temperature },
+            { "systemInstruction", chatSessionConfigurationDto.SystemInstruction ?? ""},
+            { "textStream", chatSessionConfigurationDto.TextStream },
+            { "chatSession", chatSessionId}
+        };
+
+        await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatSessionConfigurationCollectionId,
+            chatSessionConfigurationDto.Id, chatSessionConfigurationDocument);
+    }
+
     public async Task DeleteChatSessionConfiguration(string id)
     {
         await AppwriteDatabase.DeleteDocument(AppwriteDatabaseId, ChatSessionConfigurationCollectionId, id);

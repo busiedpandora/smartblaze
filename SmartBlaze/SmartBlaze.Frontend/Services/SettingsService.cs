@@ -52,7 +52,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         NotifyRefreshView();
     }
     
-    public void OpenChatSessionSettings()
+    public void OpenChatSessionDefaultSettings()
     {
         _settingsPageOpen = true;
         _settingsMenuSelected = "chat";
@@ -103,12 +103,12 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         }
     }
 
-    public async Task SaveChatSessionDefaultSettings(ChatSessionSettings chatSessionSettings)
+    public async Task SaveChatSessionDefaultSettings(ChatSessionDefaultSettings chatSessionDefaultSettings)
     {
         var chatSessionDefaultConfiguration = new ChatSessionDefaultConfigurationDto()
         {
-            SystemInstruction = chatSessionSettings.SystemInstruction,
-            TextStream = chatSessionSettings.TextStream
+            SystemInstruction = chatSessionDefaultSettings.SystemInstruction,
+            TextStream = chatSessionDefaultSettings.TextStream
         };
         
         var chatSessionDefaultConfigurationResponse = await HttpClient.PostAsJsonAsync("configuration/chat-session", 
@@ -123,8 +123,8 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             return;
         }
         
-        _systemInstruction = chatSessionSettings.SystemInstruction;
-        _textStream = chatSessionSettings.TextStream;
+        _systemInstruction = chatSessionDefaultSettings.SystemInstruction;
+        _textStream = chatSessionDefaultSettings.TextStream;
     }
     
     private void SelectChatbot(Chatbot chatbot)

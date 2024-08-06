@@ -74,6 +74,11 @@ public class ConfigurationService
         await _configurationRepository.SaveChatSessionConfiguration(chatSessionConfigurationDto, chatSessionId);
     }
 
+    public async Task EditChatSessionConfiguration(ChatSessionConfigurationDto chatSessionConfigurationDto, string chatSessionId)
+    {
+        await _configurationRepository.EditChatSessionConfiguration(chatSessionConfigurationDto, chatSessionId);
+    }
+
     public async Task DeleteChatSessionAndItsConfiguration(string chatSessionId)
     {
         var chatSessionConfiguration = await GetChatSessionConfiguration(chatSessionId);

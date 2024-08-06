@@ -31,15 +31,16 @@
 </div>
 
 <div id="conversationContainer">
-    @if (_chatSessionStateService.CurrentChatSession is not null 
-         && !string.IsNullOrEmpty(_settingsService.SystemInstruction))
+    @if (_chatSessionStateService.CurrentChatSessionConfiguration is not null 
+         && !string.IsNullOrEmpty(_chatSessionStateService.CurrentChatSessionConfiguration.SystemInstruction))
     {
     <div class="d-flex">
         <img src="icons/gear-wide.svg" width="25" height="25" alt="system icon" title="system"/>
 
         <div class="ps-3 pe-3 pb-5 pt-1">
         <span>
-            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(_settingsService.SystemInstruction),
+            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode
+                    (_chatSessionStateService.CurrentChatSessionConfiguration.SystemInstruction),
             "\r?\n|\r", "<br />"))
         </span>
         </div>
@@ -140,7 +141,7 @@
 
     private void OnEditChatSessionClicked()
     {
-        
+        _chatSessionStateService.OpenChatSessionSettings();
     }
 
     private async void OnDeleteChatSessionClicked()

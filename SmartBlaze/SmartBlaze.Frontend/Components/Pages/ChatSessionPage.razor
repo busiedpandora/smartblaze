@@ -79,7 +79,12 @@
                         var codeRegex = new Regex(@"```(\w*)((?:(?!```)[\s\S])*)```");
                         
                         var processedText = codeRegex.Replace(encodedText, 
-                            "<code class=\"language-java\">$2</code>");
+                            match => 
+                            {
+                                var language = !string.IsNullOrEmpty(match.Groups[1].Value) ? match.Groups[1].Value : "text";
+                                var code = match.Groups[2].Value;
+                                return $"<code class=\"language-{language}\">{language + "\n" + code}</code>";
+                            });
                     }
                     <div>
                         <pre>@(new MarkupString(processedText))</pre>

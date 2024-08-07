@@ -7,6 +7,7 @@
 
 @inject ChatSessionStateService _chatSessionStateService
 @inject SettingsService _settingsService
+@inject IJSRuntime _jsRuntime
 
 <PageTitle>SmartBlaze</PageTitle>
 
@@ -38,93 +39,114 @@
         <img src="icons/gear-wide.svg" width="25" height="25" alt="system icon" title="system"/>
 
         <div class="ps-3 pe-3 pb-5 pt-1">
-        <span>
-            @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode
-                    (_chatSessionStateService.CurrentChatSessionConfiguration.SystemInstruction),
-            "\r?\n|\r", "<br />"))
-        </span>
+            <span>
+                @((MarkupString)Regex.Replace(
+                Regex.Replace(
+                Regex.Replace(HttpUtility.HtmlEncode(_chatSessionStateService.CurrentChatSessionConfiguration.SystemInstruction),
+                " ", "&nbsp;"),
+                "\t", "&nbsp;&nbsp;&nbsp;&nbsp;"),
+                "\r?\n|\r", "<br />"))
+            </span>
         </div>
     </div>
     }
 
     @if (_chatSessionStateService.CurrentChatSessionMessages is not null)
     {
-    @foreach(var message in _chatSessionStateService.CurrentChatSessionMessages)
+    @foreach (var message in _chatSessionStateService.CurrentChatSessionMessages)
     {
         <div class="d-flex">
+            @if (message.Role == "user")
+            {
+                <div>
+                    <img src="icons/person-fill.svg" width="28" height="28" alt="user icon" title="user"/>
+                </div>
+                <div class="ps-3 pe-3 pb-5 pt-1">
+                    <div>
+                        <pre>@message.Text</pre>
+                    </div>
+                </div>
+            }
+            else if (message.Role == "assistant")
+            {
             <div>
-                @switch (message.Role)
-                {
-                    case "user":
-                        <img src="icons/person-fill.svg" width="28" height="28" alt="user icon" title="user"/>
-                        break;
-                    case "assistant":
-                        <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
-                        break;
-                }
-            </div>
-            <div class="ps-3 pe-3 pb-5 pt-1">
-                <div>
-                    <span>
-                        @((MarkupString)Regex.Replace(HttpUtility.HtmlEncode(@message.Text ?? ""),
-                            "\r?\n|\r", "<br />"))
-                    </span>
+                    <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
                 </div>
-                <div>
-                    @if (!string.IsNullOrEmpty(message.ChatbotName) && !string.IsNullOrEmpty(message.ChatbotModel))
-                    {
-                        <span class="text-secondary chatbot-info">@message.ChatbotName</span>
-                        <span>  -  </span>
-                        <span class="text-secondary chatbot-info">@message.ChatbotModel</span>
+                <div class="ps-3 pe-3 pb-5 pt-1">
+                    @{
+                        var encodedText = HttpUtility.HtmlEncode(message.Text ?? "");
+                        
+                        var codeRegex = new Regex(@"```(\w*)((?:(?!```)[\s\S])*)```");
+                        
+                        var processedText = codeRegex.Replace(encodedText, 
+                            "<code class=\"language-java\">$2</code>");
                     }
+                    <div>
+                        <pre>@(new MarkupString(processedText))</pre>
+                    </div>
+                    <div>
+                        @if (!string.IsNullOrEmpty(message.ChatbotName) && !string.IsNullOrEmpty(message.ChatbotModel))
+                        {
+                            <span class="text-secondary chatbot-info">@message.ChatbotName</span>
+                            <span> - </span>
+                            <span class="text-secondary chatbot-info">@message.ChatbotModel</span>
+                        }
+                    </div>
+                    <div>
+                        <pre>
+                            <!--<code class="language-(here I should put the programming language, for example: java)">
+                                
+                            </code>-->
+                        </pre>
+                    </div>
                 </div>
-            </div>
-            
+            }
         </div>
-        
-        @if(message.MediaDtos is not null)
+
+        @if (message.MediaDtos is not null)
         {
             <div class="row row-cols-4 align-items-center justify-content-start mb-5">
-            @foreach (var mediaDto in message.MediaDtos)
-            {
-                @if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                @foreach (var mediaDto in message.MediaDtos)
                 {
-                    <div class="col py-2">
-                        <img src="@mediaDto.Data" alt="user image" width="300" class="img-thumbnail"/>
-                    </div>
+                    @if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                    {
+                        <div class="col py-2">
+                            <img src="@mediaDto.Data" alt="user image" width="300" class="img-thumbnail"/>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col" py-2>
+                            <img src="data:@mediaDto.ContentType;base64, @mediaDto.Data" alt="user image" width="300" class="img-thumbnail"/>
+                        </div>
+                    }
                 }
-                else
-                {
-                    <div class="col" py-2>
-                        <img src="data:@mediaDto.ContentType;base64, @mediaDto.Data" alt="user image" width="300" class="img-thumbnail"/>
-                    </div>
-                }
+                </div> 
             }
-            </div>
-        }
     }
 
-    @if (_chatSessionStateService.IsGeneratingResponse)
-    {
-    <div class="d-flex">
+            @if (_chatSessionStateService.IsGeneratingResponse)
+            {
+                <div class="d-flex">
+                    <div>
+                        <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
+                    </div>
+                    <div class="ps-3 pe-3 pb-5 pt-1">
+                        <span class="text-secondary">I'm elaborating message...</span>
+                    </div>
+                </div>
+            }
+            }
+        </div>
+
         <div>
-            <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
+            <InputBox/>
         </div>
-        <div class="ps-3 pe-3 pb-5 pt-1">
-            <span class="text-secondary">I'm elaborating message...</span>
-        </div>
-    </div>
-    }
-    }
-</div>
-
-<div>
-    <InputBox/>
-</div>
 
 
 @code {
     private bool _applicationStarted = false;
+    
     
     protected override async Task OnInitializedAsync()
     {
@@ -137,6 +159,18 @@
         }
 
         await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            //await _jsRuntime.InvokeVoidAsync("highlightCode");
+        }
+        
+        await _jsRuntime.InvokeVoidAsync("highlightCode");
+        
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     private void OnEditChatSessionClicked()

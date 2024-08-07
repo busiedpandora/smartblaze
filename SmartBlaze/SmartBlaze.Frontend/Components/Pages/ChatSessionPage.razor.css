@@ -9,3 +9,10 @@
 .delete-icon {
     cursor: pointer;
 }
+
+pre {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

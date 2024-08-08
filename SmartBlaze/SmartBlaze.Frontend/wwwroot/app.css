@@ -100,3 +100,10 @@ h1:focus {
     font-size: 1.3rem;
     cursor: pointer;
 }
+
+pre .quoted-text {
+    color: black;
+    font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+    font-weight: 600;
+    font-size: .895em;
+}

@@ -39,14 +39,7 @@
         <img src="icons/gear-wide.svg" width="25" height="25" alt="system icon" title="system"/>
 
         <div class="ps-3 pe-3 pb-5 pt-1">
-            <span>
-                @((MarkupString)Regex.Replace(
-                Regex.Replace(
-                Regex.Replace(HttpUtility.HtmlEncode(_chatSessionStateService.CurrentChatSessionConfiguration.SystemInstruction),
-                " ", "&nbsp;"),
-                "\t", "&nbsp;&nbsp;&nbsp;&nbsp;"),
-                "\r?\n|\r", "<br />"))
-            </span>
+            <pre>@_chatSessionStateService.CurrentChatSessionConfiguration.SystemInstruction</pre>
         </div>
     </div>
     }
@@ -76,14 +69,17 @@
                     @{
                         var encodedText = HttpUtility.HtmlEncode(message.Text ?? "");
                         
+                        var quotesRegex = new Regex(@"[`'´]([^`\r\n\t]+?)[`'´]");
                         var codeRegex = new Regex(@"```(\w*)((?:(?!```)[\s\S])*)```");
-                        
-                        var processedText = codeRegex.Replace(encodedText, 
+
+                        var processedText = quotesRegex.Replace(encodedText, 
+                            "<span class=\"quoted-text\">`$1`</span>");
+                        processedText = codeRegex.Replace(processedText, 
                             match => 
                             {
                                 var language = !string.IsNullOrEmpty(match.Groups[1].Value) ? match.Groups[1].Value : "text";
                                 var code = match.Groups[2].Value;
-                                return $"<code class=\"language-{language}\">{language + "\n" + code}</code>";
+                                return $"<code class=\"language-{language}\">{language.ToUpper() + "\n" + code}</code>";
                             });
                     }
                     <div>
@@ -96,13 +92,6 @@
                             <span> - </span>
                             <span class="text-secondary chatbot-info">@message.ChatbotModel</span>
                         }
-                    </div>
-                    <div>
-                        <pre>
-                            <!--<code class="language-(here I should put the programming language, for example: java)">
-                                
-                            </code>-->
-                        </pre>
                     </div>
                 </div>
             }

@@ -70,7 +70,7 @@
                         var encodedText = HttpUtility.HtmlEncode(message.Text ?? "");
                         
                         var quotesRegex = new Regex(@"[`'´]([^`\r\n\t]+?)[`'´]");
-                        var codeRegex = new Regex(@"```(\w*)((?:(?!```)[\s\S])*)```");
+                        var codeRegex = new Regex(@"```(.+)((?:(?!```)[\s\S])*)```");
 
                         var processedText = quotesRegex.Replace(encodedText, 
                             "<span class=\"quoted-text\">`$1`</span>");
@@ -79,7 +79,7 @@
                             {
                                 var language = !string.IsNullOrEmpty(match.Groups[1].Value) ? match.Groups[1].Value : "text";
                                 var code = match.Groups[2].Value;
-                                return $"<code class=\"language-{language}\">{language.ToUpper() + "\n" + code}</code>";
+                                return $"<code class=\"language-{language}\">{language.ToUpper()}{code}</code>";
                             });
                     }
                     <div>
@@ -118,24 +118,24 @@
                 </div> 
             }
     }
-
-            @if (_chatSessionStateService.IsGeneratingResponse)
-            {
-                <div class="d-flex">
-                    <div>
-                        <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
-                    </div>
-                    <div class="ps-3 pe-3 pb-5 pt-1">
-                        <span class="text-secondary">I'm elaborating message...</span>
-                    </div>
+    
+    @if (_chatSessionStateService.IsGeneratingResponse)
+        {
+            <div class="d-flex">
+                <div>
+                    <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
                 </div>
-            }
-            }
-        </div>
+                <div class="ps-3 pe-3 pb-5 pt-1">
+                    <span class="text-secondary">I'm elaborating message...</span>
+                </div>
+            </div>
+        }
+    }
+</div>
 
-        <div>
-            <InputBox/>
-        </div>
+<div>
+    <InputBox/>
+</div>
 
 
 @code {
@@ -157,12 +157,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            //await _jsRuntime.InvokeVoidAsync("highlightCode");
-        }
-        
-        await _jsRuntime.InvokeVoidAsync("highlightCode");
+        await _jsRuntime.InvokeVoidAsync("highlightAllCodeBlocks");
         
         await base.OnAfterRenderAsync(firstRender);
     }
@@ -180,6 +175,11 @@
         {
             await _chatSessionStateService.DeleteChatSession(chatSession);
         }
+    }
+
+    private async void HighlightCode()
+    {
+        await _jsRuntime.InvokeVoidAsync("highlightCode");
     }
 
     private void ReloadComponentState()

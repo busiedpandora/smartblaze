@@ -239,6 +239,12 @@ public class Gemini : Chatbot
         }
     }
 
+    public override Task<string> UploadFile(string fileName, byte[] fileBytes, ChatSessionInfoDto chatSessionInfoDto,
+        HttpClient httpClient)
+    {
+        throw new NotImplementedException();
+    }
+
     public override ChatbotDefaultConfigurationDto GetDefaultConfiguration()
     {
         return new ChatbotDefaultConfigurationDto()

@@ -1,4 +1,6 @@
+@using System.Net.Http.Headers
 @using System.Text.RegularExpressions
+@using SmartBlaze.Frontend.Dtos
 @using SmartBlaze.Frontend.Models
 @rendermode InteractiveServer
 
@@ -12,7 +14,7 @@
     <div class="d-flex justify-content-center">
         <div class="col-8">
             
-            @if (!_imageUrlInputActive && !_imageFileInputActive)
+            @if (!_imageUrlInputActive && !_imageFileInputActive && !_textFileInputActive)
             {
                 <div class="row">
                     <div class="col-auto px-1">
@@ -24,6 +26,13 @@
                     <div class="col-auto px-1">
                         <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-title="Attach image file" style="position: relative"
                                 @onclick="ShowImageFileInput">
+                            <img src="icons/image.svg" alt="image file icon" style="opacity: 80%"/>
+                            <img src="icons/paperclip.svg" alt="image file icon" style="position: absolute;left: -1px;bottom: 9px"/>
+                        </button>
+                    </div>
+                    <div class="col-auto px-1">
+                        <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-title="Attach file" style="position: relative"
+                                @onclick="ShowNonImageFileInput">
                             <img src="icons/image.svg" alt="image file icon" style="opacity: 80%"/>
                             <img src="icons/paperclip.svg" alt="image file icon" style="position: absolute;left: -1px;bottom: 9px"/>
                         </button>
@@ -66,6 +75,22 @@
                 </div>
             }
 
+            @if (_textFileInputActive)
+            {
+            <div class="row">
+                <div class="col-10 px-1">
+                    <InputFile OnChange="LoadTextFile" multiple class="form-control"
+                               accept=".txt, .csv, .json">
+                    </InputFile>
+                </div>
+                <div class="col-auto px-0">
+                    <button class="btn btn-light" @onclick="HideNonImageFileInput">
+                        Undo
+                    </button>
+                </div>
+            </div>
+            }
+
             <div class="row align-items-center">
                 <div class="col px-1">
                     <textarea @ref="_textarea" class="form-control border-3" rows="3" @onkeydown="HandleKeyPressed" 
@@ -89,7 +114,7 @@
                         var index = 0;
                     }
                     
-                    @foreach (var imageInput in _imageInputs)
+                    @foreach (var imageInput in _fileInputs)
                     {
                         var current = index;
                         <div class="col-auto py-1">
@@ -121,10 +146,11 @@
 
     private bool _imageUrlInputActive = false;
     private bool _imageFileInputActive = false;
+    private bool _textFileInputActive = false;
     
     private string _imageUrl = "";
 
-    private List<ImageInput> _imageInputs = new();
+    private List<MediaDto> _fileInputs = new();
     
     
     protected override async Task OnInitializedAsync()
@@ -171,8 +197,8 @@
         
             await _jsRuntime.InvokeVoidAsync("setTextareaValue", _textarea, string.Empty);
 
-            var imageInputs = _imageInputs;
-            _imageInputs = new();
+            var imageInputs = _fileInputs;
+            _fileInputs = new();
             
             await _chatSessionStateService.SendUserMessage(text, imageInputs, chatbot.ApiHost, chatbot.ApiKey, chatbot.TextStreamDelay);
         }
@@ -206,9 +232,10 @@
 
         if (_imageUrl != string.Empty)
         {
-            _imageInputs.Add(new ImageInput()
+            _fileInputs.Add(new MediaDto()
             {
-                Data = _imageUrl
+                Data = _imageUrl,
+                ContentType = "image"
             });
 
             _imageUrl = "";
@@ -236,8 +263,9 @@
         var fileBytes = memoryStream.ToArray();
         var base64String = Convert.ToBase64String(fileBytes);
         
-        _imageInputs.Add(new ImageInput()
+        _fileInputs.Add(new MediaDto()
         {
+            Name = e.File.Name,
             Data = base64String,
             ContentType = e.File.ContentType
         });
@@ -247,15 +275,96 @@
 
     private void RemoveInputImage(int index)
     {
-        if (index < _imageInputs.Count)
+        if (index < _fileInputs.Count)
         {
-            _imageInputs.RemoveAt(index);
+            _fileInputs.RemoveAt(index);
             ReloadComponentState();
         }
+    }
+    
+    private async void ShowNonImageFileInput()
+    {
+        await _jsRuntime.InvokeVoidAsync("deactivateTooltips");
+        _textFileInputActive = true;
+        ReloadComponentState();
+    }
+
+    private void HideNonImageFileInput()
+    {
+        _textFileInputActive = false;
+        ReloadComponentState();
+    }
+
+    private async void LoadTextFile(InputFileChangeEventArgs e)
+    {
+        var memoryStream = new MemoryStream();
+        await e.File.OpenReadStream().CopyToAsync(memoryStream);
+        var fileBytes = memoryStream.ToArray();
+        
+        
+
+        //await UploadFileToOpenAIAsync(fileBytes, e.File.Name, "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");
+        await GetFileContentAsync("file-KRffBF5sW3jkKF6rmadLyZIQ", "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");
     }
     
     private void ReloadComponentState()
     {
         InvokeAsync(StateHasChanged);
+    }
+    
+    public async Task UploadFileToOpenAIAsync(byte[] fileBytes, string fileName, string apiKey)
+    {
+        using (var client = new HttpClient())
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+
+            using (var content = new MultipartFormDataContent())
+            {
+                // Create a StreamContent to hold the file
+                var fileContent = new ByteArrayContent(fileBytes);
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+                // Add the file content and other form data
+                content.Add(fileContent, "file", fileName);
+                content.Add(new StringContent("assistants"), "purpose");
+
+                // Send POST request
+                var response = await client.PostAsync("https://api.openai.com/v1/files", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("File uploaded successfully.");
+                    var result = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine(result);
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to upload file. Status code: {response.StatusCode}");
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine(error);
+                }
+            }
+        }
+    }
+    
+    public async Task<string> GetFileContentAsync(string fileId, string apiKey)
+    {
+        using (var client = new HttpClient())
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        
+            var response = await client.GetAsync($"https://api.openai.com/v1/files/{fileId}/content");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var c = await response.Content.ReadAsStringAsync();
+                return await response.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                Console.WriteLine($"Failed to retrieve file content. Status code: {response.StatusCode}");
+                return null;
+            }
+        }
     }
 }

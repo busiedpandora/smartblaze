@@ -39,8 +39,13 @@ public class ChatbotService
             yield return chunk;
         }
     }
+
+    public async Task<string> UploadFileFromMessage(Chatbot chatbot, string fileName, byte[] data, ChatSessionInfoDto chatSessionInfoDto)
+    {
+        return await chatbot.UploadFile(fileName, data, chatSessionInfoDto, _httpClient);
+    }
     
-    public void CreateChatbots()
+    private void CreateChatbots()
     {
         var chatGpt = new ChatGpt("ChatGPT", ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]);
         _chatbots.Add(chatGpt);

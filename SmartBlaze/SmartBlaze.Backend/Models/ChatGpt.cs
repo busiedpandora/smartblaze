@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -282,6 +283,36 @@ public class ChatGpt : Chatbot
         }
     }
 
+    public override async Task<string> UploadFile(string fileName, byte[] fileBytes, ChatSessionInfoDto chatSessionInfoDto,
+        HttpClient httpClient)
+    {
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", chatSessionInfoDto.ApiKey);
+
+        using (var content = new MultipartFormDataContent())
+        {
+            var fileContent = new ByteArrayContent(fileBytes);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+            content.Add(fileContent, "file", fileName);
+            content.Add(new StringContent("assistants"), "purpose");
+
+            var uploadedFileResponse = await httpClient.PostAsync($"{chatSessionInfoDto.ApiHost}/v1/files", content);
+
+            if (uploadedFileResponse.IsSuccessStatusCode)
+            {
+                var uploadedFileResponseContent = await uploadedFileResponse.Content.ReadAsStringAsync();
+                var uploadedFile = JsonSerializer.Deserialize<UploadedFileResponse>(uploadedFileResponseContent);
+
+                if (uploadedFile?.Id is not null)
+                {
+                    return uploadedFile.Id;
+                }
+            }
+
+            return "";
+        }
+    }
+
     public override ChatbotDefaultConfigurationDto GetDefaultConfiguration()
     {
         return new ChatbotDefaultConfigurationDto()
@@ -399,5 +430,20 @@ public class ChatGpt : Chatbot
         
         [JsonPropertyName("delta")]
         public Delta? Delta { get; set; }
+    }
+
+    private class UploadedFileResponse
+    {
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
+        
+        [JsonPropertyName("object")]
+        public string? Object { get; set; }
+        
+        [JsonPropertyName("fileName")]
+        public string? FileName { get; set; }
+        
+        [JsonPropertyName("purpose")]
+        public string? Purpose { get; set; }
     }
 }

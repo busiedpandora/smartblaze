@@ -1,5 +1,9 @@
+@using System.Text
 @using System.Text.RegularExpressions
+@using iText.Kernel.Pdf
+@using iText.Kernel.Pdf.Canvas.Parser
 @using SmartBlaze.Frontend.Dtos
+@using Xceed.Words.NET
 @rendermode InteractiveServer
 
 @inject ChatSessionStateService _chatSessionStateService
@@ -77,7 +81,7 @@
             <div class="row">
                 <div class="col-10 px-1">
                     <InputFile OnChange="LoadTextFile" multiple class="form-control"
-                               accept="text/*, .md, .yaml, .yml, .sql, .java, .c, .cpp, .cs, .h, .hpp, .py, .js, .ts, .ejs, .php, .rb, .go, .rs, .sh, .bat, .ini, .cfg, .toml, .csproj, .sln, .vbproj, .fsproj, .gradle, .make, .cmake, .gitignore, .dockerfile, .env, .properties, .plist, .asm, .vb, .lua, .r, .jl, .swift, .dart, .razor">
+                               accept="text/*, .pdf, .docx, .md, .yaml, .yml, .sql, .java, .c, .cpp, .cs, .h, .hpp, .py, .js, .ts, .ejs, .php, .rb, .go, .rs, .sh, .bat, .ini, .cfg, .toml, .csproj, .sln, .vbproj, .fsproj, .gradle, .make, .cmake, .gitignore, .dockerfile, .env, .properties, .plist, .asm, .vb, .lua, .r, .jl, .swift, .dart, .razor">
                     </InputFile>
                 </div>
                 <div class="col-auto px-0">
@@ -146,11 +150,11 @@
                                             <span class="file-name">
                                                 @if (fileInput.Name?.Length > 8)
                                                 {
-                                                    @(fileInput.Name.Substring(0, 7) + "..")
+                                                    @(fileInput.Name.Substring(0, 7).Replace(" ", "") + "..")
                                                 }
                                                 else
                                                 {
-                                                    @fileInput.Name
+                                                    @fileInput.Name?.Replace(" ", "")
                                                 }
                                             </span>
                                         </div>
@@ -265,7 +269,7 @@
 
         if (_imageUrl != string.Empty)
         {
-            _fileInputs.Add(new MediaDto()
+            _fileInputs.Add(new MediaDto
             {
                 Data = _imageUrl,
                 ContentType = "image"
@@ -293,7 +297,7 @@
     {
         foreach (var file in e.GetMultipleFiles())
         {
-            if (file.ContentType.StartsWith("image"))
+            if (file.Size < 512000L && file.ContentType.StartsWith("image"))
             {
                 var memoryStream = new MemoryStream();
                 await file.OpenReadStream().CopyToAsync(memoryStream);
@@ -302,7 +306,7 @@
 
                 if (base64String.Length < 999999)
                 {
-                    _fileInputs.Add(new MediaDto()
+                    _fileInputs.Add(new MediaDto
                     {
                         Name = file.Name,
                         Data = base64String,
@@ -341,32 +345,70 @@
     {
         foreach (var file in e.GetMultipleFiles())
         {
-            if (!file.ContentType.StartsWith("image"))
+            var contentType = file.ContentType;
+            
+            if (file.Size < 512000L && !contentType.StartsWith("image"))
             {
                 using (var memoryStream = new MemoryStream())
                 {
                     await file.OpenReadStream().CopyToAsync(memoryStream);
                     memoryStream.Seek(0, SeekOrigin.Begin);
-
-                    using (var reader = new StreamReader(memoryStream))
+                    string fileContent;
+                    
+                    if (contentType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
                     {
-                        string fileContent = await reader.ReadToEndAsync();
+                        contentType = "text/plain";
 
-                        if (fileContent.Length < 999999)
+                        fileContent = ExtractTextFromDocxFile(memoryStream);
+                    }
+                    else if (contentType == "application/pdf")
+                    {
+                        contentType = "text/plain";
+
+                        fileContent = ExtractTextFromPdfFile(memoryStream);
+                    }
+                    else
+                    {
+                        var reader = new StreamReader(memoryStream);
+                        fileContent = await reader.ReadToEndAsync();
+                    }
+
+                    if (fileContent != string.Empty && fileContent.Length < 999999)
+                    {
+                        _fileInputs.Add(new MediaDto
                         {
-                            _fileInputs.Add(new MediaDto()
-                            {
-                                Name = file.Name,
-                                Data = fileContent,
-                                ContentType = file.ContentType
-                            });
-                        }
+                            Name = file.Name,
+                            Data = fileContent,
+                            ContentType = contentType
+                        });
                     }
                 }
             }
         }
         
         HideTextFileInput();
+    }
+
+    private string ExtractTextFromDocxFile(MemoryStream memoryStream)
+    {
+        var document = DocX.Load(memoryStream);
+        
+        return document.Text;
+    }
+
+    private string ExtractTextFromPdfFile(MemoryStream memoryStream)
+    {
+        var pdfReader = new PdfReader(memoryStream);
+        var pdfDocument = new PdfDocument(pdfReader);
+                        
+        var text = new StringBuilder();
+        for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+        {
+            var page = pdfDocument.GetPage(i);
+            text.Append(PdfTextExtractor.GetTextFromPage(page));
+        }
+
+        return text.ToString();
     }
     
     private void ReloadComponentState()

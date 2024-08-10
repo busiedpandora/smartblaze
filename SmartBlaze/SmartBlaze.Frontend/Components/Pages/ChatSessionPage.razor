@@ -90,14 +90,14 @@
                                                     <img src="icons/file-earmark-text.svg" width="20" alt="file icon"/>
                                                 </div>
                                                 <div class="d-flex justify-content-center">
-                                                    <span class="file-name">
+                                                    <span class="file-name" >
                                                         @if (mediaDto.Name?.Length > 10)
                                                         {
-                                                            @(mediaDto.Name.Substring(0, 9) + "..")
+                                                            @(mediaDto.Name.Substring(0, 9).Replace(" ", "") + "..")
                                                         }
                                                         else
                                                         {
-                                                            @mediaDto.Name
+                                                            @mediaDto.Name?.Replace(" ", "")
                                                         }
                                                     </span>
                                                 </div>

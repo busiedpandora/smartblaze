@@ -54,7 +54,8 @@ public class MessageRepository : AbstractRepository
                {
                     var mediaDocument = new Dictionary<string, object>()
                     {
-                         { "data", mediaDto.Data },
+                         { "name", mediaDto.Name ?? "" },
+                         { "data", mediaDto.Data ?? "" },
                          { "contentType", mediaDto.ContentType },
                          { "message", messageStoredDocument.Id }
                     };
@@ -84,8 +85,9 @@ public class MessageRepository : AbstractRepository
                {
                     var mediaDto = new MediaDto()
                     {
+                         Name = mediaDocument.Data["name"].ToString(),
                          Data = mediaDocument.Data["data"].ToString(),
-                         ContentType = mediaDocument.Data["contentType"].ToString()
+                         ContentType = mediaDocument.Data["contentType"].ToString() ?? ""
                     };
                     
                     mediaDtos.Add(mediaDto);

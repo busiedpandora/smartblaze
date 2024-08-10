@@ -30,18 +30,25 @@ public class Gemini : Chatbot
             {
                 foreach (var mediaDto in messageDto.MediaDtos)
                 {
-                    InlineData inlineData = new()
+                    if (mediaDto.ContentType.StartsWith("image"))
                     {
-                        MimeType = mediaDto.ContentType,
-                        Data = mediaDto.Data
-                    };
+                        InlineData inlineData = new()
+                        {
+                            MimeType = mediaDto.ContentType,
+                            Data = mediaDto.Data
+                        };
 
-                    InlineDataPart inlineDataPart = new()
+                        InlineDataPart inlineDataPart = new()
+                        {
+                            InlineData = inlineData
+                        };
+                        
+                        parts.Add(inlineDataPart);
+                    }
+                    else
                     {
-                        InlineData = inlineData
-                    };
-                    
-                    parts.Add(inlineDataPart);
+                        textPart.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
+                    }
                 }
             }
             
@@ -141,18 +148,25 @@ public class Gemini : Chatbot
             {
                 foreach (var mediaDto in messageDto.MediaDtos)
                 {
-                    InlineData inlineData = new()
+                    if (mediaDto.ContentType.StartsWith("image"))
                     {
-                        MimeType = mediaDto.ContentType,
-                        Data = mediaDto.Data
-                    };
+                        InlineData inlineData = new()
+                        {
+                            MimeType = mediaDto.ContentType,
+                            Data = mediaDto.Data
+                        };
 
-                    InlineDataPart inlineDataPart = new()
+                        InlineDataPart inlineDataPart = new()
+                        {
+                            InlineData = inlineData
+                        };
+                        
+                        parts.Add(inlineDataPart);
+                    }
+                    else
                     {
-                        InlineData = inlineData
-                    };
-                    
-                    parts.Add(inlineDataPart);
+                        textPart.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
+                    }
                 }
             }
             

@@ -40,7 +40,7 @@ public class ChatbotService
         }
     }
     
-    public void CreateChatbots()
+    private void CreateChatbots()
     {
         var chatGpt = new ChatGpt("ChatGPT", ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]);
         _chatbots.Add(chatGpt);

@@ -107,3 +107,7 @@ pre .quoted-text {
     font-weight: 600;
     font-size: .895em;
 }
+
+.file-name {
+    font-size: 14px;
+}

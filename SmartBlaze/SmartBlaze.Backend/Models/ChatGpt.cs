@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -49,22 +50,28 @@ public class ChatGpt : Chatbot
 
                     foreach (var mediaDto in messageDto.MediaDtos)
                     {
-                        ImageContent imageContent = new();
-                        
-                        ImageUrl imageUrl = new();
-                        if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                        if (mediaDto.ContentType.StartsWith("image"))
                         {
-                            imageUrl.Url = mediaDto.Data;
-                            
+                            ImageContent imageContent = new();
+                        
+                            ImageUrl imageUrl = new();
+                            if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                            {
+                                imageUrl.Url = mediaDto.Data;
+                            }
+                            else
+                            {
+                                imageUrl.Url = $"data:{mediaDto.ContentType};base64,{mediaDto.Data}";
+                            }
+
+                            imageContent.ImageUrl = imageUrl;
+                        
+                            contents.Add(imageContent);
                         }
                         else
                         {
-                            imageUrl.Url = $"data:{mediaDto.ContentType};base64,{mediaDto.Data}";
+                            textContent.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
                         }
-
-                        imageContent.ImageUrl = imageUrl;
-                        
-                        contents.Add(imageContent);
                     }
 
                     TextImagesMessage userMessage = new()
@@ -177,21 +184,28 @@ public class ChatGpt : Chatbot
 
                     foreach (var mediaDto in messageDto.MediaDtos)
                     {
-                        ImageContent imageContent = new();
-                        
-                        ImageUrl imageUrl = new();
-                        if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                        if (mediaDto.ContentType.StartsWith("image"))
                         {
-                            imageUrl.Url = mediaDto.Data;
+                            ImageContent imageContent = new();
+                        
+                            ImageUrl imageUrl = new();
+                            if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                            {
+                                imageUrl.Url = mediaDto.Data;
+                            }
+                            else
+                            {
+                                imageUrl.Url = $"data:{mediaDto.ContentType};base64,{mediaDto.Data}";
+                            }
+
+                            imageContent.ImageUrl = imageUrl;
+                        
+                            contents.Add(imageContent);
                         }
                         else
                         {
-                            imageUrl.Url = $"data:{mediaDto.ContentType};base64,{mediaDto.Data}";
+                            textContent.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
                         }
-
-                        imageContent.ImageUrl = imageUrl;
-                        
-                        contents.Add(imageContent);
                     }
 
                     TextImagesMessage userMessage = new()
@@ -399,5 +413,20 @@ public class ChatGpt : Chatbot
         
         [JsonPropertyName("delta")]
         public Delta? Delta { get; set; }
+    }
+
+    private class UploadedFileResponse
+    {
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
+        
+        [JsonPropertyName("object")]
+        public string? Object { get; set; }
+        
+        [JsonPropertyName("fileName")]
+        public string? FileName { get; set; }
+        
+        [JsonPropertyName("purpose")]
+        public string? Purpose { get; set; }
     }
 }

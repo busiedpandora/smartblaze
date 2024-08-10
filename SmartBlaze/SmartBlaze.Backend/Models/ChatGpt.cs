@@ -50,22 +50,28 @@ public class ChatGpt : Chatbot
 
                     foreach (var mediaDto in messageDto.MediaDtos)
                     {
-                        ImageContent imageContent = new();
-                        
-                        ImageUrl imageUrl = new();
-                        if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                        if (mediaDto.ContentType.StartsWith("image"))
                         {
-                            imageUrl.Url = mediaDto.Data;
-                            
+                            ImageContent imageContent = new();
+                        
+                            ImageUrl imageUrl = new();
+                            if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                            {
+                                imageUrl.Url = mediaDto.Data;
+                            }
+                            else
+                            {
+                                imageUrl.Url = $"data:{mediaDto.ContentType};base64,{mediaDto.Data}";
+                            }
+
+                            imageContent.ImageUrl = imageUrl;
+                        
+                            contents.Add(imageContent);
                         }
                         else
                         {
-                            imageUrl.Url = $"data:{mediaDto.ContentType};base64,{mediaDto.Data}";
+                            textContent.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
                         }
-
-                        imageContent.ImageUrl = imageUrl;
-                        
-                        contents.Add(imageContent);
                     }
 
                     TextImagesMessage userMessage = new()
@@ -178,21 +184,28 @@ public class ChatGpt : Chatbot
 
                     foreach (var mediaDto in messageDto.MediaDtos)
                     {
-                        ImageContent imageContent = new();
-                        
-                        ImageUrl imageUrl = new();
-                        if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                        if (mediaDto.ContentType.StartsWith("image"))
                         {
-                            imageUrl.Url = mediaDto.Data;
+                            ImageContent imageContent = new();
+                        
+                            ImageUrl imageUrl = new();
+                            if (mediaDto.Data is not null && mediaDto.Data.StartsWith("http"))
+                            {
+                                imageUrl.Url = mediaDto.Data;
+                            }
+                            else
+                            {
+                                imageUrl.Url = $"data:{mediaDto.ContentType};base64,{mediaDto.Data}";
+                            }
+
+                            imageContent.ImageUrl = imageUrl;
+                        
+                            contents.Add(imageContent);
                         }
                         else
                         {
-                            imageUrl.Url = $"data:{mediaDto.ContentType};base64,{mediaDto.Data}";
+                            textContent.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
                         }
-
-                        imageContent.ImageUrl = imageUrl;
-                        
-                        contents.Add(imageContent);
                     }
 
                     TextImagesMessage userMessage = new()
@@ -280,36 +293,6 @@ public class ChatGpt : Chatbot
                     }
                 }
             }
-        }
-    }
-
-    public override async Task<string> UploadFile(string fileName, byte[] fileBytes, ChatSessionInfoDto chatSessionInfoDto,
-        HttpClient httpClient)
-    {
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", chatSessionInfoDto.ApiKey);
-
-        using (var content = new MultipartFormDataContent())
-        {
-            var fileContent = new ByteArrayContent(fileBytes);
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-
-            content.Add(fileContent, "file", fileName);
-            content.Add(new StringContent("assistants"), "purpose");
-
-            var uploadedFileResponse = await httpClient.PostAsync($"{chatSessionInfoDto.ApiHost}/v1/files", content);
-
-            if (uploadedFileResponse.IsSuccessStatusCode)
-            {
-                var uploadedFileResponseContent = await uploadedFileResponse.Content.ReadAsStringAsync();
-                var uploadedFile = JsonSerializer.Deserialize<UploadedFileResponse>(uploadedFileResponseContent);
-
-                if (uploadedFile?.Id is not null)
-                {
-                    return uploadedFile.Id;
-                }
-            }
-
-            return "";
         }
     }
 

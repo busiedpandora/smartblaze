@@ -22,9 +22,6 @@ public abstract class Chatbot
     
     public abstract IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto, 
         HttpClient httpClient);
-
-    public abstract Task<string> UploadFile(string fileName, byte[] fileBytes, ChatSessionInfoDto chatSessionInfoDto,
-        HttpClient httpClient);
     
     public abstract ChatbotDefaultConfigurationDto GetDefaultConfiguration();
 }

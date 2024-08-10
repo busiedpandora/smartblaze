@@ -16,3 +16,8 @@ pre {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
+
+.file-input-container {
+    width: 80px;
+    height: 80px;
+}

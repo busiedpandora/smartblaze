@@ -39,11 +39,6 @@ public class ChatbotService
             yield return chunk;
         }
     }
-
-    public async Task<string> UploadFileFromMessage(Chatbot chatbot, string fileName, byte[] data, ChatSessionInfoDto chatSessionInfoDto)
-    {
-        return await chatbot.UploadFile(fileName, data, chatSessionInfoDto, _httpClient);
-    }
     
     private void CreateChatbots()
     {

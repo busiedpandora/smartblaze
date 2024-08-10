@@ -163,7 +163,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
     }
 
-    public async Task SendUserMessage(string text, List<ImageInput> imageInputs, string apiHost, string apiKey, int textStreamDelay)
+    public async Task SendUserMessage(string text, List<MediaDto> fileInputs, string apiHost, string apiKey, int textStreamDelay)
     {
         if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null 
             || _currentChatSessionConfiguration is null)
@@ -178,7 +178,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
 
         _isGeneratingResponse = true;
 
-        await SendUserMessage(text, imageInputs);
+        await SendUserMessage(text, fileInputs);
         
         NotifyRefreshView();
 
@@ -484,12 +484,13 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
                && messageDto.CreationDate is not null;
     }
 
-    private async Task SendUserMessage(string text, List<ImageInput> imageInputs)
+    private async Task SendUserMessage(string text, List<MediaDto> fileInputs)
     {
         MessageDto userTextMessageDto = new MessageDto();
         userTextMessageDto.Text = text;
+        userTextMessageDto.MediaDtos = fileInputs;
         
-        if (imageInputs.Count > 0)
+        /*if (fileInputs.Count > 0)
         {
             userTextMessageDto.MediaDtos = new();
 
@@ -503,7 +504,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
 
                 userTextMessageDto.MediaDtos.Add(mediaDto);
             }
-        }
+        }*/
         
         var userMessageResponse = await HttpClient
             .PostAsJsonAsync($"chat-session/{_currentChatSession.Id}/new-user-message", 

@@ -21,7 +21,7 @@
     
     <SettingsMenu/>
     
-    @if (_settingsService.Chatbots is not null && _settingsService.ChatbotSelected?.Models is not null)
+    @if (_settingsService.Chatbots is not null && _settingsService.ChatbotSelected?.TextGenerationModels is not null)
     {
         <EditForm Model="@_chatbotSettings" OnSubmit="@OnSaveClicked" autocomplete="off">
             <div>
@@ -64,12 +64,26 @@
             </div>
 
             <div class="mb-4">
-                <label for="chatbotModel" class="form-label">Model</label>
+                <label for="textGenerationChatbotModel" class="form-label">Text Generation Model</label>
                 <div class="col-2">
-                    <InputSelect id="chatbotModel" @bind-Value="_chatbotSettings.ChatbotModel" class="form-select">
-                        @foreach (var chatbotModel in _chatbotSettings.ChatbotModels)
+                    <InputSelect id="textGenerationChatbotModel" @bind-Value="_chatbotSettings.TextGenerationChatbotModel" 
+                                 class="form-select">
+                        @foreach (var chatbotModel in _chatbotSettings.TextGenerationChatbotModels)
                         {
                             <option value="@chatbotModel">@chatbotModel</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="imageGenerationChatbotModel" class="form-label">Image Generation Model</label>
+                <div class="col-2">
+                    <InputSelect id="imageGenerationChatbotModel" @bind-Value="_chatbotSettings.ImageGenerationChatbotModel" 
+                                 class="form-select">
+                        @foreach (var chatbotModel in _chatbotSettings.ImageGenerationChatbotModels)
+                        {
+                        <option value="@chatbotModel">@chatbotModel</option>
                         }
                     </InputSelect>
                 </div>
@@ -122,8 +136,10 @@
         }
         
         _chatbotSettings.ChatbotName = _settingsService.ChatbotSelected?.Name ?? "";
-        _chatbotSettings.ChatbotModel = _settingsService.ChatbotSelected?.Model ?? "";
-        _chatbotSettings.ChatbotModels = _settingsService.ChatbotSelected?.Models ?? [];
+        _chatbotSettings.TextGenerationChatbotModel = _settingsService.ChatbotSelected?.TextGenerationModel ?? "";
+        _chatbotSettings.ImageGenerationChatbotModel = _settingsService.ChatbotSelected?.ImageGenerationModel ?? "";
+        _chatbotSettings.TextGenerationChatbotModels = _settingsService.ChatbotSelected?.TextGenerationModels ?? [];
+        _chatbotSettings.ImageGenerationChatbotModels = _settingsService.ChatbotSelected?.ImageGenerationModels ?? [];
         _chatbotSettings.ApiHost = _settingsService.ChatbotSelected?.ApiHost ?? "";
         _chatbotSettings.ApiKey = _settingsService.ChatbotSelected?.ApiKey ?? "";
         _chatbotSettings.Temperature = _settingsService.ChatbotSelected?.Temperature ?? 0.0f;
@@ -142,8 +158,10 @@
         if (chatbotSelected is not null)
         {
             _chatbotSettings.ChatbotName = chatbotSelected.Name;
-            _chatbotSettings.ChatbotModels = chatbotSelected.Models;
-            _chatbotSettings.ChatbotModel = chatbotSelected.Model;
+            _chatbotSettings.TextGenerationChatbotModels = chatbotSelected.TextGenerationModels;
+            _chatbotSettings.ImageGenerationChatbotModels = chatbotSelected.ImageGenerationModels;
+            _chatbotSettings.TextGenerationChatbotModel = chatbotSelected.TextGenerationModel;
+            _chatbotSettings.ImageGenerationChatbotModel = chatbotSelected.ImageGenerationModel;
             _chatbotSettings.ApiHost = chatbotSelected.ApiHost;
             _chatbotSettings.ApiKey = chatbotSelected.ApiKey;
             _chatbotSettings.Temperature = chatbotSelected.Temperature;

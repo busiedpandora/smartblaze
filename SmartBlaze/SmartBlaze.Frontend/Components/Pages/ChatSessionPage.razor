@@ -54,7 +54,7 @@
                     <div>
                         <img src="icons/person-fill.svg" width="28" height="28" alt="user icon" title="user"/>
                     </div>
-                    <div class="ps-3 pe-3 pb-1 pt-1">
+                    <div class="ps-3 pe-3 pb-5 pt-1">
                         <div>
                             <pre>@message.Text</pre>
                         </div>
@@ -134,6 +134,31 @@
                         <div>
                             <pre>@(new MarkupString(processedText))</pre>
                         </div>
+
+                        @if (message.MediaDtos is not null)
+                        {
+                            <div class="row row-cols-4 align-items-center justify-content-start mb-1">
+                                @foreach (var mediaDto in message.MediaDtos)
+                                {
+                                    @if (mediaDto.Data is not null)
+                                    {
+                                        <div class="col py-2">
+                                            @if (mediaDto.Data.StartsWith("http"))
+                                            {
+                                                <img src="@mediaDto.Data" alt="assistant generated image" width="300" class="img-thumbnail"
+                                                     title="@mediaDto.Name"/>
+                                            }
+                                            else
+                                            {
+                                                <img src="data:@mediaDto.ContentType;base64, @mediaDto.Data" alt="user image"
+                                                     width="300" class="img-thumbnail" title="@mediaDto.Name"/>
+                                            }
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        }
+                        
                         <div>
                             @if (!string.IsNullOrEmpty(message.ChatbotName) && !string.IsNullOrEmpty(message.ChatbotModel))
                             {

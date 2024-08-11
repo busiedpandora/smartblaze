@@ -163,7 +163,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
     }
 
-    public async Task SendUserMessage(string text, List<MediaDto> fileInputs, string apiHost, string apiKey, int textStreamDelay)
+    public async Task RequestNewAssistantTextMessage(string text, List<MediaDto> fileInputs, string apiHost, string apiKey, 
+        int textStreamDelay)
     {
         if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null 
             || _currentChatSessionConfiguration is null)
@@ -186,7 +187,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         {
             Messages = _currentChatSessionMessages,
             ChatbotName = _currentChatSessionConfiguration.ChatbotName,
-            ChatbotModel = _currentChatSessionConfiguration.ChatbotModel,
+            ChatbotModel = _currentChatSessionConfiguration.TextGenerationChatbotModel,
             ApiHost = apiHost,
             ApiKey = apiKey,
             SystemInstruction = _currentChatSessionConfiguration.SystemInstruction,
@@ -208,8 +209,43 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         NotifyRefreshView();
     }
 
-    public async Task CreateNewChatSession(string title, string chatbotName, string chatbotModel, float temperature,
-        string systemInstruction, bool textStream)
+    public async Task RequestNewAssistantImageMessage(string text, string apiHost, string apiKey)
+    {
+        if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null 
+            || _currentChatSessionConfiguration is null)
+        {
+            return;
+        }
+        
+        if (!CanUserInteract())
+        {
+            return;
+        }
+
+        _isGeneratingResponse = true;
+
+        await SendUserMessage(text);
+        
+        NotifyRefreshView();
+        
+        var chatSessionInfoDto = new ChatSessionInfoDto()
+        {
+            LastUserMessage = _currentChatSessionMessages.Last(),
+            ChatbotName = _currentChatSessionConfiguration.ChatbotName,
+            ChatbotModel = _currentChatSessionConfiguration.ImageGenerationChatbotModel,
+            ApiHost = apiHost,
+            ApiKey = apiKey,
+        };
+
+        await GenerateAssistantImageMessage(chatSessionInfoDto);
+        
+        _isGeneratingResponse = false;
+        
+        NotifyRefreshView();
+    }
+
+    public async Task CreateNewChatSession(string title, string chatbotName, string textGenerationChatbotModel, 
+        string imageGenerationChatbotModel, float temperature, string systemInstruction, bool textStream)
     {
         if (!CanUserInteract())
         {
@@ -251,7 +287,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         ChatSessionConfigurationDto chatSessionConfigurationDto = new()
         {
             ChatbotName = chatbotName,
-            ChatbotModel = chatbotModel,
+            TextGenerationChatbotModel = textGenerationChatbotModel,
+            ImageGenerationChatbotModel = imageGenerationChatbotModel,
             Temperature = temperature,
             SystemInstruction = systemInstruction,
             TextStream = textStream
@@ -320,7 +357,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         ChatSessionConfigurationDto chatSessionConfigurationDto = new()
         {
             ChatbotName = chatSessionSettings.ChatbotName,
-            ChatbotModel = chatSessionSettings.ChatbotModel,
+            TextGenerationChatbotModel = chatSessionSettings.TextGenerationChatbotModel,
+            ImageGenerationChatbotModel = chatSessionSettings.ImageGenerationChatbotModel,
             Temperature = chatSessionSettings.Temperature,
             SystemInstruction = chatSessionSettings.SystemInstruction,
             TextStream = chatSessionSettings.TextStream
@@ -354,7 +392,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         
         _currentChatSession.Title = title;
         _currentChatSessionConfiguration.ChatbotName = chatSessionSettings.ChatbotName;
-        _currentChatSessionConfiguration.ChatbotModel = chatSessionSettings.ChatbotModel;
+        _currentChatSessionConfiguration.TextGenerationChatbotModel = chatSessionSettings.TextGenerationChatbotModel;
+        _currentChatSessionConfiguration.ImageGenerationChatbotModel = chatSessionSettings.ImageGenerationChatbotModel;
         _currentChatSessionConfiguration.Temperature = chatSessionSettings.Temperature;
         _currentChatSessionConfiguration.SystemInstruction = chatSessionSettings.SystemInstruction;
         _currentChatSessionConfiguration.TextStream = chatSessionSettings.TextStream;
@@ -484,27 +523,11 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
                && messageDto.CreationDate is not null;
     }
 
-    private async Task SendUserMessage(string text, List<MediaDto> fileInputs)
+    private async Task SendUserMessage(string text, List<MediaDto>? fileInputs = null)
     {
         MessageDto userTextMessageDto = new MessageDto();
         userTextMessageDto.Text = text;
         userTextMessageDto.MediaDtos = fileInputs;
-        
-        /*if (fileInputs.Count > 0)
-        {
-            userTextMessageDto.MediaDtos = new();
-
-            foreach (var imageInput in imageInputs)
-            {
-                MediaDto mediaDto = new()
-                {
-                    Data = imageInput.Data,
-                    ContentType = imageInput.ContentType
-                };
-
-                userTextMessageDto.MediaDtos.Add(mediaDto);
-            }
-        }*/
         
         var userMessageResponse = await HttpClient
             .PostAsJsonAsync($"chat-session/{_currentChatSession.Id}/new-user-message", 
@@ -617,5 +640,34 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
                     await Task.Delay(chatSessionInfoDto.TextStreamDelay);
                 }
             }
+    }
+
+    private async Task GenerateAssistantImageMessage(ChatSessionInfoDto chatSessionInfoDto)
+    {
+        var assistantMessageResponse = await 
+            HttpClient.PostAsJsonAsync(
+                $"chat-session/{_currentChatSession.Id}/new-assistant-image-message", 
+                chatSessionInfoDto);
+        var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
+            
+        if (!assistantMessageResponse.IsSuccessStatusCode)
+        {
+            _isGeneratingResponse = false;
+            NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
+                assistantMessageResponseContent);
+            return;
+        }
+        
+        MessageDto? assistantMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantMessageResponseContent);
+        
+        if (assistantMessageDto is null || !IsMessageValid(assistantMessageDto))
+        {
+            _isGeneratingResponse = false;
+            NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
+                "the assistant message cannot be null and must contain a content and a role");
+            return;
+        }
+        
+        _currentChatSessionMessages.Add(assistantMessageDto);
     }
 }

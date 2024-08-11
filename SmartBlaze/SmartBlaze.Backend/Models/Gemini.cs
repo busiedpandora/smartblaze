@@ -7,7 +7,8 @@ namespace SmartBlaze.Backend.Models;
 
 public class Gemini : Chatbot
 {
-    public Gemini(string name, List<string> models) : base(name, models)
+    public Gemini(string name, List<string> textGenerationModels, List<string> imageGenerationModels) 
+        : base(name, textGenerationModels, imageGenerationModels)
     {
     }
 
@@ -253,12 +254,17 @@ public class Gemini : Chatbot
         }
     }
 
+    public override Task<AssistantMessageInfoDto> GenerateImage(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
+    {
+        throw new NotImplementedException();
+    }
+
     public override ChatbotDefaultConfigurationDto GetDefaultConfiguration()
     {
         return new ChatbotDefaultConfigurationDto()
         {
             ChatbotName = "Google Gemini",
-            ChatbotModel = "gemini-1.5-pro",
+            TextGenerationChatbotModel = "gemini-1.5-pro",
             ApiHost = "https://generativelanguage.googleapis.com",
             ApiKey = "",
             TextStreamDelay = 400,

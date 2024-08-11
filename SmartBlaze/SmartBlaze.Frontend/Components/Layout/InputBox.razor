@@ -237,7 +237,8 @@
             var imageInputs = _fileInputs;
             _fileInputs = new();
             
-            await _chatSessionStateService.SendUserMessage(text, imageInputs, chatbot.ApiHost, chatbot.ApiKey, chatbot.TextStreamDelay);
+            //await _chatSessionStateService.RequestNewAssistantTextMessage(text, imageInputs, chatbot.ApiHost, chatbot.ApiKey, chatbot.TextStreamDelay);
+            await _chatSessionStateService.RequestNewAssistantImageMessage(text, chatbot.ApiHost, chatbot.ApiKey);
         }
     }
 

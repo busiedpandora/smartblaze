@@ -6,9 +6,13 @@ public class ChatSessionSettings
     
     public string ChatbotName { get; set; } = "";
     
-    public string ChatbotModel { get; set; } = "";
+    public string TextGenerationChatbotModel { get; set; } = "";
     
-    public List<string> ChatbotModels { get; set; } = [];
+    public List<string> TextGenerationChatbotModels { get; set; } = [];
+    
+    public string ImageGenerationChatbotModel { get; set; } = "";
+    
+    public List<string> ImageGenerationChatbotModels { get; set; } = [];
     
     public float Temperature { get; set; }
     

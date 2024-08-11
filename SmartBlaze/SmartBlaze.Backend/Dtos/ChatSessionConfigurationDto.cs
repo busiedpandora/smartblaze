@@ -10,8 +10,11 @@ public class ChatSessionConfigurationDto
     [JsonPropertyName("chatbotName")]
     public string? ChatbotName { get; set; }
     
-    [JsonPropertyName("chatbotModel")]
-    public string? ChatbotModel { get; set; }
+    [JsonPropertyName("textGenerationChatbotModel")]
+    public string? TextGenerationChatbotModel { get; set; }
+    
+    [JsonPropertyName("imageGenerationChatbotModel")]
+    public string? ImageGenerationChatbotModel { get; set; }
     
     [JsonPropertyName("temperature")]
     public float Temperature { get; set; }

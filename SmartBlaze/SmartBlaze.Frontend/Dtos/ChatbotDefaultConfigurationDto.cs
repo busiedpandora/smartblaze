@@ -16,11 +16,17 @@ public class ChatbotDefaultConfigurationDto
     [JsonPropertyName("apiKey")]
     public string? ApiKey { get; set; }
     
-    [JsonPropertyName("chatbotModel")]
-    public string? ChatbotModel { get; set; }
+    [JsonPropertyName("textGenerationChatbotModel")]
+    public string? TextGenerationChatbotModel { get; set; }
     
-    [JsonPropertyName("chatbotModels")]
-    public List<string>? ChatbotModels { get; set; }
+    [JsonPropertyName("imageGenerationChatbotModel")]
+    public string? ImageGenerationChatbotModel { get; set; }
+    
+    [JsonPropertyName("textGenerationChatbotModels")]
+    public List<string>? TextGenerationChatbotModels { get; set; }
+    
+    [JsonPropertyName("imageGenerationChatbotModels")]
+    public List<string>? ImageGenerationChatbotModels { get; set; }
     
     [JsonPropertyName("textStreamDelay")]
     public int TextStreamDelay { get; set; }

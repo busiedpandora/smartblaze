@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
 using SmartBlaze.Frontend.Dtos;
 using SmartBlaze.Frontend.Models;
 
@@ -19,6 +18,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     private bool _isChatSessionBeingDeleted;
     private bool _isChatSessionBeingEdited;
 
+    private string _currentGenerationType = "text";
     
     public List<ChatSessionDto>? ChatSessions
     {
@@ -59,6 +59,12 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     }
 
     public bool IsChatSessionBeingDeleted => _isChatSessionBeingDeleted;
+
+    public string CurrentGenerationType
+    {
+        get => _currentGenerationType;
+        set => _currentGenerationType = value ?? throw new ArgumentNullException(nameof(value));
+    }
 
     public async Task SelectChatSession(ChatSessionDto chatSession)
     {

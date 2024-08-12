@@ -287,7 +287,9 @@ public class Gemini : Chatbot
             Selected = false,
             Temperature = 1.0f,
             MinTemperature = 0.0f,
-            MaxTemperature = 2.0f
+            MaxTemperature = 2.0f,
+            SupportBase64ImageInputFormat = true,
+            SupportUrlImageInputFormat = false
         };
     }
 

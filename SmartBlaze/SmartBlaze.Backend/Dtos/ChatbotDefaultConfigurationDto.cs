@@ -40,6 +40,12 @@ public class ChatbotDefaultConfigurationDto
     [JsonPropertyName("maxTemperature")]
     public float MaxTemperature { get; set; }
     
+    [JsonPropertyName("supportBase64ImageInputFormat")]
+    public bool SupportBase64ImageInputFormat { get; set; }
+    
+    [JsonPropertyName("supportUrlImageInputFormat")]
+    public bool SupportUrlImageInputFormat { get; set; }
+    
     [JsonPropertyName("selected")]
     public bool Selected { get; set; }
 }

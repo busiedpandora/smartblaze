@@ -171,7 +171,8 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             {
                 var chatbot = new Chatbot(chatbotConfigurationDto.ChatbotName, 
                     chatbotConfigurationDto.TextGenerationChatbotModels, chatbotConfigurationDto.ImageGenerationChatbotModels,
-                    chatbotConfigurationDto.MinTemperature, chatbotConfigurationDto.MaxTemperature);
+                    chatbotConfigurationDto.MinTemperature, chatbotConfigurationDto.MaxTemperature,
+                    chatbotConfigurationDto.SupportBase64ImageInputFormat, chatbotConfigurationDto.SupportUrlImageInputFormat);
                 
                 chatbot.ApiHost = chatbotConfigurationDto.ApiHost;
                 chatbot.ApiKey = chatbotConfigurationDto.ApiKey;

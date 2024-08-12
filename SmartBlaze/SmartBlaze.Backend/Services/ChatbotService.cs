@@ -48,7 +48,7 @@ public class ChatbotService
     private void CreateChatbots()
     {
         var chatGpt = new ChatGpt("ChatGPT", ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"], 
-            ["dall-e-3"]);
+            ["dall-e-3", "dall-e-2"]);
         _chatbots.Add(chatGpt);
         
         var gemini = new Gemini("Google Gemini", ["gemini-1.5-pro", "gemini-1.5-flash"], 

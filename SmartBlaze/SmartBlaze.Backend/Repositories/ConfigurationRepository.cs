@@ -61,7 +61,9 @@ public class ConfigurationRepository : AbstractRepository
             { "textStreamDelay", chatbotDefaultConfigurationDto.TextStreamDelay },
             { "temperature" , chatbotDefaultConfigurationDto.Temperature },
             { "minTemperature", chatbotDefaultConfigurationDto.MinTemperature },
-            { "maxTemperature", chatbotDefaultConfigurationDto.MaxTemperature }
+            { "maxTemperature", chatbotDefaultConfigurationDto.MaxTemperature },
+            { "supportBase64ImageInputFormat", chatbotDefaultConfigurationDto.SupportBase64ImageInputFormat},
+            { "supportUrlImageInputFormat", chatbotDefaultConfigurationDto.SupportUrlImageInputFormat}
         };
 
         await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
@@ -86,7 +88,9 @@ public class ConfigurationRepository : AbstractRepository
             { "textStreamDelay", chatbotDefaultConfigurationDto.TextStreamDelay },
             { "temperature" , chatbotDefaultConfigurationDto.Temperature },
             { "minTemperature", chatbotDefaultConfigurationDto.MinTemperature },
-            { "maxTemperature", chatbotDefaultConfigurationDto.MaxTemperature }
+            { "maxTemperature", chatbotDefaultConfigurationDto.MaxTemperature },
+            { "supportBase64ImageInputFormat", chatbotDefaultConfigurationDto.SupportBase64ImageInputFormat},
+            { "supportUrlImageInputFormat", chatbotDefaultConfigurationDto.SupportUrlImageInputFormat}
         };
         
         await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
@@ -216,7 +220,9 @@ public class ConfigurationRepository : AbstractRepository
             TextStreamDelay = int.Parse(chatbotDefaultConfigurationDocument.Data["textStreamDelay"].ToString() ?? "100"),
             Temperature = float.Parse(chatbotDefaultConfigurationDocument.Data["temperature"].ToString() ?? "0.0"),
             MinTemperature = float.Parse(chatbotDefaultConfigurationDocument.Data["minTemperature"].ToString() ?? "0.0"),
-            MaxTemperature = float.Parse(chatbotDefaultConfigurationDocument.Data["maxTemperature"].ToString() ?? "0.0")
+            MaxTemperature = float.Parse(chatbotDefaultConfigurationDocument.Data["maxTemperature"].ToString() ?? "0.0"),
+            SupportBase64ImageInputFormat = bool.Parse(chatbotDefaultConfigurationDocument.Data["supportBase64ImageInputFormat"].ToString() ?? "false"),
+            SupportUrlImageInputFormat = bool.Parse(chatbotDefaultConfigurationDocument.Data["supportUrlImageInputFormat"].ToString() ?? "false")
         };
 
         return chatbotDefaultConfigurationDto;

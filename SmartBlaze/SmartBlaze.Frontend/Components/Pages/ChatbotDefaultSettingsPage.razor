@@ -11,10 +11,16 @@
 <PageTitle>Chatbot settings - SmartBlaze</PageTitle>
 
 <div id="pageRow">
-    <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
-    <span id="pageTitle">
-        Settings
-    </span>
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="col-auto pe-0">
+            <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon"/>
+        </div>
+        <div class="col-auto">
+            <span id="pageTitle">
+                Settings
+            </span>
+        </div>
+    </div>
 </div>
 
 <div id="settingsPagesContainer">
@@ -90,7 +96,7 @@
             </div>
             
             <div class="mb-4">
-                <label for="temperature" class="form-label">Temperature</label>
+                <label for="temperature" class="form-label">Temperature (For Text Generation)</label>
                 <div class="d-flex">
                     <div class="col-4">
                         <input id="temperature" type="range" class="form-range" step="0.1" @bind-value="_chatbotSettings.Temperature"

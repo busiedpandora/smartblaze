@@ -9,10 +9,16 @@
 <PageTitle>Chat settings - SmartBlaze</PageTitle>
 
 <div id="pageRow">
-    <img src="icons/chat-dots-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
-    <span id="pageTitle">
-        
-    </span>
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="col-auto pe-0">
+            <img src="icons/chat-dots-fill.svg" width="21" height="21" alt="settings icon"/>
+        </div>
+        <div class="col-auto">
+             <span id="pageTitle">
+                Edit
+            </span>
+        </div>
+    </div>
 </div>
 
 <div id="settingsPagesContainer">
@@ -66,7 +72,7 @@
         </div>
 
         <div class="mb-4">
-            <label for="temperature" class="form-label">Temperature</label>
+            <label for="temperature" class="form-label">Temperature (For Text Generation)</label>
             <div class="d-flex">
                 <div class="col-4">
                     <input id="temperature" type="range" class="form-range" step="0.1" @bind-value="_chatSessionSettings.Temperature"
@@ -80,14 +86,14 @@
         </div>
         
         <div class="mb-3">
-            <label for="systemInstruction" class="form-label">System instruction</label>
+            <label for="systemInstruction" class="form-label">System instruction (For Text Generation)</label>
             <div class="col-6">
                 <InputTextArea id="systemInstruction" class="form-control" @bind-Value="_chatSessionSettings.SystemInstruction"></InputTextArea>
             </div>
         </div>
 
         <div class="mb-3">
-            <label for="textStream" class="form-label">Text stream</label>
+            <label for="textStream" class="form-label">Text stream (For Text Generation)</label>
             <InputCheckbox id="textStream" class="form-check" @bind-Value="_chatSessionSettings.TextStream"></InputCheckbox>
         </div>
 

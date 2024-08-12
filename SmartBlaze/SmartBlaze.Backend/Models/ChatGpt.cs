@@ -354,7 +354,6 @@ public class ChatGpt : Chatbot
 
         if (chatResponse is not null && chatResponse.ImageDatas is not null)
         {
-            var images = chatResponse.ImageDatas.Select(id => id.Url ?? "").ToList();
             var assistantMessageInfo = new AssistantMessageInfoDto()
             {
                 Status = "ok",
@@ -378,7 +377,10 @@ public class ChatGpt : Chatbot
                 }
             }
 
-            assistantMessageInfo.Text = assistantMessageInfo.Text.Substring(1);
+            if (assistantMessageInfo.Text.Length > 1)
+            {
+                assistantMessageInfo.Text = assistantMessageInfo.Text.Substring(1);
+            }
 
             return assistantMessageInfo;
         }
@@ -403,7 +405,9 @@ public class ChatGpt : Chatbot
             Selected = true,
             Temperature = 1.0f,
             MinTemperature = 0.0f,
-            MaxTemperature = 2.0f
+            MaxTemperature = 2.0f,
+            SupportBase64ImageInputFormat = true,
+            SupportUrlImageInputFormat = true
         };
     }
 

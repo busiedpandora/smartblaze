@@ -13,15 +13,20 @@ public class Chatbot
     private float _temperature;
     private float _minTemperature;
     private float _maxtemperature;
+    private bool _supportBase64ImageInputFormat;
+    private bool _supportUrlImageInputFormat;
 
     
-    public Chatbot(string name, List<string> textGenerationModels, List<string> imageGenerationModels, float minTemperature, float maxTemperature)
+    public Chatbot(string name, List<string> textGenerationModels, List<string> imageGenerationModels, float minTemperature, float maxTemperature,
+        bool supportBase64ImageInputFormat, bool supportUrlImageInputFormat)
     {
         _name = name;
         _textGenerationModels = textGenerationModels;
         _imageGenerationModels = imageGenerationModels;
         _minTemperature = minTemperature;
         _maxtemperature = maxTemperature;
+        _supportBase64ImageInputFormat = supportBase64ImageInputFormat;
+        _supportUrlImageInputFormat = supportUrlImageInputFormat;
     }
     
     public string Name => _name;
@@ -69,4 +74,8 @@ public class Chatbot
     public float MinTemperature => _minTemperature;
 
     public float Maxtemperature => _maxtemperature;
+
+    public bool SupportBase64ImageInputFormat => _supportBase64ImageInputFormat;
+
+    public bool SupportUrlImageInputFormat => _supportUrlImageInputFormat;
 }

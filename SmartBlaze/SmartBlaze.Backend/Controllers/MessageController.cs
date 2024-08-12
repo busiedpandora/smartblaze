@@ -42,7 +42,7 @@ public class MessageController : ControllerBase
     [HttpPost("new-user-message")]
     public async Task<ActionResult<MessageDto>> AddNewUserMessageToChatSession(string id, [FromBody] MessageDto messageDto)
     {
-        if (messageDto.Text is null)
+        if (messageDto.Text is null or "")
         {
             return BadRequest("Message not specified correctly");
         }
@@ -69,18 +69,18 @@ public class MessageController : ControllerBase
             return NotFound($"Chat session with id {id} not found");
         }
 
-        if (chatSessionInfoDto.ChatbotName is null)
+        if (chatSessionInfoDto.ChatbotName is null or "")
         {
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
 
-        if (chatSessionInfoDto.ChatbotModel is null)
+        if (chatSessionInfoDto.ChatbotModel is null or "")
         {
             return BadRequest($"No model specified for chatbot {chatSessionInfoDto.ChatbotName}");
         }
 
-        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.ApiHost is null ||
-            chatSessionInfoDto.ApiKey is null)
+        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.ApiHost is null or "" ||
+            chatSessionInfoDto.ApiKey is null or "")
         {
             return BadRequest(
                 $"messages, API host and the API key must be specified for the chat session with id {id} " +
@@ -106,12 +106,12 @@ public class MessageController : ControllerBase
     [HttpPost("new-assistant-empty-message")]
     public ActionResult<MessageDto> GetNewAssistantMessageWithEmptyContent(string id, [FromBody] ChatSessionInfoDto chatSessionInfoDto)
     {
-        if (chatSessionInfoDto.ChatbotName is null)
+        if (chatSessionInfoDto.ChatbotName is null or "")
         {
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
 
-        if (chatSessionInfoDto.ChatbotModel is null)
+        if (chatSessionInfoDto.ChatbotModel is null or "")
         {
             return BadRequest($"No model specified for chatbot {chatSessionInfoDto.ChatbotName}");
         }
@@ -142,7 +142,7 @@ public class MessageController : ControllerBase
             yield break;
         }
 
-        if (chatSessionInfoDto.ChatbotName is null)
+        if (chatSessionInfoDto.ChatbotName is null or "")
         {
             var result =  NotFound($"Chat session with id {id} has no chatbot specified");
             var responseDetails = new
@@ -157,7 +157,7 @@ public class MessageController : ControllerBase
             yield break;
         }
         
-        if (chatSessionInfoDto.ChatbotModel is null)
+        if (chatSessionInfoDto.ChatbotModel is null or "")
         {
             var result =  BadRequest($"No model specified for chatbot {chatSessionInfoDto.ChatbotName}");
             var responseDetails = new
@@ -172,8 +172,8 @@ public class MessageController : ControllerBase
             yield break;
         }
         
-        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.ApiHost is null ||
-            chatSessionInfoDto.ApiKey is null)
+        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.ApiHost is null or "" ||
+            chatSessionInfoDto.ApiKey is null or "")
         {
             var result =  BadRequest(
                 $"messages, API host and the API key must be specified for the chat session with id {id} " +
@@ -231,18 +231,18 @@ public class MessageController : ControllerBase
             return NotFound($"Chat session with id {id} not found");
         }
 
-        if (chatSessionInfoDto.ChatbotName is null)
+        if (chatSessionInfoDto.ChatbotName is null or "")
         {
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
 
-        if (chatSessionInfoDto.ChatbotModel is null)
+        if (chatSessionInfoDto.ChatbotModel is null or "")
         {
             return BadRequest($"No model specified for chatbot {chatSessionInfoDto.ChatbotName}");
         }
         
-        if (chatSessionInfoDto.LastUserMessage is null || chatSessionInfoDto.ApiHost is null ||
-            chatSessionInfoDto.ApiKey is null)
+        if (chatSessionInfoDto.LastUserMessage is null || chatSessionInfoDto.ApiHost is null or "" ||
+            chatSessionInfoDto.ApiKey is null or "")
         {
             return BadRequest(
                 $"Last user message, API host and the API key must be specified for the chat session with id {id} " +

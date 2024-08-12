@@ -37,12 +37,13 @@ public class MessageRepository : AbstractRepository
           
           var messageDocument = new Dictionary<string, object>()
           {
-               {"text", messageDto.Text},
-               {"role", messageDto.Role},
-               {"creationDate", messageDto.CreationDate},
+               {"text", messageDto.Text ?? ""},
+               {"role", messageDto.Role ?? ""},
+               {"creationDate", messageDto.CreationDate ?? DateTime.MinValue},
                {"chatbotName", messageDto.ChatbotName ?? ""},
                {"chatbotModel", messageDto.ChatbotModel ?? ""},
-               {"chatSession", chatSessionDocument.Id}
+               {"chatSession", chatSessionDocument.Id},
+               {"status", messageDto.Status ?? ""}
           };
 
           var messageStoredDocument = await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, MessageCollectionId, 
@@ -74,7 +75,8 @@ public class MessageRepository : AbstractRepository
                Role = messageDocument.Data["role"].ToString(),
                CreationDate = DateTime.Parse(messageDocument.Data["creationDate"].ToString() ?? ""),
                ChatbotName = messageDocument.Data["chatbotName"].ToString(),
-               ChatbotModel = messageDocument.Data["chatbotModel"].ToString()
+               ChatbotModel = messageDocument.Data["chatbotModel"].ToString(),
+               Status = messageDocument.Data["status"].ToString()
           };
 
           if (mediaDocuments.Count > 0)

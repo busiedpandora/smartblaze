@@ -12,7 +12,7 @@ public class Gemini : Chatbot
     {
     }
 
-    public override async Task<string?> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
+    public override async Task<AssistantMessageInfoDto> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
     {
         var contents = new List<RequestContent>();
 
@@ -48,7 +48,7 @@ public class Gemini : Chatbot
                     }
                     else
                     {
-                        textPart.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
+                        textPart.Text += $"\n```{mediaDto.ContentType}\nfile name: {mediaDto.Name}\n{mediaDto.Data}\n```";
                     }
                 }
             }
@@ -111,7 +111,11 @@ public class Gemini : Chatbot
 
         if (!chatResponseMessage.IsSuccessStatusCode)
         {
-            return chatResponseMessageContent;
+            return new AssistantMessageInfoDto
+            {
+                Status = "error",
+                Text = chatResponseMessageContent
+            };
         }
         
         ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseMessageContent);
@@ -122,11 +126,19 @@ public class Gemini : Chatbot
 
             if (candidate.Content is not null && candidate.Content.Parts is not null)
             {
-                return candidate.Content.Parts[0].Text;
+                return new AssistantMessageInfoDto
+                {
+                    Status = "ok",
+                    Text = candidate.Content.Parts[0].Text
+                };
             }
         }
 
-        return null;
+        return new AssistantMessageInfoDto()
+        {
+            Status = "error",
+            Text = "No content has been generated"
+        };
     }
 
     public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto,
@@ -166,7 +178,7 @@ public class Gemini : Chatbot
                     }
                     else
                     {
-                        textPart.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
+                        textPart.Text += $"\n```{mediaDto.ContentType}\nfile name: {mediaDto.Name}\n{mediaDto.Data}\n```";
                     }
                 }
             }
@@ -254,9 +266,13 @@ public class Gemini : Chatbot
         }
     }
 
-    public override Task<AssistantMessageInfoDto> GenerateImage(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
+    public override async Task<AssistantMessageInfoDto> GenerateImage(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
     {
-        throw new NotImplementedException();
+        return new AssistantMessageInfoDto
+        {
+            Status = "error",
+            Text = "Currently, Google Gemini is not able to generate images."
+        };
     }
 
     public override ChatbotDefaultConfigurationDto GetDefaultConfiguration()

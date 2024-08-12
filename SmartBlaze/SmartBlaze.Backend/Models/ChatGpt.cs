@@ -13,7 +13,7 @@ public class ChatGpt : Chatbot
     {
     }
 
-    public override async Task<string?> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
+    public override async Task<AssistantMessageInfoDto> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
     { 
         List<Message> messages = new();
         
@@ -71,7 +71,7 @@ public class ChatGpt : Chatbot
                         }
                         else
                         {
-                            textContent.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
+                            textContent.Text += $"\n```{mediaDto.ContentType}\nfile name: {mediaDto.Name}\n{mediaDto.Data}\n```";
                         }
                     }
 
@@ -128,7 +128,11 @@ public class ChatGpt : Chatbot
 
         if (!chatResponseMessage.IsSuccessStatusCode)
         {
-            return chatResponseMessageContent;
+            return new AssistantMessageInfoDto
+            {
+                Status = "error",
+                Text = chatResponseMessageContent
+            };
         }
         
         TextGenerationChatResponse? chatResponse = JsonSerializer.Deserialize<TextGenerationChatResponse>(chatResponseMessageContent);
@@ -139,11 +143,19 @@ public class ChatGpt : Chatbot
 
             if (message is not null)
             {
-                return message.Contents;
+                return new AssistantMessageInfoDto
+                {
+                    Status = "ok",
+                    Text = message.Contents
+                };
             }
         }
         
-        return null;
+        return new AssistantMessageInfoDto()
+        {
+            Status = "error",
+            Text = "No content has been generated"
+        };
     }
 
     public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto, 
@@ -205,7 +217,7 @@ public class ChatGpt : Chatbot
                         }
                         else
                         {
-                            textContent.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
+                            textContent.Text += $"\n```{mediaDto.ContentType}\nfile name: {mediaDto.Name}\n{mediaDto.Data}\n```";
                         }
                     }
 

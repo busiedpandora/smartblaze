@@ -111,3 +111,7 @@ pre .quoted-text {
 .file-name {
     font-size: 14px;
 }
+
+.error {
+    color: red;
+}

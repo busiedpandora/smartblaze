@@ -22,7 +22,7 @@ public abstract class Chatbot
     
     public List<string> ImageGenerationModels => _imageGenerationModels;
 
-    public abstract Task<string?> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient);
+    public abstract Task<AssistantMessageInfoDto> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient);
     
     public abstract IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto, 
         HttpClient httpClient);

@@ -45,7 +45,7 @@ public class ConfigurationService
         return new ChatSessionDefaultConfigurationDto()
         {
             SystemInstruction = "You are a helpful assistant. You can help me by answering my questions.",
-            TextStream = true
+            TextStream = false
         };
     }
     

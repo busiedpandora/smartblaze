@@ -27,7 +27,7 @@ public class ChatbotService
         return _chatbots.Find(c => c.Name == name);
     }
 
-    public async Task<string?> GenerateTextInChatSession(Chatbot chatbot, ChatSessionInfoDto chatSessionInfoDto)
+    public async Task<AssistantMessageInfoDto> GenerateTextInChatSession(Chatbot chatbot, ChatSessionInfoDto chatSessionInfoDto)
     {
         return await chatbot.GenerateText(chatSessionInfoDto, _httpClient);
     }

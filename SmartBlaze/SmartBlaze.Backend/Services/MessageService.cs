@@ -25,7 +25,7 @@ public class MessageService
         };
     }
     
-    public MessageDto CreateNewAssistantTextMessage(string text, string chatbotName, string chatbotModel)
+    public MessageDto CreateNewAssistantTextMessage(string text, string chatbotName, string chatbotModel, string status)
     {
         return new MessageDto()
         {
@@ -33,7 +33,8 @@ public class MessageService
             Role = Role.Assistant,
             CreationDate = DateTime.Now,
             ChatbotName = chatbotName,
-            ChatbotModel = chatbotModel
+            ChatbotModel = chatbotModel,
+            Status = status
         };
     }
 

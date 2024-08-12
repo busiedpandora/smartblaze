@@ -237,8 +237,8 @@
             var imageInputs = _fileInputs;
             _fileInputs = new();
             
-            //await _chatSessionStateService.RequestNewAssistantTextMessage(text, imageInputs, chatbot.ApiHost, chatbot.ApiKey, chatbot.TextStreamDelay);
-            await _chatSessionStateService.RequestNewAssistantImageMessage(text, chatbot.ApiHost, chatbot.ApiKey);
+            await _chatSessionStateService.RequestNewAssistantTextMessage(text, imageInputs, chatbot.ApiHost, chatbot.ApiKey, chatbot.TextStreamDelay);
+            //await _chatSessionStateService.RequestNewAssistantImageMessage(text, chatbot.ApiHost, chatbot.ApiKey);
         }
     }
 
@@ -370,6 +370,15 @@
                     }
                     else
                     {
+                        if (contentType == "")
+                        {
+                            var i = file.Name.LastIndexOf(".");
+                            if (i != -1 && i < file.Name.Length - 1)
+                            {
+                                contentType = "text/" + file.Name.Substring(i + 1);
+                            }
+                        }
+                        
                         var reader = new StreamReader(memoryStream);
                         fileContent = await reader.ReadToEndAsync();
                     }

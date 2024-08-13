@@ -63,7 +63,8 @@ public class ConfigurationRepository : AbstractRepository
             { "minTemperature", chatbotDefaultConfigurationDto.MinTemperature },
             { "maxTemperature", chatbotDefaultConfigurationDto.MaxTemperature },
             { "supportBase64ImageInputFormat", chatbotDefaultConfigurationDto.SupportBase64ImageInputFormat},
-            { "supportUrlImageInputFormat", chatbotDefaultConfigurationDto.SupportUrlImageInputFormat}
+            { "supportUrlImageInputFormat", chatbotDefaultConfigurationDto.SupportUrlImageInputFormat},
+            { "supportImageGeneration", chatbotDefaultConfigurationDto.SupportImageGeneration}
         };
 
         await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
@@ -90,7 +91,8 @@ public class ConfigurationRepository : AbstractRepository
             { "minTemperature", chatbotDefaultConfigurationDto.MinTemperature },
             { "maxTemperature", chatbotDefaultConfigurationDto.MaxTemperature },
             { "supportBase64ImageInputFormat", chatbotDefaultConfigurationDto.SupportBase64ImageInputFormat},
-            { "supportUrlImageInputFormat", chatbotDefaultConfigurationDto.SupportUrlImageInputFormat}
+            { "supportUrlImageInputFormat", chatbotDefaultConfigurationDto.SupportUrlImageInputFormat},
+            { "supportImageGeneration", chatbotDefaultConfigurationDto.SupportImageGeneration}
         };
         
         await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
@@ -222,7 +224,8 @@ public class ConfigurationRepository : AbstractRepository
             MinTemperature = float.Parse(chatbotDefaultConfigurationDocument.Data["minTemperature"].ToString() ?? "0.0"),
             MaxTemperature = float.Parse(chatbotDefaultConfigurationDocument.Data["maxTemperature"].ToString() ?? "0.0"),
             SupportBase64ImageInputFormat = bool.Parse(chatbotDefaultConfigurationDocument.Data["supportBase64ImageInputFormat"].ToString() ?? "false"),
-            SupportUrlImageInputFormat = bool.Parse(chatbotDefaultConfigurationDocument.Data["supportUrlImageInputFormat"].ToString() ?? "false")
+            SupportUrlImageInputFormat = bool.Parse(chatbotDefaultConfigurationDocument.Data["supportUrlImageInputFormat"].ToString() ?? "false"),
+            SupportImageGeneration = bool.Parse(chatbotDefaultConfigurationDocument.Data["supportImageGeneration"].ToString() ?? "false")
         };
 
         return chatbotDefaultConfigurationDto;

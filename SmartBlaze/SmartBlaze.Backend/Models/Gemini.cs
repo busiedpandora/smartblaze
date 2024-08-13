@@ -289,7 +289,8 @@ public class Gemini : Chatbot
             MinTemperature = 0.0f,
             MaxTemperature = 2.0f,
             SupportBase64ImageInputFormat = true,
-            SupportUrlImageInputFormat = false
+            SupportUrlImageInputFormat = false,
+            SupportImageGeneration = false
         };
     }
 

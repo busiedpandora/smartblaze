@@ -6,6 +6,8 @@ namespace SmartBlaze.Frontend.Services;
 
 public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
 {
+    private SettingsService _settingsService;
+    
     private List<ChatSessionDto>? _chatSessions;
     private ChatSessionDto? _currentChatSession;
     private List<MessageDto>? _currentChatSessionMessages;
@@ -19,7 +21,14 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     private bool _isChatSessionBeingEdited;
 
     private string _currentGenerationType = "text";
-    
+
+
+    public ChatSessionStateService(IHttpClientFactory httpClientFactory, SettingsService settingsService) 
+        : this(httpClientFactory)
+    {
+        _settingsService = settingsService;
+    }
+
     public List<ChatSessionDto>? ChatSessions
     {
         get => _chatSessions;
@@ -109,6 +118,17 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
 
         var chatSessionConfiguration =
             JsonSerializer.Deserialize<ChatSessionConfigurationDto>(chatSessionConfigurationResponseContent);
+
+        if (chatSessionConfiguration is not null)
+        {
+            var chatbot = _settingsService.GetChatbotByName(chatSessionConfiguration.ChatbotName);
+            if (chatbot is not null)
+            {
+                chatSessionConfiguration.SupportBase64InputImageFormat = chatbot.SupportBase64ImageInputFormat;
+                chatSessionConfiguration.SupportUrlInputImageFormat = chatbot.SupportUrlImageInputFormat;
+                chatSessionConfiguration.SupportImageGeneration = chatbot.SupportImageGeneration;
+            }
+        }
 
         _currentChatSessionConfiguration = chatSessionConfiguration;
         
@@ -408,6 +428,14 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         _currentChatSessionConfiguration.Temperature = chatSessionSettings.Temperature;
         _currentChatSessionConfiguration.SystemInstruction = chatSessionSettings.SystemInstruction;
         _currentChatSessionConfiguration.TextStream = chatSessionSettings.TextStream;
+        
+        var chatbot = _settingsService.GetChatbotByName(chatSessionSettings.ChatbotName);
+        if (chatbot is not null)
+        {
+            _currentChatSessionConfiguration.SupportBase64InputImageFormat = chatbot.SupportBase64ImageInputFormat;
+            _currentChatSessionConfiguration.SupportUrlInputImageFormat = chatbot.SupportUrlImageInputFormat;
+            _currentChatSessionConfiguration.SupportImageGeneration = chatbot.SupportImageGeneration;
+        }
         
         _isChatSessionBeingEdited = false;
         NotifyNavigateToPage("/");

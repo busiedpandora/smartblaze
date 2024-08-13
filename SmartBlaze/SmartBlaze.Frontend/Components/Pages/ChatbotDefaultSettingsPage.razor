@@ -27,7 +27,7 @@
     
     <SettingsMenu/>
     
-    @if (_settingsService.Chatbots is not null && _settingsService.ChatbotSelected?.TextGenerationModels is not null)
+    @if (_settingsService.Chatbots is not null && _settingsService.DefaultChatbotSelected?.TextGenerationModels is not null)
     {
         <EditForm Model="@_chatbotSettings" OnSubmit="@OnSaveClicked" autocomplete="off">
             <div>
@@ -141,18 +141,18 @@
             _chatSessionStateService.RefreshView += ReloadComponentState;
         }
         
-        _chatbotSettings.ChatbotName = _settingsService.ChatbotSelected?.Name ?? "";
-        _chatbotSettings.TextGenerationChatbotModel = _settingsService.ChatbotSelected?.TextGenerationModel ?? "";
-        _chatbotSettings.ImageGenerationChatbotModel = _settingsService.ChatbotSelected?.ImageGenerationModel ?? "";
-        _chatbotSettings.TextGenerationChatbotModels = _settingsService.ChatbotSelected?.TextGenerationModels ?? [];
-        _chatbotSettings.ImageGenerationChatbotModels = _settingsService.ChatbotSelected?.ImageGenerationModels ?? [];
-        _chatbotSettings.ApiHost = _settingsService.ChatbotSelected?.ApiHost ?? "";
-        _chatbotSettings.ApiKey = _settingsService.ChatbotSelected?.ApiKey ?? "";
-        _chatbotSettings.Temperature = _settingsService.ChatbotSelected?.Temperature ?? 0.0f;
-        _chatbotSettings.MinTemperature = _settingsService.ChatbotSelected?.MinTemperature ?? 0.0f;
-        _chatbotSettings.MaxTemperature = _settingsService.ChatbotSelected?.Maxtemperature ?? 1.0f;
+        _chatbotSettings.ChatbotName = _settingsService.DefaultChatbotSelected?.Name ?? "";
+        _chatbotSettings.TextGenerationChatbotModel = _settingsService.DefaultChatbotSelected?.TextGenerationModel ?? "";
+        _chatbotSettings.ImageGenerationChatbotModel = _settingsService.DefaultChatbotSelected?.ImageGenerationModel ?? "";
+        _chatbotSettings.TextGenerationChatbotModels = _settingsService.DefaultChatbotSelected?.TextGenerationModels ?? [];
+        _chatbotSettings.ImageGenerationChatbotModels = _settingsService.DefaultChatbotSelected?.ImageGenerationModels ?? [];
+        _chatbotSettings.ApiHost = _settingsService.DefaultChatbotSelected?.ApiHost ?? "";
+        _chatbotSettings.ApiKey = _settingsService.DefaultChatbotSelected?.ApiKey ?? "";
+        _chatbotSettings.Temperature = _settingsService.DefaultChatbotSelected?.Temperature ?? 0.0f;
+        _chatbotSettings.MinTemperature = _settingsService.DefaultChatbotSelected?.MinTemperature ?? 0.0f;
+        _chatbotSettings.MaxTemperature = _settingsService.DefaultChatbotSelected?.Maxtemperature ?? 1.0f;
         
-        _badgeTemperature = _settingsService.ChatbotSelected?.Temperature ?? 0.0f;
+        _badgeTemperature = _settingsService.DefaultChatbotSelected?.Temperature ?? 0.0f;
         
         return base.OnInitializedAsync();
     }

@@ -407,7 +407,8 @@ public class ChatGpt : Chatbot
             MinTemperature = 0.0f,
             MaxTemperature = 2.0f,
             SupportBase64ImageInputFormat = true,
-            SupportUrlImageInputFormat = true
+            SupportUrlImageInputFormat = true,
+            SupportImageGeneration = true
         };
     }
 

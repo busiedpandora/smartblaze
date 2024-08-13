@@ -24,4 +24,10 @@ public class ChatSessionConfigurationDto
     
     [JsonPropertyName("textStream")]
     public bool TextStream { get; set; }
+    
+    public bool SupportBase64InputImageFormat { get; set; }
+    
+    public bool SupportUrlInputImageFormat { get; set; }
+    
+    public bool SupportImageGeneration { get; set; }
 }

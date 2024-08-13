@@ -46,6 +46,9 @@ public class ChatbotDefaultConfigurationDto
     [JsonPropertyName("supportUrlImageInputFormat")]
     public bool SupportUrlImageInputFormat { get; set; }
     
+    [JsonPropertyName("supportImageGeneration")]
+    public bool SupportImageGeneration { get; set; }
+    
     [JsonPropertyName("selected")]
     public bool Selected { get; set; }
 }

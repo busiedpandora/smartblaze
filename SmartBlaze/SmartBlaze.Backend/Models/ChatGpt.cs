@@ -8,11 +8,12 @@ namespace SmartBlaze.Backend.Models;
 
 public class ChatGpt : Chatbot
 {
-    public ChatGpt(string name, List<string> models) : base(name, models)
+    public ChatGpt(string name, List<string> textGenerationModels, List<string> imageGenerationModels) 
+        : base(name, textGenerationModels, imageGenerationModels)
     {
     }
 
-    public override async Task<string?> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
+    public override async Task<AssistantMessageInfoDto> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
     { 
         List<Message> messages = new();
         
@@ -70,7 +71,7 @@ public class ChatGpt : Chatbot
                         }
                         else
                         {
-                            textContent.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
+                            textContent.Text += $"\n```{mediaDto.ContentType}\nfile name: {mediaDto.Name}\n{mediaDto.Data}\n```";
                         }
                     }
 
@@ -96,7 +97,7 @@ public class ChatGpt : Chatbot
             messages.Insert(0, systemInstructionMessage);
         }
 
-        var chatRequest = new ChatRequest
+        var chatRequest = new TextGenerationChatRequest
         {
             Model = chatSessionInfoDto.ChatbotModel,
             Messages = (object[]) messages.ToArray(),
@@ -127,10 +128,14 @@ public class ChatGpt : Chatbot
 
         if (!chatResponseMessage.IsSuccessStatusCode)
         {
-            return chatResponseMessageContent;
+            return new AssistantMessageInfoDto
+            {
+                Status = "error",
+                Text = chatResponseMessageContent
+            };
         }
         
-        ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseMessageContent);
+        TextGenerationChatResponse? chatResponse = JsonSerializer.Deserialize<TextGenerationChatResponse>(chatResponseMessageContent);
         
         if (chatResponse is not null && chatResponse.Choices is not null && chatResponse.Choices.Count > 0)
         {
@@ -138,11 +143,19 @@ public class ChatGpt : Chatbot
 
             if (message is not null)
             {
-                return message.Contents;
+                return new AssistantMessageInfoDto
+                {
+                    Status = "ok",
+                    Text = message.Contents
+                };
             }
         }
         
-        return null;
+        return new AssistantMessageInfoDto()
+        {
+            Status = "error",
+            Text = "No content has been generated"
+        };
     }
 
     public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto, 
@@ -204,7 +217,7 @@ public class ChatGpt : Chatbot
                         }
                         else
                         {
-                            textContent.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
+                            textContent.Text += $"\n```{mediaDto.ContentType}\nfile name: {mediaDto.Name}\n{mediaDto.Data}\n```";
                         }
                     }
 
@@ -230,7 +243,7 @@ public class ChatGpt : Chatbot
             messages.Insert(0, systemInstructionMessage);
         }
 
-        var chatRequest = new ChatRequest
+        var chatRequest = new TextGenerationChatRequest
         {
             Model = chatSessionInfoDto.ChatbotModel,
             Messages = (object[]) messages.ToArray(),
@@ -280,7 +293,7 @@ public class ChatGpt : Chatbot
 
                 if (chunk != "[DONE]")
                 {
-                    ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chunk);
+                    TextGenerationChatResponse? chatResponse = JsonSerializer.Deserialize<TextGenerationChatResponse>(chunk);
 
                     if (chatResponse is not null && chatResponse.Choices is not null && chatResponse.Choices.Count > 0)
                     {
@@ -296,19 +309,106 @@ public class ChatGpt : Chatbot
         }
     }
 
+    public override async Task<AssistantMessageInfoDto> GenerateImage(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
+    {
+        ImageGenerationChatRequest imageGenerationChatRequest = new()
+        {
+            Model = chatSessionInfoDto.ChatbotModel,
+            Prompt = chatSessionInfoDto.LastUserMessage.Text,
+            N = 1,
+            Size = "1024x1024",
+            ResponseFormat = "url"
+        };
+        
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true
+        };
+
+        var chatRequestJson = JsonSerializer.Serialize(imageGenerationChatRequest, options);
+        
+        var httpRequest = new HttpRequestMessage
+        {
+            Method = HttpMethod.Post,
+            RequestUri = new Uri($"https://api.openai.com/v1/images/generations"),
+            Headers =
+            {
+                { "Authorization", $"Bearer {chatSessionInfoDto.ApiKey}" },
+            },
+            Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
+        };
+        
+        var chatResponseMessage = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
+        var chatResponseMessageContent = await chatResponseMessage.Content.ReadAsStringAsync();
+        
+        if (!chatResponseMessage.IsSuccessStatusCode)
+        {
+            return new AssistantMessageInfoDto()
+            {
+                Status = "error",
+                Text = chatResponseMessageContent
+            };
+        }
+
+        var chatResponse = JsonSerializer.Deserialize<ImageGenerationChatResponse>(chatResponseMessageContent);
+
+        if (chatResponse is not null && chatResponse.ImageDatas is not null)
+        {
+            var assistantMessageInfo = new AssistantMessageInfoDto()
+            {
+                Status = "ok",
+                Text = "",
+                MediaDtos = new List<MediaDto>()
+            };
+
+            foreach (var imageData in chatResponse.ImageDatas)
+            {
+                if (imageData.RevisitedPrompt?.Length > 0)
+                {
+                    assistantMessageInfo.Text += $"\n{imageData.RevisitedPrompt}";
+                }
+
+                if (imageData.Url?.Length > 0)
+                {
+                    assistantMessageInfo.MediaDtos.Add(new MediaDto()
+                    {
+                        Data = imageData.Url
+                    });
+                }
+            }
+
+            if (assistantMessageInfo.Text.Length > 1)
+            {
+                assistantMessageInfo.Text = assistantMessageInfo.Text.Substring(1);
+            }
+
+            return assistantMessageInfo;
+        }
+
+        return new AssistantMessageInfoDto()
+        {
+            Status = "error",
+            Text = "No content has been generated"
+        };
+    }
+
     public override ChatbotDefaultConfigurationDto GetDefaultConfiguration()
     {
         return new ChatbotDefaultConfigurationDto()
         {
             ChatbotName = "ChatGPT",
-            ChatbotModel = "gpt-4o",
+            TextGenerationChatbotModel = "gpt-4o",
+            ImageGenerationChatbotModel = "dall-e-3",
             ApiHost = "https://api.openai.com",
             ApiKey = "",
             TextStreamDelay = 100,
             Selected = true,
             Temperature = 1.0f,
             MinTemperature = 0.0f,
-            MaxTemperature = 2.0f
+            MaxTemperature = 2.0f,
+            SupportBase64ImageInputFormat = true,
+            SupportUrlImageInputFormat = true,
+            SupportImageGeneration = true
         };
     }
 
@@ -367,7 +467,7 @@ public class ChatGpt : Chatbot
         public string? Content { get; set; }
     }
 
-    private class ChatRequest
+    private class TextGenerationChatRequest
     {
         [JsonPropertyName("model")]
         public string? Model { get; set; }
@@ -382,7 +482,25 @@ public class ChatGpt : Chatbot
         public float Temperature { get; set; }
     }
 
-    private class ChatResponse
+    private class ImageGenerationChatRequest
+    {
+        [JsonPropertyName("model")]
+        public string? Model { get; set; }
+        
+        [JsonPropertyName("prompt")]
+        public string? Prompt { get; set; }
+        
+        [JsonPropertyName("n")]
+        public int N { get; set; }
+        
+        [JsonPropertyName("size")]
+        public string? Size { get; set; }
+        
+        [JsonPropertyName("response_format")]
+        public string? ResponseFormat { get; set; }
+    }
+
+    private class TextGenerationChatResponse
     {
         [JsonPropertyName("id")]
         public string? Id { get; set; }
@@ -400,6 +518,15 @@ public class ChatGpt : Chatbot
         public string? Object { get; set; }
     }
 
+    private class ImageGenerationChatResponse
+    {
+        [JsonPropertyName("created")]
+        public long? Created { get; set; }
+        
+        [JsonPropertyName("data")]
+        public List<ImageData>? ImageDatas { get; set; }
+    }
+
     private class Choice
     {
         [JsonPropertyName("finish_reason")]
@@ -415,18 +542,12 @@ public class ChatGpt : Chatbot
         public Delta? Delta { get; set; }
     }
 
-    private class UploadedFileResponse
+    private class ImageData
     {
-        [JsonPropertyName("id")]
-        public string? Id { get; set; }
+        [JsonPropertyName("revised_prompt")]
+        public string? RevisitedPrompt { get; set; }
         
-        [JsonPropertyName("object")]
-        public string? Object { get; set; }
-        
-        [JsonPropertyName("fileName")]
-        public string? FileName { get; set; }
-        
-        [JsonPropertyName("purpose")]
-        public string? Purpose { get; set; }
+        [JsonPropertyName("url")]
+        public string? Url { get; set; }
     }
 }

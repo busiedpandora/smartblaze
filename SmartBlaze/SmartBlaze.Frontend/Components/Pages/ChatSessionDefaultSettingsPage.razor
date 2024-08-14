@@ -11,10 +11,16 @@
 <PageTitle>Chat default settings - SmartBlaze</PageTitle>
 
 <div id="pageRow">
-    <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
-    <span id="pageTitle">
-        Settings
-    </span>
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="col-auto pe-0">
+            <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon"/>
+        </div>
+        <div class="col-auto">
+            <span id="pageTitle">
+                Settings
+            </span>
+        </div>
+    </div>
 </div>
 
 <div id="settingsPagesContainer">
@@ -23,14 +29,14 @@
 
     <EditForm Model="_chatSessionDefaultSettings" OnSubmit="@OnSaveClicked" autocomplete="off">
         <div class="mb-3">
-            <label for="systemInstruction" class="form-label">System instruction</label>
+            <label for="systemInstruction" class="form-label">System instruction (For Text Generation)</label>
             <div class="col-6">
                 <InputTextArea id="systemInstruction" class="form-control" @bind-Value="_chatSessionDefaultSettings.SystemInstruction"></InputTextArea>
             </div>
         </div>
 
         <div class="mb-3">
-            <label for="textStream" class="form-label">Text stream</label>
+            <label for="textStream" class="form-label">Text stream (For Text Generation)</label>
             <InputCheckbox id="textStream" class="form-check" @bind-Value="_chatSessionDefaultSettings.TextStream"></InputCheckbox>
         </div>
 

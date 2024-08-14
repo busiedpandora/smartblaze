@@ -14,3 +14,17 @@ textarea {
     width: 65px;
     height: 65px;
 }
+
+.button-double-image {
+    position: relative;
+}
+
+.right-image {
+    opacity: 80%;
+}
+
+.left-image {
+    position: absolute;
+    left: -1px;
+    bottom: 9px;
+}

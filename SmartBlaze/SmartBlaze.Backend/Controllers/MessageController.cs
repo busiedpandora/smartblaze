@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using SmartBlaze.Backend.Dtos;
 using SmartBlaze.Backend.Models;
 using SmartBlaze.Backend.Services;
@@ -41,7 +42,7 @@ public class MessageController : ControllerBase
     [HttpPost("new-user-message")]
     public async Task<ActionResult<MessageDto>> AddNewUserMessageToChatSession(string id, [FromBody] MessageDto messageDto)
     {
-        if (messageDto.Text is null)
+        if (messageDto.Text is null or "")
         {
             return BadRequest("Message not specified correctly");
         }
@@ -59,7 +60,7 @@ public class MessageController : ControllerBase
     }
     
     [HttpPost("new-assistant-message")]
-    public async Task<ActionResult<MessageDto>> GenerateNewAssistantMessageInChatSession(string id, 
+    public async Task<ActionResult<MessageDto>> GenerateNewAssistantTextMessageInChatSession(string id, 
         [FromBody] ChatSessionInfoDto chatSessionInfoDto)
     {
         ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
@@ -68,18 +69,18 @@ public class MessageController : ControllerBase
             return NotFound($"Chat session with id {id} not found");
         }
 
-        if (chatSessionInfoDto.ChatbotName is null)
+        if (chatSessionInfoDto.ChatbotName is null or "")
         {
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
 
-        if (chatSessionInfoDto.ChatbotModel is null)
+        if (chatSessionInfoDto.ChatbotModel is null or "")
         {
             return BadRequest($"No model specified for chatbot {chatSessionInfoDto.ChatbotName}");
         }
 
-        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.ApiHost is null ||
-            chatSessionInfoDto.ApiKey is null)
+        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.ApiHost is null or "" ||
+            chatSessionInfoDto.ApiKey is null or "")
         {
             return BadRequest(
                 $"messages, API host and the API key must be specified for the chat session with id {id} " +
@@ -93,15 +94,10 @@ public class MessageController : ControllerBase
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
         
-        string? content = await _chatbotService.GenerateTextInChatSession(chatbot, chatSessionInfoDto);
-        
-        if (content is null)
-        {
-            return Problem("Problem occured while generating the assistant message");
-        }
+        var assistantMessageInfo = await _chatbotService.GenerateTextInChatSession(chatbot, chatSessionInfoDto);
 
-        MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage(content, 
-            chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel);
+        MessageDto assistantMessageDto = _messageService.CreateNewAssistantTextMessage(assistantMessageInfo.Text ?? "", 
+            chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel, assistantMessageInfo.Status);
         await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
 
         return Ok(assistantMessageDto);
@@ -110,45 +106,88 @@ public class MessageController : ControllerBase
     [HttpPost("new-assistant-empty-message")]
     public ActionResult<MessageDto> GetNewAssistantMessageWithEmptyContent(string id, [FromBody] ChatSessionInfoDto chatSessionInfoDto)
     {
-        if (chatSessionInfoDto.ChatbotName is null)
+        if (chatSessionInfoDto.ChatbotName is null or "")
         {
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
 
-        if (chatSessionInfoDto.ChatbotModel is null)
+        if (chatSessionInfoDto.ChatbotModel is null or "")
         {
             return BadRequest($"No model specified for chatbot {chatSessionInfoDto.ChatbotName}");
         }
         
-        MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage("", 
-            chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel);
+        MessageDto assistantMessageDto = _messageService.CreateNewAssistantTextMessage("", 
+            chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel, "ok");
 
         return Ok(assistantMessageDto);
     }
     
     [HttpPost("generate-assistant-stream-message")]
-    public async IAsyncEnumerable<string> GenerateNewAssistantMessageInChatSessionStreamEnabled(string id, 
+    public async IAsyncEnumerable<string?> GenerateNewAssistantTextMessageInChatSessionStreamEnabled(string id, 
         [FromBody] ChatSessionInfoDto chatSessionInfoDto)
     {
         ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
         if (chatSessionDto is null)
         {
+            var result = NotFound($"Chat session with id {id} not found");
+            var responseDetails = new
+            {
+                StatusCode = result.StatusCode,
+                Message = result.Value,
+                Type = result.GetType().Name,
+            };
+
+            var fullResponse = JsonConvert.SerializeObject(responseDetails);
+            yield return fullResponse;
             yield break;
         }
 
-        if (chatSessionInfoDto.ChatbotName is null)
+        if (chatSessionInfoDto.ChatbotName is null or "")
         {
+            var result =  NotFound($"Chat session with id {id} has no chatbot specified");
+            var responseDetails = new
+            {
+                StatusCode = result.StatusCode,
+                Message = result.Value,
+                Type = result.GetType().Name,
+            };
+
+            var fullResponse = JsonConvert.SerializeObject(responseDetails);
+            yield return fullResponse;
             yield break;
         }
         
-        if (chatSessionInfoDto.ChatbotModel is null)
+        if (chatSessionInfoDto.ChatbotModel is null or "")
         {
+            var result =  BadRequest($"No model specified for chatbot {chatSessionInfoDto.ChatbotName}");
+            var responseDetails = new
+            {
+                StatusCode = result.StatusCode,
+                Message = result.Value,
+                Type = result.GetType().Name,
+            };
+
+            var fullResponse = JsonConvert.SerializeObject(responseDetails);
+            yield return fullResponse;
             yield break;
         }
         
-        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.ApiHost is null ||
-            chatSessionInfoDto.ApiKey is null)
+        if (chatSessionInfoDto.Messages is null || chatSessionInfoDto.ApiHost is null or "" ||
+            chatSessionInfoDto.ApiKey is null or "")
         {
+            var result =  BadRequest(
+                $"messages, API host and the API key must be specified for the chat session with id {id} " +
+                $"for generating the assistant message");
+            
+            var responseDetails = new
+            {
+                StatusCode = result.StatusCode,
+                Message = result.Value,
+                Type = result.GetType().Name,
+            };
+
+            var fullResponse = JsonConvert.SerializeObject(responseDetails);
+            yield return fullResponse;
             yield break;
         }
 
@@ -156,6 +195,16 @@ public class MessageController : ControllerBase
         
         if (chatbot is null)
         {
+            var result = NotFound($"Chat session with id {id} has no chatbot specified");
+            var responseDetails = new
+            {
+                StatusCode = result.StatusCode,
+                Message = result.Value,
+                Type = result.GetType().Name,
+            };
+
+            var fullResponse = JsonConvert.SerializeObject(responseDetails);
+            yield return fullResponse;
             yield break;
         }
         
@@ -167,8 +216,54 @@ public class MessageController : ControllerBase
             yield return chunk;
         }
 
-        MessageDto assistantMessageDto = _messageService.CreateNewAssistantMessage(output.ToString(), 
-            chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel);
+        MessageDto assistantMessageDto = _messageService.CreateNewAssistantTextMessage(output.ToString(), 
+            chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel, "ok");
         await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
+    }
+
+    [HttpPost("new-assistant-image-message")]
+    public async Task<ActionResult<MessageDto>> GenerateNewAssistantImageMessageFromChatSession(string id, 
+        [FromBody] ChatSessionInfoDto chatSessionInfoDto)
+    {
+        ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
+        if (chatSessionDto is null)
+        {
+            return NotFound($"Chat session with id {id} not found");
+        }
+
+        if (chatSessionInfoDto.ChatbotName is null or "")
+        {
+            return NotFound($"Chat session with id {id} has no chatbot specified");
+        }
+
+        if (chatSessionInfoDto.ChatbotModel is null or "")
+        {
+            return BadRequest($"No model specified for chatbot {chatSessionInfoDto.ChatbotName}");
+        }
+        
+        if (chatSessionInfoDto.LastUserMessage is null || chatSessionInfoDto.ApiHost is null or "" ||
+            chatSessionInfoDto.ApiKey is null or "")
+        {
+            return BadRequest(
+                $"Last user message, API host and the API key must be specified for the chat session with id {id} " +
+                $"for generating the assistant message");
+        }
+
+        Chatbot? chatbot = _chatbotService.GetChatbotByName(chatSessionInfoDto.ChatbotName);
+        
+        if (chatbot is null)
+        {
+            return NotFound($"Chat session with id {id} has no chatbot specified");
+        }
+
+        var assistantMessageInfo = await _chatbotService.GenerateImageInChatSession(chatbot, chatSessionInfoDto);
+        
+        MessageDto assistantMessageDto = _messageService.CreateNewAssistantImageMessage(assistantMessageInfo.Text, 
+            assistantMessageInfo.MediaDtos, chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel, 
+            assistantMessageInfo.Status);
+        
+        await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
+
+        return Ok(assistantMessageDto);
     }
 }

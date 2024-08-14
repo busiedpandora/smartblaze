@@ -21,3 +21,11 @@ pre {
     width: 80px;
     height: 80px;
 }
+
+.image-container {
+    min-width: 330px !important;
+}
+
+.img-thumbnail {
+    width: 300px !important;
+}

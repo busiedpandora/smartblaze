@@ -9,10 +9,16 @@
 <PageTitle>Chat settings - SmartBlaze</PageTitle>
 
 <div id="pageRow">
-    <img src="icons/chat-dots-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
-    <span id="pageTitle">
-        
-    </span>
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="col-auto pe-0">
+            <img src="icons/chat-dots-fill.svg" width="21" height="21" alt="settings icon"/>
+        </div>
+        <div class="col-auto">
+             <span id="pageTitle">
+                Edit
+            </span>
+        </div>
+    </div>
 </div>
 
 <div id="settingsPagesContainer">
@@ -28,7 +34,8 @@
             <label for="chatbot" class="form-label">Chatbot</label>
             <div class="col-2">
                 <InputSelect id="chatbot" class="form-select"
-                             Value="_chatSessionSettings.ChatbotName" ValueExpression="() => _chatSessionSettings.ChatbotName" TValue="string"
+                             Value="_chatSessionSettings.ChatbotName" ValueExpression="() => _chatSessionSettings.ChatbotName" 
+                             TValue="string"
                              ValueChanged="(string chatbotName) => OnChatbotSelected(chatbotName)">
                     @foreach (var chatbot in _settingsService.Chatbots)
                     {
@@ -39,10 +46,11 @@
         </div>
 
         <div class="mb-4">
-            <label for="chatbotModel" class="form-label">Model</label>
+            <label for="textGenerationChatbotModel" class="form-label">Text Generation Model</label>
             <div class="col-2">
-                <InputSelect id="chatbotModel" @bind-Value="_chatSessionSettings.ChatbotModel" class="form-select">
-                    @foreach (var chatbotModel in _chatSessionSettings.ChatbotModels)
+                <InputSelect id="textGenerationChatbotModel" @bind-Value="_chatSessionSettings.TextGenerationChatbotModel" 
+                             class="form-select">
+                    @foreach (var chatbotModel in _chatSessionSettings.TextGenerationChatbotModels)
                     {
                         <option value="@chatbotModel">@chatbotModel</option>
                     }
@@ -51,7 +59,20 @@
         </div>
 
         <div class="mb-4">
-            <label for="temperature" class="form-label">Temperature</label>
+            <label for="imageGenerationChatbotModel" class="form-label">Image Generation Model</label>
+            <div class="col-2">
+                <InputSelect id="imageGenerationChatbotModel" @bind-Value="_chatSessionSettings.ImageGenerationChatbotModel"
+                             class="form-select">
+                    @foreach (var chatbotModel in _chatSessionSettings.ImageGenerationChatbotModels)
+                    {
+                    <option value="@chatbotModel">@chatbotModel</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="temperature" class="form-label">Temperature (For Text Generation)</label>
             <div class="d-flex">
                 <div class="col-4">
                     <input id="temperature" type="range" class="form-range" step="0.1" @bind-value="_chatSessionSettings.Temperature"
@@ -65,14 +86,14 @@
         </div>
         
         <div class="mb-3">
-            <label for="systemInstruction" class="form-label">System instruction</label>
+            <label for="systemInstruction" class="form-label">System instruction (For Text Generation)</label>
             <div class="col-6">
                 <InputTextArea id="systemInstruction" class="form-control" @bind-Value="_chatSessionSettings.SystemInstruction"></InputTextArea>
             </div>
         </div>
 
         <div class="mb-3">
-            <label for="textStream" class="form-label">Text stream</label>
+            <label for="textStream" class="form-label">Text stream (For Text Generation)</label>
             <InputCheckbox id="textStream" class="form-check" @bind-Value="_chatSessionSettings.TextStream"></InputCheckbox>
         </div>
 
@@ -115,13 +136,15 @@
         {
             _chatSessionSettings.Title = chatSession.Title ?? "";
             _chatSessionSettings.ChatbotName = chatSessionConfiguration.ChatbotName ?? "";
-            _chatSessionSettings.ChatbotModel = chatSessionConfiguration.ChatbotModel ?? "";
+            _chatSessionSettings.TextGenerationChatbotModel = chatSessionConfiguration.TextGenerationChatbotModel ?? "";
+            _chatSessionSettings.ImageGenerationChatbotModel = chatSessionConfiguration.ImageGenerationChatbotModel ?? "";
             
             var chatbot = _settingsService.Chatbots?.Find(c => c.Name == chatSessionConfiguration.ChatbotName);
 
             if (chatbot is not null)
             {
-                _chatSessionSettings.ChatbotModels = chatbot.Models;
+                _chatSessionSettings.TextGenerationChatbotModels = chatbot.TextGenerationModels;
+                _chatSessionSettings.ImageGenerationChatbotModels = chatbot.ImageGenerationModels;
                 _chatbotMinTemperature = chatbot.MinTemperature;
                 _chatbotMaxTemperature = chatbot.Maxtemperature;
             }
@@ -144,8 +167,10 @@
         if (chatbotSelected is not null)
         {
             _chatSessionSettings.ChatbotName = chatbotSelected.Name;
-            _chatSessionSettings.ChatbotModels = chatbotSelected.Models;
-            _chatSessionSettings.ChatbotModel = chatbotSelected.Model;
+            _chatSessionSettings.TextGenerationChatbotModels = chatbotSelected.TextGenerationModels;
+            _chatSessionSettings.ImageGenerationChatbotModels = chatbotSelected.ImageGenerationModels;
+            _chatSessionSettings.TextGenerationChatbotModel = chatbotSelected.TextGenerationModel;
+            _chatSessionSettings.ImageGenerationChatbotModel = chatbotSelected.ImageGenerationModel;
             _chatSessionSettings.Temperature = chatbotSelected.Temperature;
 
             _badgeTemperature = chatbotSelected.Temperature;

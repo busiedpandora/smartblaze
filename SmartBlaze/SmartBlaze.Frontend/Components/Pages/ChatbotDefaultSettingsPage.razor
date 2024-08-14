@@ -11,17 +11,23 @@
 <PageTitle>Chatbot settings - SmartBlaze</PageTitle>
 
 <div id="pageRow">
-    <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
-    <span id="pageTitle">
-        Settings
-    </span>
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="col-auto pe-0">
+            <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon"/>
+        </div>
+        <div class="col-auto">
+            <span id="pageTitle">
+                Settings
+            </span>
+        </div>
+    </div>
 </div>
 
 <div id="settingsPagesContainer">
     
     <SettingsMenu/>
     
-    @if (_settingsService.Chatbots is not null && _settingsService.ChatbotSelected?.Models is not null)
+    @if (_settingsService.Chatbots is not null && _settingsService.DefaultChatbotSelected?.TextGenerationModels is not null)
     {
         <EditForm Model="@_chatbotSettings" OnSubmit="@OnSaveClicked" autocomplete="off">
             <div>
@@ -64,19 +70,33 @@
             </div>
 
             <div class="mb-4">
-                <label for="chatbotModel" class="form-label">Model</label>
+                <label for="textGenerationChatbotModel" class="form-label">Text Generation Model</label>
                 <div class="col-2">
-                    <InputSelect id="chatbotModel" @bind-Value="_chatbotSettings.ChatbotModel" class="form-select">
-                        @foreach (var chatbotModel in _chatbotSettings.ChatbotModels)
+                    <InputSelect id="textGenerationChatbotModel" @bind-Value="_chatbotSettings.TextGenerationChatbotModel" 
+                                 class="form-select">
+                        @foreach (var chatbotModel in _chatbotSettings.TextGenerationChatbotModels)
                         {
                             <option value="@chatbotModel">@chatbotModel</option>
                         }
                     </InputSelect>
                 </div>
             </div>
+
+            <div class="mb-4">
+                <label for="imageGenerationChatbotModel" class="form-label">Image Generation Model</label>
+                <div class="col-2">
+                    <InputSelect id="imageGenerationChatbotModel" @bind-Value="_chatbotSettings.ImageGenerationChatbotModel" 
+                                 class="form-select">
+                        @foreach (var chatbotModel in _chatbotSettings.ImageGenerationChatbotModels)
+                        {
+                        <option value="@chatbotModel">@chatbotModel</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
             
             <div class="mb-4">
-                <label for="temperature" class="form-label">Temperature</label>
+                <label for="temperature" class="form-label">Temperature (For Text Generation)</label>
                 <div class="d-flex">
                     <div class="col-4">
                         <input id="temperature" type="range" class="form-range" step="0.1" @bind-value="_chatbotSettings.Temperature"
@@ -121,16 +141,18 @@
             _chatSessionStateService.RefreshView += ReloadComponentState;
         }
         
-        _chatbotSettings.ChatbotName = _settingsService.ChatbotSelected?.Name ?? "";
-        _chatbotSettings.ChatbotModel = _settingsService.ChatbotSelected?.Model ?? "";
-        _chatbotSettings.ChatbotModels = _settingsService.ChatbotSelected?.Models ?? [];
-        _chatbotSettings.ApiHost = _settingsService.ChatbotSelected?.ApiHost ?? "";
-        _chatbotSettings.ApiKey = _settingsService.ChatbotSelected?.ApiKey ?? "";
-        _chatbotSettings.Temperature = _settingsService.ChatbotSelected?.Temperature ?? 0.0f;
-        _chatbotSettings.MinTemperature = _settingsService.ChatbotSelected?.MinTemperature ?? 0.0f;
-        _chatbotSettings.MaxTemperature = _settingsService.ChatbotSelected?.Maxtemperature ?? 1.0f;
+        _chatbotSettings.ChatbotName = _settingsService.DefaultChatbotSelected?.Name ?? "";
+        _chatbotSettings.TextGenerationChatbotModel = _settingsService.DefaultChatbotSelected?.TextGenerationModel ?? "";
+        _chatbotSettings.ImageGenerationChatbotModel = _settingsService.DefaultChatbotSelected?.ImageGenerationModel ?? "";
+        _chatbotSettings.TextGenerationChatbotModels = _settingsService.DefaultChatbotSelected?.TextGenerationModels ?? [];
+        _chatbotSettings.ImageGenerationChatbotModels = _settingsService.DefaultChatbotSelected?.ImageGenerationModels ?? [];
+        _chatbotSettings.ApiHost = _settingsService.DefaultChatbotSelected?.ApiHost ?? "";
+        _chatbotSettings.ApiKey = _settingsService.DefaultChatbotSelected?.ApiKey ?? "";
+        _chatbotSettings.Temperature = _settingsService.DefaultChatbotSelected?.Temperature ?? 0.0f;
+        _chatbotSettings.MinTemperature = _settingsService.DefaultChatbotSelected?.MinTemperature ?? 0.0f;
+        _chatbotSettings.MaxTemperature = _settingsService.DefaultChatbotSelected?.Maxtemperature ?? 1.0f;
         
-        _badgeTemperature = _settingsService.ChatbotSelected?.Temperature ?? 0.0f;
+        _badgeTemperature = _settingsService.DefaultChatbotSelected?.Temperature ?? 0.0f;
         
         return base.OnInitializedAsync();
     }
@@ -142,8 +164,10 @@
         if (chatbotSelected is not null)
         {
             _chatbotSettings.ChatbotName = chatbotSelected.Name;
-            _chatbotSettings.ChatbotModels = chatbotSelected.Models;
-            _chatbotSettings.ChatbotModel = chatbotSelected.Model;
+            _chatbotSettings.TextGenerationChatbotModels = chatbotSelected.TextGenerationModels;
+            _chatbotSettings.ImageGenerationChatbotModels = chatbotSelected.ImageGenerationModels;
+            _chatbotSettings.TextGenerationChatbotModel = chatbotSelected.TextGenerationModel;
+            _chatbotSettings.ImageGenerationChatbotModel = chatbotSelected.ImageGenerationModel;
             _chatbotSettings.ApiHost = chatbotSelected.ApiHost;
             _chatbotSettings.ApiKey = chatbotSelected.ApiKey;
             _chatbotSettings.Temperature = chatbotSelected.Temperature;

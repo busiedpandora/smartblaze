@@ -27,7 +27,7 @@ public class ChatbotService
         return _chatbots.Find(c => c.Name == name);
     }
 
-    public async Task<string?> GenerateTextInChatSession(Chatbot chatbot, ChatSessionInfoDto chatSessionInfoDto)
+    public async Task<AssistantMessageInfoDto> GenerateTextInChatSession(Chatbot chatbot, ChatSessionInfoDto chatSessionInfoDto)
     {
         return await chatbot.GenerateText(chatSessionInfoDto, _httpClient);
     }
@@ -39,13 +39,20 @@ public class ChatbotService
             yield return chunk;
         }
     }
+
+    public async Task<AssistantMessageInfoDto> GenerateImageInChatSession(Chatbot chatbot, ChatSessionInfoDto chatSessionInfoDto)
+    {
+        return await chatbot.GenerateImage(chatSessionInfoDto, _httpClient);
+    }
     
     private void CreateChatbots()
     {
-        var chatGpt = new ChatGpt("ChatGPT", ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]);
+        var chatGpt = new ChatGpt("ChatGPT", ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"], 
+            ["dall-e-3", "dall-e-2"]);
         _chatbots.Add(chatGpt);
         
-        var gemini = new Gemini("Google Gemini", ["gemini-1.5-pro", "gemini-1.5-flash"]);
+        var gemini = new Gemini("Google Gemini", ["gemini-1.5-pro", "gemini-1.5-flash"], 
+            []);
         _chatbots.Add(gemini);
     }
 }

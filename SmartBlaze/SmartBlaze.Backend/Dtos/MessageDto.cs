@@ -21,4 +21,7 @@ public class MessageDto
     
     [JsonPropertyName("chatbotModel")]
     public string? ChatbotModel { get; set; }
+    
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
 }

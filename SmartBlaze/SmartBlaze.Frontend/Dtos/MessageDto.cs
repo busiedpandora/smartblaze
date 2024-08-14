@@ -21,17 +21,7 @@ public class MessageDto
     
     [JsonPropertyName("chatbotModel")]
     public string? ChatbotModel { get; set; }
-
     
-    public static MessageDto ToMessageDto(string? content, string? role, DateTime? creationDate)
-    {
-        MessageDto messageDto = new MessageDto()
-        {
-            Text = content,
-            Role = role,
-            CreationDate = creationDate
-        };
-
-        return messageDto;
-    }
+    [JsonPropertyName("status")]
+    public string? Status { get; set; }
 }

@@ -11,7 +11,7 @@
 @inject IJSRuntime _jsRuntime
 
 
-@if(_chatSessionStateService.CurrentChatSession is not null)
+@if(_chatSessionStateService.CurrentChatSession is not null && _chatSessionStateService.CanUserInteract())
 {
     <div class="d-flex justify-content-center">
         <div class="col-8">
@@ -19,25 +19,54 @@
             @if (!_imageUrlInputActive && !_imageFileInputActive && !_textFileInputActive)
             {
                 <div class="row">
-                    <div class="col-auto px-1">
-                        <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-title="Insert image URL"
-                                @onclick="ShowImageUrlInput" style="container: body">
-                            <img src="icons/image-fill.svg" alt="image url icon"/>
-                        </button>
-                    </div>
-                    <div class="col-auto px-1">
-                        <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-title="Attach image file" style="position: relative"
-                                @onclick="ShowImageFileInput">
-                            <img src="icons/image.svg" alt="image file icon" style="opacity: 80%"/>
-                            <img src="icons/paperclip.svg" alt="image file icon" style="position: absolute;left: -1px;bottom: 9px"/>
-                        </button>
-                    </div>
-                    <div class="col-auto px-1">
-                        <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-title="Attach file" style="position: relative"
-                                @onclick="ShowTextFileInput">
-                            <img src="icons/paperclip.svg" alt="text file icon"/>
-                        </button>
-                    </div>
+                    @if (_chatSessionStateService.CurrentGenerationType == "text")
+                    {
+                        @if (_chatSessionStateService.CurrentChatSessionConfiguration?.SupportUrlInputImageFormat == true)
+                        {
+                            <div class="col-auto px-1">
+                                <button class="btn btn-light button-double-image" data-bs-toggle="tooltip" data-bs-title="Insert image URL"
+                                        @onclick="ShowImageUrlInput">
+                                    <img src="icons/image-fill.svg" alt="image url icon" class="right-image"/>
+                                    <img src="icons/link.svg" alt="image file icon" class="left-image"/>
+                                </button>
+                            </div>
+                        }
+                        @if (_chatSessionStateService.CurrentChatSessionConfiguration?.SupportBase64InputImageFormat == true)
+                        {
+                            <div class="col-auto px-1">
+                                <button class="btn btn-light button-double-image" data-bs-toggle="tooltip" data-bs-title="Attach image file"
+                                        @onclick="ShowImageFileInput">
+                                    <img src="icons/image.svg" alt="image file icon" class="right-image"/>
+                                    <img src="icons/paperclip.svg" alt="image file icon" class="left-image"/>
+                                </button>
+                            </div>
+                        }
+                        <div class="col-auto px-1">
+                            <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-title="Attach file"
+                                    @onclick="ShowTextFileInput">
+                                <img src="icons/paperclip.svg" alt="text file icon"/>
+                            </button>
+                        </div>
+                    }
+                    @if (_chatSessionStateService.CurrentGenerationType == "image")
+                    {
+                        <div class="col-auto px-1 ms-auto">
+                            <button class="btn btn-light"
+                                    @onclick="SwitchToTextGeneration">
+                                <span>Switch to text generation</span>
+                            </button>
+                        </div>
+                    }
+                    @if (_chatSessionStateService.CurrentChatSessionConfiguration?.SupportImageGeneration == true
+                            && _chatSessionStateService.CurrentGenerationType == "text")
+                    {
+                        <div class="col-auto px-1 ms-auto">
+                            <button class="btn btn-light"
+                                    @onclick="SwitchToImageGeneration">
+                                <span>Switch to image generation</span>
+                            </button>
+                        </div>
+                    }
                 </div>
             }
             
@@ -236,8 +265,16 @@
 
             var imageInputs = _fileInputs;
             _fileInputs = new();
-            
-            await _chatSessionStateService.SendUserMessage(text, imageInputs, chatbot.ApiHost, chatbot.ApiKey, chatbot.TextStreamDelay);
+
+            if (_chatSessionStateService.CurrentGenerationType == "text")
+            {
+                await _chatSessionStateService.RequestNewAssistantTextMessage(text, imageInputs, chatbot.ApiHost, 
+                    chatbot.ApiKey, chatbot.TextStreamDelay);
+            }
+            else if (_chatSessionStateService.CurrentGenerationType == "image")
+            {
+                await _chatSessionStateService.RequestNewAssistantImageMessage(text, chatbot.ApiHost, chatbot.ApiKey);
+            }
         }
     }
 
@@ -369,6 +406,15 @@
                     }
                     else
                     {
+                        if (contentType == "")
+                        {
+                            var i = file.Name.LastIndexOf(".");
+                            if (i != -1 && i < file.Name.Length - 1)
+                            {
+                                contentType = "text/" + file.Name.Substring(i + 1);
+                            }
+                        }
+                        
                         var reader = new StreamReader(memoryStream);
                         fileContent = await reader.ReadToEndAsync();
                     }
@@ -409,6 +455,16 @@
         }
 
         return text.ToString();
+    }
+
+    private void SwitchToTextGeneration()
+    {
+        _chatSessionStateService.CurrentGenerationType = "text";
+    }
+
+    private void SwitchToImageGeneration()
+    {
+        _chatSessionStateService.CurrentGenerationType = "image";
     }
     
     private void ReloadComponentState()

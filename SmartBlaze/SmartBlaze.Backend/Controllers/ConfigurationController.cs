@@ -37,7 +37,8 @@ public class ConfigurationController : ControllerBase
                 await _configurationService.AddChatbotDefaultConfiguration(chatbotDefaultConfiguration);
             }
 
-            chatbotDefaultConfiguration.ChatbotModels = chatbot.Models;
+            chatbotDefaultConfiguration.TextGenerationChatbotModels = chatbot.TextGenerationModels;
+            chatbotDefaultConfiguration.ImageGenerationChatbotModels = chatbot.ImageGenerationModels;
                 
             chatbotConfigurationDtos.Add(chatbotDefaultConfiguration);
         }
@@ -48,7 +49,8 @@ public class ConfigurationController : ControllerBase
     [HttpPost("chatbot")]
     public async Task<ActionResult> UpdateChatbotDefaultConfiguration([FromBody] ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
     {
-        if (chatbotDefaultConfigurationDto.ChatbotName is null || chatbotDefaultConfigurationDto.ChatbotModel is null)
+        if (chatbotDefaultConfigurationDto.ChatbotName is null || chatbotDefaultConfigurationDto.TextGenerationChatbotModel is null
+                                                               || chatbotDefaultConfigurationDto.ImageGenerationChatbotModel is null)
         {
             return BadRequest("The chatbot name and model cannot be null");
         }
@@ -65,7 +67,8 @@ public class ConfigurationController : ControllerBase
             await _configurationService.DeselectCurrentChatbotDefaultConfiguration();
         }
 
-        chatbotDefaultConfiguration.ChatbotModel = chatbotDefaultConfigurationDto.ChatbotModel;
+        chatbotDefaultConfiguration.TextGenerationChatbotModel = chatbotDefaultConfigurationDto.TextGenerationChatbotModel;
+        chatbotDefaultConfiguration.ImageGenerationChatbotModel = chatbotDefaultConfigurationDto.ImageGenerationChatbotModel;
         chatbotDefaultConfiguration.ApiHost = chatbotDefaultConfigurationDto.ApiHost ?? "";
         chatbotDefaultConfiguration.ApiKey = chatbotDefaultConfigurationDto.ApiKey ?? "";
         chatbotDefaultConfigurationDto.TextStreamDelay = chatbotDefaultConfigurationDto.TextStreamDelay;
@@ -142,7 +145,8 @@ public class ConfigurationController : ControllerBase
             return NotFound($"Chat session with id {id} not found");
         }
         
-        if (chatSessionConfigurationDto.ChatbotName is null || chatSessionConfigurationDto.ChatbotModel is null)
+        if (chatSessionConfigurationDto.ChatbotName is null || chatSessionConfigurationDto.TextGenerationChatbotModel is null 
+                                                            || chatSessionConfigurationDto.ImageGenerationChatbotModel is null)
         {
             return BadRequest($"No chatbot specified for chat session with id {id}");
         }

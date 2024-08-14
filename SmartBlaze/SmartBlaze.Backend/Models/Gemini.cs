@@ -7,11 +7,12 @@ namespace SmartBlaze.Backend.Models;
 
 public class Gemini : Chatbot
 {
-    public Gemini(string name, List<string> models) : base(name, models)
+    public Gemini(string name, List<string> textGenerationModels, List<string> imageGenerationModels) 
+        : base(name, textGenerationModels, imageGenerationModels)
     {
     }
 
-    public override async Task<string?> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
+    public override async Task<AssistantMessageInfoDto> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
     {
         var contents = new List<RequestContent>();
 
@@ -47,7 +48,7 @@ public class Gemini : Chatbot
                     }
                     else
                     {
-                        textPart.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
+                        textPart.Text += $"\n```{mediaDto.ContentType}\nfile name: {mediaDto.Name}\n{mediaDto.Data}\n```";
                     }
                 }
             }
@@ -110,7 +111,11 @@ public class Gemini : Chatbot
 
         if (!chatResponseMessage.IsSuccessStatusCode)
         {
-            return chatResponseMessageContent;
+            return new AssistantMessageInfoDto
+            {
+                Status = "error",
+                Text = chatResponseMessageContent
+            };
         }
         
         ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseMessageContent);
@@ -121,11 +126,19 @@ public class Gemini : Chatbot
 
             if (candidate.Content is not null && candidate.Content.Parts is not null)
             {
-                return candidate.Content.Parts[0].Text;
+                return new AssistantMessageInfoDto
+                {
+                    Status = "ok",
+                    Text = candidate.Content.Parts[0].Text
+                };
             }
         }
 
-        return null;
+        return new AssistantMessageInfoDto()
+        {
+            Status = "error",
+            Text = "No content has been generated"
+        };
     }
 
     public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto,
@@ -165,7 +178,7 @@ public class Gemini : Chatbot
                     }
                     else
                     {
-                        textPart.Text += $"\n```{mediaDto.ContentType}\n{mediaDto.Data}\n```";
+                        textPart.Text += $"\n```{mediaDto.ContentType}\nfile name: {mediaDto.Name}\n{mediaDto.Data}\n```";
                     }
                 }
             }
@@ -253,19 +266,31 @@ public class Gemini : Chatbot
         }
     }
 
+    public override async Task<AssistantMessageInfoDto> GenerateImage(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
+    {
+        return new AssistantMessageInfoDto
+        {
+            Status = "error",
+            Text = "Currently, Google Gemini is not able to generate images."
+        };
+    }
+
     public override ChatbotDefaultConfigurationDto GetDefaultConfiguration()
     {
         return new ChatbotDefaultConfigurationDto()
         {
             ChatbotName = "Google Gemini",
-            ChatbotModel = "gemini-1.5-pro",
+            TextGenerationChatbotModel = "gemini-1.5-pro",
             ApiHost = "https://generativelanguage.googleapis.com",
             ApiKey = "",
             TextStreamDelay = 400,
             Selected = false,
             Temperature = 1.0f,
             MinTemperature = 0.0f,
-            MaxTemperature = 2.0f
+            MaxTemperature = 2.0f,
+            SupportBase64ImageInputFormat = true,
+            SupportUrlImageInputFormat = false,
+            SupportImageGeneration = false
         };
     }
 

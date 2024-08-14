@@ -7,6 +7,9 @@ public class ChatSessionInfoDto
     [JsonPropertyName("messages")]
     public List<MessageDto>? Messages { get; set; }
     
+    [JsonPropertyName("lastUserMessage")]
+    public MessageDto? LastUserMessage { get; set; }
+    
     [JsonPropertyName("chatbotName")]
     public string? ChatbotName { get; set; }
     

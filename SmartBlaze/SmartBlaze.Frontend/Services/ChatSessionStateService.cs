@@ -6,6 +6,8 @@ namespace SmartBlaze.Frontend.Services;
 
 public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
 {
+    private SettingsService _settingsService;
+    
     private List<ChatSessionDto>? _chatSessions;
     private ChatSessionDto? _currentChatSession;
     private List<MessageDto>? _currentChatSessionMessages;
@@ -18,7 +20,15 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     private bool _isChatSessionBeingDeleted;
     private bool _isChatSessionBeingEdited;
 
-    
+    private string _currentGenerationType = "text";
+
+
+    public ChatSessionStateService(IHttpClientFactory httpClientFactory, SettingsService settingsService) 
+        : this(httpClientFactory)
+    {
+        _settingsService = settingsService;
+    }
+
     public List<ChatSessionDto>? ChatSessions
     {
         get => _chatSessions;
@@ -59,6 +69,12 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
 
     public bool IsChatSessionBeingDeleted => _isChatSessionBeingDeleted;
 
+    public string CurrentGenerationType
+    {
+        get => _currentGenerationType;
+        set => _currentGenerationType = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
     public async Task SelectChatSession(ChatSessionDto chatSession)
     {
         if (_chatSessions is null)
@@ -84,8 +100,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         if (newSelectedChatSession is null)
         {
             _isChatSessionBeingSelected = false;
-            NotifyNavigateToErrorPage("Error occured while selecting the chat session", 
-                $"chat session with id {chatSession.Id} not found");
+            HandleError("Error occured while selecting the chat session", $"chat session with id {chatSession.Id} not found");
             return;
         }
         
@@ -96,13 +111,24 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         if (!chatSessionConfigurationResponse.IsSuccessStatusCode)
         {
             _isChatSessionBeingSelected = false;
-            NotifyNavigateToErrorPage("Error occured while selecting the chat session", 
+            HandleError($"Error occured while selecting the chat session {chatSession.Title}", 
                 chatSessionConfigurationResponseContent);
             return;
         }
 
         var chatSessionConfiguration =
             JsonSerializer.Deserialize<ChatSessionConfigurationDto>(chatSessionConfigurationResponseContent);
+
+        if (chatSessionConfiguration is not null)
+        {
+            var chatbot = _settingsService.GetChatbotByName(chatSessionConfiguration.ChatbotName);
+            if (chatbot is not null)
+            {
+                chatSessionConfiguration.SupportBase64InputImageFormat = chatbot.SupportBase64ImageInputFormat;
+                chatSessionConfiguration.SupportUrlInputImageFormat = chatbot.SupportUrlImageInputFormat;
+                chatSessionConfiguration.SupportImageGeneration = chatbot.SupportImageGeneration;
+            }
+        }
 
         _currentChatSessionConfiguration = chatSessionConfiguration;
         
@@ -112,8 +138,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         if (!response.IsSuccessStatusCode)
         {
             _isChatSessionBeingSelected = false;
-            NotifyNavigateToErrorPage("Error occured while selecting the chat session", 
-                responseContent);
+            HandleError("Error occured while selecting the chat session", responseContent);
             return;
         }
         
@@ -163,7 +188,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
     }
 
-    public async Task SendUserMessage(string text, List<MediaDto> fileInputs, string apiHost, string apiKey, int textStreamDelay)
+    public async Task RequestNewAssistantTextMessage(string text, List<MediaDto> fileInputs, string apiHost, string apiKey, 
+        int textStreamDelay)
     {
         if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null 
             || _currentChatSessionConfiguration is null)
@@ -178,7 +204,15 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
 
         _isGeneratingResponse = true;
 
-        await SendUserMessage(text, fileInputs);
+        var userMessage = await SendUserMessage(text, fileInputs);
+        _currentChatSessionMessages.Add(userMessage);
+
+        if (userMessage.Status == "error")
+        {
+            _isGeneratingResponse = false;
+            NotifyRefreshView();
+            return;
+        }
         
         NotifyRefreshView();
 
@@ -186,7 +220,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         {
             Messages = _currentChatSessionMessages,
             ChatbotName = _currentChatSessionConfiguration.ChatbotName,
-            ChatbotModel = _currentChatSessionConfiguration.ChatbotModel,
+            ChatbotModel = _currentChatSessionConfiguration.TextGenerationChatbotModel,
             ApiHost = apiHost,
             ApiKey = apiKey,
             SystemInstruction = _currentChatSessionConfiguration.SystemInstruction,
@@ -200,7 +234,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
         else
         {
-            await GenerateAssistantTextMessage(chatSessionInfoDto);
+            var assistantMessage = await GenerateAssistantTextMessage(chatSessionInfoDto);
+            _currentChatSessionMessages.Add(assistantMessage);
         }
         
         _isGeneratingResponse = false;
@@ -208,8 +243,52 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         NotifyRefreshView();
     }
 
-    public async Task CreateNewChatSession(string title, string chatbotName, string chatbotModel, float temperature,
-        string systemInstruction, bool textStream)
+    public async Task RequestNewAssistantImageMessage(string text, string apiHost, string apiKey)
+    {
+        if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null 
+            || _currentChatSessionConfiguration is null)
+        {
+            return;
+        }
+        
+        if (!CanUserInteract())
+        {
+            return;
+        }
+
+        _isGeneratingResponse = true;
+
+        var userMessage = await SendUserMessage(text);
+        _currentChatSessionMessages.Add(userMessage);
+        
+        if (userMessage.Status == "error")
+        {
+            _isGeneratingResponse = false;
+            NotifyRefreshView();
+            return;
+        }
+        
+        NotifyRefreshView();
+        
+        var chatSessionInfoDto = new ChatSessionInfoDto()
+        {
+            LastUserMessage = _currentChatSessionMessages.Last(),
+            ChatbotName = _currentChatSessionConfiguration.ChatbotName,
+            ChatbotModel = _currentChatSessionConfiguration.ImageGenerationChatbotModel,
+            ApiHost = apiHost,
+            ApiKey = apiKey,
+        };
+
+        var assistantMessage = await GenerateAssistantImageMessage(chatSessionInfoDto);
+        _currentChatSessionMessages.Add(assistantMessage);
+        
+        _isGeneratingResponse = false;
+        
+        NotifyRefreshView();
+    }
+
+    public async Task CreateNewChatSession(string title, string chatbotName, string textGenerationChatbotModel, 
+        string imageGenerationChatbotModel, float temperature, string systemInstruction, bool textStream)
     {
         if (!CanUserInteract())
         {
@@ -233,8 +312,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         if (!newChatSessionResponse.IsSuccessStatusCode)
         {
             _isNewChatSessionBeingCreated = false;
-            NotifyNavigateToErrorPage("Error occured while creating a new chat session", 
-                newChatSessionResponseContent);
+            HandleError("Error occured while creating a new chat session", newChatSessionResponseContent);
             return;
         }
         
@@ -243,15 +321,16 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         if (chatSessionDto is null || !IsChatSessionValid(chatSessionDto))
         {
             _isNewChatSessionBeingCreated = false;
-            NotifyNavigateToErrorPage("Error occured while creating a new chat session", 
-                "the chat session cannot be null and must contain a title");
+            HandleError("Error occured while creating a new chat session", 
+                "The assistant message could not be deserialized");
             return;
         }
         
         ChatSessionConfigurationDto chatSessionConfigurationDto = new()
         {
             ChatbotName = chatbotName,
-            ChatbotModel = chatbotModel,
+            TextGenerationChatbotModel = textGenerationChatbotModel,
+            ImageGenerationChatbotModel = imageGenerationChatbotModel,
             Temperature = temperature,
             SystemInstruction = systemInstruction,
             TextStream = textStream
@@ -262,11 +341,9 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         
         if (!chatSessionConfigurationResponse.IsSuccessStatusCode)
         {
-            var chatSessionConfigurationResponseContent =
-                await chatSessionConfigurationResponse.Content.ReadAsStringAsync();
+            var chatSessionConfigurationResponseContent = await chatSessionConfigurationResponse.Content.ReadAsStringAsync();
             _isNewChatSessionBeingCreated = false;
-            NotifyNavigateToErrorPage("Error occured while creating a new chat session", 
-                chatSessionConfigurationResponseContent);
+            HandleError("Error occured while creating a new chat session", chatSessionConfigurationResponseContent);
             return;
         }
         
@@ -275,16 +352,6 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         _chatSessions.Insert(0, chatSessionDto);
         _isNewChatSessionBeingCreated = false;
         await SelectChatSession(chatSessionDto);
-        NotifyRefreshView();
-
-        if (_currentChatSession is null || _currentChatSessionMessages is null)
-        {
-            _isNewChatSessionBeingCreated = false;
-            NotifyNavigateToErrorPage("Error occured while creating a new chat session", 
-                "the chat session and the list of messages cannot be null");
-            return;
-        }
-        
         NotifyRefreshView();
     }
 
@@ -320,7 +387,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         ChatSessionConfigurationDto chatSessionConfigurationDto = new()
         {
             ChatbotName = chatSessionSettings.ChatbotName,
-            ChatbotModel = chatSessionSettings.ChatbotModel,
+            TextGenerationChatbotModel = chatSessionSettings.TextGenerationChatbotModel,
+            ImageGenerationChatbotModel = chatSessionSettings.ImageGenerationChatbotModel,
             Temperature = chatSessionSettings.Temperature,
             SystemInstruction = chatSessionSettings.SystemInstruction,
             TextStream = chatSessionSettings.TextStream
@@ -348,16 +416,26 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         {
             _isChatSessionBeingEdited = false;
             var editChatSessionResponseContent = await editChatSessionResponse.Content.ReadAsStringAsync();
-            NotifyNavigateToErrorPage("Error occured while editing the chat session", editChatSessionResponseContent);
+            HandleError($"Error occured while editing the chat session {chatSessionEditDto.Title}", 
+                editChatSessionResponseContent);
             return;
         }
         
         _currentChatSession.Title = title;
         _currentChatSessionConfiguration.ChatbotName = chatSessionSettings.ChatbotName;
-        _currentChatSessionConfiguration.ChatbotModel = chatSessionSettings.ChatbotModel;
+        _currentChatSessionConfiguration.TextGenerationChatbotModel = chatSessionSettings.TextGenerationChatbotModel;
+        _currentChatSessionConfiguration.ImageGenerationChatbotModel = chatSessionSettings.ImageGenerationChatbotModel;
         _currentChatSessionConfiguration.Temperature = chatSessionSettings.Temperature;
         _currentChatSessionConfiguration.SystemInstruction = chatSessionSettings.SystemInstruction;
         _currentChatSessionConfiguration.TextStream = chatSessionSettings.TextStream;
+        
+        var chatbot = _settingsService.GetChatbotByName(chatSessionSettings.ChatbotName);
+        if (chatbot is not null)
+        {
+            _currentChatSessionConfiguration.SupportBase64InputImageFormat = chatbot.SupportBase64ImageInputFormat;
+            _currentChatSessionConfiguration.SupportUrlInputImageFormat = chatbot.SupportUrlImageInputFormat;
+            _currentChatSessionConfiguration.SupportImageGeneration = chatbot.SupportImageGeneration;
+        }
         
         _isChatSessionBeingEdited = false;
         NotifyNavigateToPage("/");
@@ -387,10 +465,9 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
 
         if (!deleteChatSessionResponse.IsSuccessStatusCode)
         {
-            var deleteChatSessionResponseContent = await deleteChatSessionResponse.Content.ReadAsStringAsync();
-            NotifyNavigateToErrorPage("Error occured while deleting the chat session", 
-                deleteChatSessionResponseContent);
             _isChatSessionBeingDeleted = false;
+            var deleteChatSessionResponseContent = await deleteChatSessionResponse.Content.ReadAsStringAsync();
+            HandleError("Error occured while deleting the chat session", deleteChatSessionResponseContent);
             return;
         }
         
@@ -429,8 +506,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         if (!response.IsSuccessStatusCode)
         {
             _areChatSessionsLoadingOnStartup = false;
-            NotifyNavigateToErrorPage("Error occured while loading the chat sessions", 
-                responseContent);
+            HandleError("Error occured while loading the chat sessions", responseContent);
             return;
         }
         
@@ -484,27 +560,11 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
                && messageDto.CreationDate is not null;
     }
 
-    private async Task SendUserMessage(string text, List<MediaDto> fileInputs)
+    private async Task<MessageDto> SendUserMessage(string text, List<MediaDto>? fileInputs = null)
     {
         MessageDto userTextMessageDto = new MessageDto();
         userTextMessageDto.Text = text;
         userTextMessageDto.MediaDtos = fileInputs;
-        
-        /*if (fileInputs.Count > 0)
-        {
-            userTextMessageDto.MediaDtos = new();
-
-            foreach (var imageInput in imageInputs)
-            {
-                MediaDto mediaDto = new()
-                {
-                    Data = imageInput.Data,
-                    ContentType = imageInput.ContentType
-                };
-
-                userTextMessageDto.MediaDtos.Add(mediaDto);
-            }
-        }*/
         
         var userMessageResponse = await HttpClient
             .PostAsJsonAsync($"chat-session/{_currentChatSession.Id}/new-user-message", 
@@ -513,21 +573,20 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
 
         if (!userMessageResponse.IsSuccessStatusCode)
         {
-            _isGeneratingResponse = false;
-            NotifyNavigateToErrorPage("Error occured while sending the message", 
-                userMessageResponseContent);
-            return;
+            return CreateNewErrorMessage("userMessageResponseContent");
         }
             
         var userMessage = JsonSerializer.Deserialize<MessageDto>(userMessageResponseContent);
 
-        if (userMessage is not null)
+        if (userMessage is null)
         {
-            _currentChatSessionMessages.Add(userMessage);
+            return CreateNewErrorMessage("The user message could not be deserialized");
         }
+
+        return userMessage;
     }
     
-    private async Task GenerateAssistantTextMessage(ChatSessionInfoDto chatSessionInfoDto)
+    private async Task<MessageDto> GenerateAssistantTextMessage(ChatSessionInfoDto chatSessionInfoDto)
     {
         var assistantMessageResponse = await 
             HttpClient.PostAsJsonAsync(
@@ -537,23 +596,17 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             
         if (!assistantMessageResponse.IsSuccessStatusCode)
         {
-            _isGeneratingResponse = false;
-            NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
-                assistantMessageResponseContent);
-            return;
+            return CreateNewErrorMessage(assistantMessageResponseContent);
         }
         
         MessageDto? assistantMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantMessageResponseContent);
         
         if (assistantMessageDto is null || !IsMessageValid(assistantMessageDto))
         {
-            _isGeneratingResponse = false;
-            NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
-                "the assistant message cannot be null and must contain a content and a role");
-            return;
+            return CreateNewErrorMessage("The assistant message could not be deserialized");
         }
-        
-        _currentChatSessionMessages.Add(assistantMessageDto);
+
+        return assistantMessageDto;
     }
 
     private async Task GenerateAssistantTextMessageWithStreamEnabled(ChatSessionInfoDto chatSessionInfoDto)
@@ -567,8 +620,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             if (!assistantEmptyMessageResponse.IsSuccessStatusCode)
             {
                 _isGeneratingResponse = false;
-                NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
-                    assistantEmptyMessageResponseContent);
+                HandleError("Error occured while creating a new assistant message", assistantEmptyMessageResponseContent);
                 return;
             }
             
@@ -577,8 +629,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             if (assistantEmptyMessageDto is null || !IsMessageValid(assistantEmptyMessageDto))
             {
                 _isGeneratingResponse = false;
-                NotifyNavigateToErrorPage("Error occured while creating a new assistant message", 
-                    "the assistant message cannot be null and must contain a content and a role");
+                HandleError("Error occured while creating a new assistant message", 
+                    "The assistant message could not be deserialized");
                 return;
             }
             
@@ -596,7 +648,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             if (!assistantStreamMessageResponse.IsSuccessStatusCode)
             {
                 _isGeneratingResponse = false;
-                NotifyNavigateToErrorPage("Error occured while generating a new assistant text stream message", 
+                HandleError("Error occured while generating a new assistant text stream message", 
                     assistantStreamMessageResponseContent.ToString() ?? "");
                 return;
             }
@@ -617,5 +669,52 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
                     await Task.Delay(chatSessionInfoDto.TextStreamDelay);
                 }
             }
+    }
+
+    private async Task<MessageDto> GenerateAssistantImageMessage(ChatSessionInfoDto chatSessionInfoDto)
+    {
+        var assistantMessageResponse = await 
+            HttpClient.PostAsJsonAsync(
+                $"chat-session/{_currentChatSession.Id}/new-assistant-image-message", 
+                chatSessionInfoDto);
+        var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
+            
+        if (!assistantMessageResponse.IsSuccessStatusCode)
+        {
+            return CreateNewErrorMessage($"{assistantMessageResponseContent}");
+        }
+        
+        MessageDto? assistantMessageDto = JsonSerializer.Deserialize<MessageDto>(assistantMessageResponseContent);
+        
+        if (assistantMessageDto is null || !IsMessageValid(assistantMessageDto))
+        {
+            return CreateNewErrorMessage("The assistant message could not be deserialized");
+        }
+
+        return assistantMessageDto;
+    }
+
+    private MessageDto CreateNewErrorMessage(string text)
+    {
+        return new MessageDto
+        {
+            Role = "assistant",
+            Status = "error",
+            Text = text
+        };
+    }
+
+    private void HandleError(string errorTitle, string errorMessage)
+    {
+        if (_currentChatSessionMessages is null)
+        {
+            NotifyNavigateToErrorPage(errorTitle, errorMessage);
+        }
+        else
+        {
+            _currentChatSessionMessages.Add(
+                CreateNewErrorMessage($"{errorTitle}: {errorMessage}"));
+            NotifyRefreshView();
+        }
     }
 }

@@ -58,13 +58,7 @@ public class ConfigurationRepository : AbstractRepository
             { "apiHost", chatbotDefaultConfigurationDto.ApiHost ?? ""},
             { "apiKey", chatbotDefaultConfigurationDto.ApiKey ?? ""},
             { "selected", chatbotDefaultConfigurationDto.Selected },
-            { "textStreamDelay", chatbotDefaultConfigurationDto.TextStreamDelay },
-            { "temperature" , chatbotDefaultConfigurationDto.Temperature },
-            { "minTemperature", chatbotDefaultConfigurationDto.MinTemperature },
-            { "maxTemperature", chatbotDefaultConfigurationDto.MaxTemperature },
-            { "supportBase64ImageInputFormat", chatbotDefaultConfigurationDto.SupportBase64ImageInputFormat},
-            { "supportUrlImageInputFormat", chatbotDefaultConfigurationDto.SupportUrlImageInputFormat},
-            { "supportImageGeneration", chatbotDefaultConfigurationDto.SupportImageGeneration}
+            { "temperature" , chatbotDefaultConfigurationDto.Temperature }
         };
 
         await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
@@ -86,13 +80,7 @@ public class ConfigurationRepository : AbstractRepository
             { "apiHost", chatbotDefaultConfigurationDto.ApiHost ?? ""},
             { "apiKey", chatbotDefaultConfigurationDto.ApiKey ?? ""},
             { "selected", chatbotDefaultConfigurationDto.Selected},
-            { "textStreamDelay", chatbotDefaultConfigurationDto.TextStreamDelay },
-            { "temperature" , chatbotDefaultConfigurationDto.Temperature },
-            { "minTemperature", chatbotDefaultConfigurationDto.MinTemperature },
-            { "maxTemperature", chatbotDefaultConfigurationDto.MaxTemperature },
-            { "supportBase64ImageInputFormat", chatbotDefaultConfigurationDto.SupportBase64ImageInputFormat},
-            { "supportUrlImageInputFormat", chatbotDefaultConfigurationDto.SupportUrlImageInputFormat},
-            { "supportImageGeneration", chatbotDefaultConfigurationDto.SupportImageGeneration}
+            { "temperature" , chatbotDefaultConfigurationDto.Temperature }
         };
         
         await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
@@ -219,13 +207,7 @@ public class ConfigurationRepository : AbstractRepository
             ApiHost = chatbotDefaultConfigurationDocument.Data["apiHost"].ToString(),
             ApiKey = chatbotDefaultConfigurationDocument.Data["apiKey"].ToString(),
             Selected = bool.Parse(chatbotDefaultConfigurationDocument.Data["selected"].ToString() ?? "false"),
-            TextStreamDelay = int.Parse(chatbotDefaultConfigurationDocument.Data["textStreamDelay"].ToString() ?? "100"),
-            Temperature = float.Parse(chatbotDefaultConfigurationDocument.Data["temperature"].ToString() ?? "0.0"),
-            MinTemperature = float.Parse(chatbotDefaultConfigurationDocument.Data["minTemperature"].ToString() ?? "0.0"),
-            MaxTemperature = float.Parse(chatbotDefaultConfigurationDocument.Data["maxTemperature"].ToString() ?? "0.0"),
-            SupportBase64ImageInputFormat = bool.Parse(chatbotDefaultConfigurationDocument.Data["supportBase64ImageInputFormat"].ToString() ?? "false"),
-            SupportUrlImageInputFormat = bool.Parse(chatbotDefaultConfigurationDocument.Data["supportUrlImageInputFormat"].ToString() ?? "false"),
-            SupportImageGeneration = bool.Parse(chatbotDefaultConfigurationDocument.Data["supportImageGeneration"].ToString() ?? "false")
+            Temperature = float.Parse(chatbotDefaultConfigurationDocument.Data["temperature"].ToString() ?? "0.0")
         };
 
         return chatbotDefaultConfigurationDto;

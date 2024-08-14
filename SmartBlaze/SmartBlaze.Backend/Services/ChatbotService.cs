@@ -27,32 +27,69 @@ public class ChatbotService
         return _chatbots.Find(c => c.Name == name);
     }
 
-    public async Task<AssistantMessageInfoDto> GenerateTextInChatSession(Chatbot chatbot, ChatSessionInfoDto chatSessionInfoDto)
+    public async Task<AssistantMessageInfoDto> GenerateTextInChatSession(Chatbot chatbot, TextGenerationRequestData textGenerationRequestData)
     {
-        return await chatbot.GenerateText(chatSessionInfoDto, _httpClient);
+        return await chatbot.GenerateText(textGenerationRequestData, _httpClient);
     }
     
-    public async IAsyncEnumerable<string> GenerateTextStreamInChatSession(Chatbot chatbot, ChatSessionInfoDto chatSessionInfoDto)
+    public async IAsyncEnumerable<string> GenerateTextStreamInChatSession(Chatbot chatbot, TextGenerationRequestData textGenerationRequestData)
     {
-        await foreach (var chunk in chatbot.GenerateTextStreamEnabled(chatSessionInfoDto, _httpClient))
+        await foreach (var chunk in chatbot.GenerateTextStreamEnabled(textGenerationRequestData, _httpClient))
         {
             yield return chunk;
         }
     }
 
-    public async Task<AssistantMessageInfoDto> GenerateImageInChatSession(Chatbot chatbot, ChatSessionInfoDto chatSessionInfoDto)
+    public async Task<AssistantMessageInfoDto> GenerateImageInChatSession(Chatbot chatbot, ImageGenerationRequestData imageGenerationRequestData)
     {
-        return await chatbot.GenerateImage(chatSessionInfoDto, _httpClient);
+        return await chatbot.GenerateImage(imageGenerationRequestData, _httpClient);
     }
     
     private void CreateChatbots()
     {
-        var chatGpt = new ChatGpt("ChatGPT", ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"], 
-            ["dall-e-3", "dall-e-2"]);
+        var chatGpt = new ChatGpt("ChatGPT",
+            [
+                new TextGenerationChatbotModel("gpt-4o", true, true, 
+                0.0f, 2.0f, true, true, 
+                true, 100, true),
+                new TextGenerationChatbotModel("gpt-4-turbo", true, true, 
+                    0.0f, 2.0f, true, true, 
+                    true, 100, true),
+                new TextGenerationChatbotModel("gpt-4", true, true, 
+                    0.0f, 2.0f, true, true, 
+                    true, 100, true),
+                new TextGenerationChatbotModel("gpt-3.5-turbo", true, true, 
+                    0.0f, 2.0f, true, true, 
+                    true, 100, true)
+            ],
+            [
+                new ImageGenerationChatbotModel("dall-e-3", false, 
+                    false, .0f, .0f, 
+                    false, false,
+                    true, ["1024x1024", "1024x1792", "1792x1024"],
+                    false, 1),
+                new ImageGenerationChatbotModel("dall-e-2", false, 
+                    false, .0f, .0f, 
+                    false, false,
+                    false, ["1024x1024"],
+                    true, 10)
+            ]);
+        
         _chatbots.Add(chatGpt);
         
-        var gemini = new Gemini("Google Gemini", ["gemini-1.5-pro", "gemini-1.5-flash"], 
-            []);
+        
+        var gemini = new Gemini("Google Gemini",
+            [
+                new TextGenerationChatbotModel("gemini-1.5-pro", true, true, 
+                    0.0f, 2.0f, true, true, 
+                    true, 400, true),
+                new TextGenerationChatbotModel("gemini-1.5-flash", true, true, 
+                    0.0f, 2.0f, true, true, 
+                    true, 400, true),
+            ],
+            []
+        );
+        
         _chatbots.Add(gemini);
     }
 }

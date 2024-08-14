@@ -9,7 +9,13 @@ public class ChatSessionRepository : AbstractRepository
 { 
     public async Task<List<ChatSessionDto>> GetAllChatSessions()
     {
-        var chatSessionDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId, ChatSessionCollectionId);
+        var chatSessionDocuments = await AppwriteDatabase.ListDocuments(
+                AppwriteDatabaseId, 
+                ChatSessionCollectionId,
+                [
+                    Query.OrderDesc("creationDate")
+                ]
+            );
 
         var chatSessionsDto = chatSessionDocuments.Documents
             .Select(ConvertToChatSession)

@@ -10,7 +10,8 @@ public class MessageRepository : AbstractRepository
      {
           var messageDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId, MessageCollectionId, 
           [
-               Query.Equal("chatSession", chatSessionId)
+               Query.Equal("chatSession", chatSessionId),
+               Query.OrderAsc("creationDate")
           ]);
 
           List<MessageDto> messages = new();

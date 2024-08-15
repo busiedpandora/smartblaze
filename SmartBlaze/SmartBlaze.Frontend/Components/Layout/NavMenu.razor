@@ -108,18 +108,7 @@
 
     private async void OnNewChatClicked()
     {
-        if (_settingsService.DefaultChatbotSelected?.Name != null)
-        {
-            if (_settingsService.SettingsPageOpen)
-            {
-                _settingsService.CloseSettings();
-            }
-        
-            await _chatSessionStateService.CreateNewChatSession("Undefined", _settingsService.DefaultChatbotSelected.Name,
-                _settingsService.DefaultChatbotSelected.TextGenerationModel, 
-                _settingsService.DefaultChatbotSelected.ImageGenerationModel, _settingsService.DefaultChatbotSelected.Temperature, 
-                _settingsService.SystemInstruction, _settingsService.TextStream);
-        }
+        await _chatSessionStateService.CreateNewChatSession();
     }
 
     private void OnSettingsClicked()

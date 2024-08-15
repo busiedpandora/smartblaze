@@ -22,32 +22,8 @@ public class ChatbotDefaultConfigurationDto
     [JsonPropertyName("imageGenerationChatbotModel")]
     public string? ImageGenerationChatbotModel { get; set; }
     
-    [JsonPropertyName("textGenerationChatbotModels")]
-    public List<string>? TextGenerationChatbotModels { get; set; }
-    
-    [JsonPropertyName("imageGenerationChatbotModels")]
-    public List<string>? ImageGenerationChatbotModels { get; set; }
-    
-    [JsonPropertyName("textStreamDelay")]
-    public int TextStreamDelay { get; set; }
-    
     [JsonPropertyName("temperature")]
     public float Temperature { get; set; }
-    
-    [JsonPropertyName("minTemperature")]
-    public float MinTemperature { get; set; }
-    
-    [JsonPropertyName("maxTemperature")]
-    public float MaxTemperature { get; set; }
-    
-    [JsonPropertyName("supportBase64ImageInputFormat")]
-    public bool SupportBase64ImageInputFormat { get; set; }
-    
-    [JsonPropertyName("supportUrlImageInputFormat")]
-    public bool SupportUrlImageInputFormat { get; set; }
-    
-    [JsonPropertyName("supportImageGeneration")]
-    public bool SupportImageGeneration { get; set; }
     
     [JsonPropertyName("selected")]
     public bool Selected { get; set; }

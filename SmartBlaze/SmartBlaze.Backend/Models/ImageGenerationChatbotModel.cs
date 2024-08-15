@@ -8,12 +8,11 @@ public class ImageGenerationChatbotModel : ChatbotModel
     private readonly int _maxNumberOfGeneratedImagesAtOnce;
 
 
-    public ImageGenerationChatbotModel(string name, bool acceptSystemInstruction, 
-        bool acceptTemperature, float minTemperature, float maxTemperature, 
+    public ImageGenerationChatbotModel(string name, 
         bool acceptBase64ImageInput, bool acceptUrlImageInput, 
         bool acceptImageSize, string[] imageSizeSupport, 
         bool acceptMultipleImagesGenerationAtOnce, int maxNumberOfGeneratedImagesAtOnce) 
-        : base(name, acceptSystemInstruction, acceptTemperature, minTemperature, maxTemperature, acceptBase64ImageInput, acceptUrlImageInput)
+        : base(name, acceptBase64ImageInput, acceptUrlImageInput)
     {
         _acceptImageSize = acceptImageSize;
         _imageSizeSupport = imageSizeSupport;

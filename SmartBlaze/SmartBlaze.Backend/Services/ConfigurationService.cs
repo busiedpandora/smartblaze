@@ -19,7 +19,12 @@ public class ConfigurationService
         return await _configurationRepository.GetChatbotDefaultConfiguration(chatbotName);
     }
     
-    public async Task AddChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
+    /*public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration()
+    {
+        return await _configurationRepository.GetChatbotDefaultConfiguration();
+    }*/
+    
+    public async Task SaveChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
     {
         await _configurationRepository.SaveChatbotDefaultConfiguration(chatbotDefaultConfigurationDto);
     }

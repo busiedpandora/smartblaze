@@ -20,7 +20,7 @@ public class ConfigurationController : ControllerBase
         _chatbotService = chatbotService;
         _chatSessionService = chatSessionService;
     }
-
+    
     [HttpGet("chatbot")]
     public async Task<ActionResult<List<ChatbotDefaultConfigurationDto>>> GetChatbotDefaultConfigurations()
     {
@@ -34,12 +34,9 @@ public class ConfigurationController : ControllerBase
             if (chatbotDefaultConfiguration is null)
             {
                 chatbotDefaultConfiguration = chatbot.GetDefaultConfiguration();
-                await _configurationService.AddChatbotDefaultConfiguration(chatbotDefaultConfiguration);
+                await _configurationService.SaveChatbotDefaultConfiguration(chatbotDefaultConfiguration);
             }
-
-            chatbotDefaultConfiguration.TextGenerationChatbotModels = chatbot.TextGenerationModels;
-            chatbotDefaultConfiguration.ImageGenerationChatbotModels = chatbot.ImageGenerationModels;
-                
+            
             chatbotConfigurationDtos.Add(chatbotDefaultConfiguration);
         }
 
@@ -47,7 +44,7 @@ public class ConfigurationController : ControllerBase
     }
 
     [HttpPost("chatbot")]
-    public async Task<ActionResult> UpdateChatbotDefaultConfiguration([FromBody] ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
+    public async Task<ActionResult> EditChatbotDefaultConfiguration([FromBody] ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
     {
         if (chatbotDefaultConfigurationDto.ChatbotName is null || chatbotDefaultConfigurationDto.TextGenerationChatbotModel is null
                                                                || chatbotDefaultConfigurationDto.ImageGenerationChatbotModel is null)
@@ -59,9 +56,9 @@ public class ConfigurationController : ControllerBase
 
         if (chatbotDefaultConfiguration is null)
         {
-            return NotFound($"Cannot found configuration for chatbot {chatbotDefaultConfigurationDto.ChatbotName}");
+            return NotFound($"Cannot find configuration for chatbot {chatbotDefaultConfigurationDto.ChatbotName}");
         }
-
+        
         if (chatbotDefaultConfiguration.Selected == false)
         {
             await _configurationService.DeselectCurrentChatbotDefaultConfiguration();
@@ -71,9 +68,8 @@ public class ConfigurationController : ControllerBase
         chatbotDefaultConfiguration.ImageGenerationChatbotModel = chatbotDefaultConfigurationDto.ImageGenerationChatbotModel;
         chatbotDefaultConfiguration.ApiHost = chatbotDefaultConfigurationDto.ApiHost ?? "";
         chatbotDefaultConfiguration.ApiKey = chatbotDefaultConfigurationDto.ApiKey ?? "";
-        chatbotDefaultConfigurationDto.TextStreamDelay = chatbotDefaultConfigurationDto.TextStreamDelay;
-        chatbotDefaultConfiguration.Selected = true;
         chatbotDefaultConfiguration.Temperature = chatbotDefaultConfigurationDto.Temperature;
+        chatbotDefaultConfiguration.Selected = true;
 
         await _configurationService.EditChatbotDefaultConfiguration(chatbotDefaultConfiguration);
 
@@ -95,7 +91,7 @@ public class ConfigurationController : ControllerBase
     }
 
     [HttpPost("chat-session")]
-    public async Task<ActionResult> UpdateChatSessionDefaultConfiguration(
+    public async Task<ActionResult> EditChatSessionDefaultConfiguration(
         [FromBody] ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto)
     {
         if (chatSessionDefaultConfigurationDto.SystemInstruction is null)

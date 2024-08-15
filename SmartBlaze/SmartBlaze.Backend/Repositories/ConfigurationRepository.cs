@@ -27,6 +27,24 @@ public class ConfigurationRepository : AbstractRepository
         return chatbotDefaultConfiguration;
     }
     
+    /*public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration()
+    {
+        var chatbotDefaultConfigurationDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId,
+            ChatbotDefaultConfigurationCollectionId);
+        
+        var chatbotDefaultConfigurationDocument = chatbotDefaultConfigurationDocuments.Documents.Count > 0 
+            ? chatbotDefaultConfigurationDocuments.Documents.First() : null;
+
+        if (chatbotDefaultConfigurationDocument is null)
+        {
+            return null;
+        }
+        
+        var chatbotDefaultConfiguration = ConvertToChatbotDefaultConfiguration(chatbotDefaultConfigurationDocument);
+
+        return chatbotDefaultConfiguration;
+    }*/
+    
     public async Task<ChatbotDefaultConfigurationDto?> GetSelectedChatbotDefaultConfiguration()
     {
         var chatbotDefaultConfigurationDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId,
@@ -57,8 +75,8 @@ public class ConfigurationRepository : AbstractRepository
             { "imageGenerationChatbotModel", chatbotDefaultConfigurationDto.ImageGenerationChatbotModel ?? ""},
             { "apiHost", chatbotDefaultConfigurationDto.ApiHost ?? ""},
             { "apiKey", chatbotDefaultConfigurationDto.ApiKey ?? ""},
-            { "selected", chatbotDefaultConfigurationDto.Selected },
-            { "temperature" , chatbotDefaultConfigurationDto.Temperature }
+            { "temperature" , chatbotDefaultConfigurationDto.Temperature },
+            { "selected", chatbotDefaultConfigurationDto.Selected}
         };
 
         await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
@@ -79,8 +97,8 @@ public class ConfigurationRepository : AbstractRepository
             { "imageGenerationChatbotModel", chatbotDefaultConfigurationDto.ImageGenerationChatbotModel ?? ""},
             { "apiHost", chatbotDefaultConfigurationDto.ApiHost ?? ""},
             { "apiKey", chatbotDefaultConfigurationDto.ApiKey ?? ""},
-            { "selected", chatbotDefaultConfigurationDto.Selected},
-            { "temperature" , chatbotDefaultConfigurationDto.Temperature }
+            { "temperature" , chatbotDefaultConfigurationDto.Temperature },
+            { "selected", chatbotDefaultConfigurationDto.Selected}
         };
         
         await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
@@ -206,8 +224,8 @@ public class ConfigurationRepository : AbstractRepository
             ImageGenerationChatbotModel = chatbotDefaultConfigurationDocument.Data["imageGenerationChatbotModel"].ToString(),
             ApiHost = chatbotDefaultConfigurationDocument.Data["apiHost"].ToString(),
             ApiKey = chatbotDefaultConfigurationDocument.Data["apiKey"].ToString(),
-            Selected = bool.Parse(chatbotDefaultConfigurationDocument.Data["selected"].ToString() ?? "false"),
-            Temperature = float.Parse(chatbotDefaultConfigurationDocument.Data["temperature"].ToString() ?? "0.0")
+            Temperature = float.Parse(chatbotDefaultConfigurationDocument.Data["temperature"].ToString() ?? "0.0"),
+            Selected = bool.Parse(chatbotDefaultConfigurationDocument.Data["selected"].ToString() ?? "false")
         };
 
         return chatbotDefaultConfigurationDto;

@@ -1,4 +1,4 @@
-namespace SmartBlaze.Frontend.Dtos;
+namespace SmartBlaze.Backend.Dtos;
 
 public class ChatbotDto
 {

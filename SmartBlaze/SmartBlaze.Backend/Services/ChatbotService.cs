@@ -27,6 +27,12 @@ public class ChatbotService
         return _chatbots.Find(c => c.Name == name);
     }
 
+    public Chatbot GetChatbotSelected()
+    {
+        return _chatbots
+            .Find(c => c.GetDefaultConfiguration().Selected) ?? _chatbots.First();
+    }
+
     public async Task<AssistantMessageInfoDto> GenerateTextInChatSession(Chatbot chatbot, TextGenerationRequestData textGenerationRequestData)
     {
         return await chatbot.GenerateText(textGenerationRequestData, _httpClient);
@@ -64,14 +70,10 @@ public class ChatbotService
             ],
             [
                 new ImageGenerationChatbotModel("dall-e-3", false, 
-                    false, .0f, .0f, 
-                    false, false,
-                    true, ["1024x1024", "1024x1792", "1792x1024"],
+                    false, true, ["1024x1024", "1024x1792", "1792x1024"], 
                     false, 1),
                 new ImageGenerationChatbotModel("dall-e-2", false, 
-                    false, .0f, .0f, 
-                    false, false,
-                    false, ["1024x1024"],
+                    false, false, ["1024x1024"], 
                     true, 10)
             ]);
         

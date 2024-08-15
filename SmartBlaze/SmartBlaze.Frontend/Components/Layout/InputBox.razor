@@ -21,7 +21,7 @@
                 <div class="row">
                     @if (_chatSessionStateService.CurrentGenerationType == "text")
                     {
-                        @if (_chatSessionStateService.CurrentChatSessionConfiguration?.SupportUrlInputImageFormat == true)
+                        @if (_settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptUrlImageInput == true)
                         {
                             <div class="col-auto px-1">
                                 <button class="btn btn-light button-double-image" data-bs-toggle="tooltip" data-bs-title="Insert image URL"
@@ -31,7 +31,7 @@
                                 </button>
                             </div>
                         }
-                        @if (_chatSessionStateService.CurrentChatSessionConfiguration?.SupportBase64InputImageFormat == true)
+                        @if (_settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptBase64ImageInput == true)
                         {
                             <div class="col-auto px-1">
                                 <button class="btn btn-light button-double-image" data-bs-toggle="tooltip" data-bs-title="Attach image file"
@@ -57,8 +57,7 @@
                             </button>
                         </div>
                     }
-                    @if (_chatSessionStateService.CurrentChatSessionConfiguration?.SupportImageGeneration == true
-                            && _chatSessionStateService.CurrentGenerationType == "text")
+                    @if (_chatSessionStateService.CurrentGenerationType == "text")
                     {
                         <div class="col-auto px-1 ms-auto">
                             <button class="btn btn-light"
@@ -254,7 +253,7 @@
         if (_chatSessionStateService.CanUserInteract() && chatSessionConfiguration is not null)
         {
 
-            var chatbot = _settingsService.GetChatbotByName(chatSessionConfiguration.ChatbotName ?? "");
+            var chatbot = _settingsService.GetChatbot(chatSessionConfiguration.ChatbotName ?? "");
 
             if (chatbot is null)
             {
@@ -268,12 +267,11 @@
 
             if (_chatSessionStateService.CurrentGenerationType == "text")
             {
-                await _chatSessionStateService.RequestNewAssistantTextMessage(text, imageInputs, chatbot.ApiHost, 
-                    chatbot.ApiKey, chatbot.TextStreamDelay);
+                await _chatSessionStateService.RequestNewAssistantTextMessage(text, imageInputs);
             }
             else if (_chatSessionStateService.CurrentGenerationType == "image")
             {
-                await _chatSessionStateService.RequestNewAssistantImageMessage(text, chatbot.ApiHost, chatbot.ApiKey);
+                await _chatSessionStateService.RequestNewAssistantImageMessage(text);
             }
         }
     }
@@ -459,12 +457,12 @@
 
     private void SwitchToTextGeneration()
     {
-        _chatSessionStateService.CurrentGenerationType = "text";
+        _chatSessionStateService.SwitchToTextGeneration();
     }
 
     private void SwitchToImageGeneration()
     {
-        _chatSessionStateService.CurrentGenerationType = "image";
+        _chatSessionStateService.SwitchToImageGeneration();
     }
     
     private void ReloadComponentState()

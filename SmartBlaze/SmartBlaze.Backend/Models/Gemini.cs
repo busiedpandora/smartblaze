@@ -288,6 +288,103 @@ public class Gemini : Chatbot
         };
     }
 
+    public override async Task<AssistantMessageInfoDto> EntitleChatSession(TextGenerationRequestData textGenerationRequestData, HttpClient httpClient)
+    {
+        var contents = new List<RequestContent>();
+
+        if (textGenerationRequestData.Messages.Count > 0)
+        {
+            var userMessageDto = textGenerationRequestData.Messages.ElementAt(0);
+
+            if (!textGenerationRequestData.ChatbotModel.AcceptSystemInstruction)
+            {
+                userMessageDto.Text = textGenerationRequestData.SystemInstruction + " Here is the text content: " +
+                                      userMessageDto.Text;
+            }
+            
+            List<Part> parts = new();
+            
+            TextPart textPart = new()
+            {
+                Text = userMessageDto.Text
+            };
+            
+            parts.Add(textPart);
+            
+            RequestContent content = new()
+            {
+                Role = "user",
+                Parts = (object[]) parts.ToArray()
+            };
+            
+            contents.Add(content);
+            
+            var chatRequest = new ChatRequest
+            {
+                Contents = contents
+            };
+
+            if (textGenerationRequestData.ChatbotModel.AcceptSystemInstruction)
+            {
+                TextPart systemInstructionTextPart = new()
+                {
+                    Text = textGenerationRequestData.SystemInstruction
+                };
+            
+                SystemInstruction systemInstruction = new SystemInstruction()
+                {
+                    Part = (object) systemInstructionTextPart
+                };
+            
+                chatRequest.SystemInstruction = systemInstruction;
+            }
+            
+            var chatRequestJson = JsonSerializer.Serialize(chatRequest);
+        
+            var httpRequest = new HttpRequestMessage
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri($"{textGenerationRequestData.ApiHost}/v1beta/models/" +
+                                     $"{textGenerationRequestData.ChatbotModel.Name}:generateContent?key={textGenerationRequestData.ApiKey}"),
+                Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
+            };
+        
+            var chatResponseMessage = await httpClient.SendAsync(httpRequest);
+            var chatResponseMessageContent = await chatResponseMessage.Content.ReadAsStringAsync();
+
+            if (!chatResponseMessage.IsSuccessStatusCode)
+            {
+                return new AssistantMessageInfoDto
+                {
+                    Status = "error",
+                    Text = chatResponseMessageContent
+                };
+            }
+        
+            ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseMessageContent);
+
+            if (chatResponse is not null && chatResponse.Candidates is not null)
+            {
+                var candidate = chatResponse.Candidates[0];
+
+                if (candidate.Content is not null && candidate.Content.Parts is not null)
+                {
+                    return new AssistantMessageInfoDto
+                    {
+                        Status = "ok",
+                        Text = candidate.Content.Parts[0].Text
+                    };
+                }
+            }
+        }
+
+        return new AssistantMessageInfoDto()
+        {
+            Status = "error",
+            Text = "No content has been generated"
+        };
+    }
+
     public override ChatbotDefaultConfigurationDto GetDefaultConfiguration()
     {
         return new ChatbotDefaultConfigurationDto()

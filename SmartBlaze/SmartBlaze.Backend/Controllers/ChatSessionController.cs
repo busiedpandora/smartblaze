@@ -11,12 +11,15 @@ public class ChatSessionController : ControllerBase
 {
     private ChatSessionService _chatSessionService;
     private ConfigurationService _configurationService;
+    private ChatbotService _chatbotService;
 
 
-    public ChatSessionController(ChatSessionService chatSessionService, ConfigurationService configurationService)
+    public ChatSessionController(ChatSessionService chatSessionService, ConfigurationService configurationService,
+        ChatbotService chatbotService)
     {
         _chatSessionService = chatSessionService;
         _configurationService = configurationService;
+        _chatbotService = chatbotService;
     }
 
     [HttpGet("")]
@@ -107,5 +110,73 @@ public class ChatSessionController : ControllerBase
         }
 
         return Ok();
+    }
+
+    [HttpPut("{id}/entitle")]
+    public async Task<ActionResult<string>> EntitleChatSessionFromUserMessage(string id, 
+        [FromBody] ChatSessionInfoDto chatSessionInfoDto)
+    {
+        ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
+        
+        if (chatSessionDto is null)
+        {
+            return NotFound($"Chat session with id {id} not found");
+        }
+        
+        if (chatSessionInfoDto.ChatbotName is null or "")
+        {
+            return NotFound($"Chat session with id {id} has no chatbot specified");
+        }
+
+        if (chatSessionInfoDto.ChatbotModel is null or "")
+        {
+            return BadRequest($"No model specified for chatbot {chatSessionInfoDto.ChatbotName}");
+        }
+
+        if (chatSessionInfoDto.LastUserMessage is null || chatSessionInfoDto.ApiHost is null or "" ||
+            chatSessionInfoDto.ApiKey is null or "")
+        {
+            return BadRequest(
+                $"Last user message, API host and the API key must be specified for the chat session with id {id} " +
+                $"for generating the assistant message");
+        }
+        
+        Chatbot? chatbot = _chatbotService.GetChatbotByName(chatSessionInfoDto.ChatbotName);
+        
+        if (chatbot is null)
+        {
+            return NotFound($"Chat session with id {id} has no chatbot specified");
+        }
+        
+        var chatbotModel = chatbot.TextGenerationChatbotModels
+            .Find(tgm => tgm.Name == chatSessionInfoDto.ChatbotModel);
+
+        if (chatbotModel is null)
+        {
+            return NotFound(
+                $"No model with name {chatSessionInfoDto.ChatbotModel} found for chatbot {chatSessionInfoDto.ChatbotName}");
+        }
+
+        var textGenerationRequestData = new TextGenerationRequestData()
+        {
+            Messages = new List<MessageDto>() { chatSessionInfoDto.LastUserMessage },
+            ChatbotModel = chatbotModel,
+            ApiHost = chatSessionInfoDto.ApiHost,
+            ApiKey = chatSessionInfoDto.ApiKey,
+            SystemInstruction = "Summarize in maximum 3 words the text content. If the text contains questions, do not answer them." +
+                                " Use no more than 20 characters. Don't use punctuation marks."
+        };
+
+        var assistantMessageInfo = await _chatbotService.EntitleChatSessionFromUserMessage(chatbot, textGenerationRequestData);
+
+        if (assistantMessageInfo.Status == "ok")
+        {
+            chatSessionDto.Title = assistantMessageInfo.Text;
+            await _chatSessionService.EditChatSession(chatSessionDto);
+            
+            return Ok(assistantMessageInfo.Text);
+        }
+        
+        return Problem(assistantMessageInfo.Text);
     }
 }

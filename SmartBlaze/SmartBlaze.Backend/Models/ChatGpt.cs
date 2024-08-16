@@ -461,6 +461,101 @@ public class ChatGpt : Chatbot
         };
     }
 
+    public override async Task<AssistantMessageInfoDto> EntitleChatSession(TextGenerationRequestData textGenerationRequestData, HttpClient httpClient)
+    {
+        List<Message> messages = new();
+
+        if (textGenerationRequestData.Messages.Count > 0)
+        {
+            var userMessageDto = textGenerationRequestData.Messages.ElementAt(0);
+            
+            if (textGenerationRequestData.ChatbotModel.AcceptSystemInstruction)
+            {
+                TextMessage systemInstructionMessage = new()
+                {
+                    Role = "system",
+                    Contents = textGenerationRequestData.SystemInstruction
+                };
+
+                messages.Insert(0, systemInstructionMessage);
+            }
+            else
+            {
+                userMessageDto.Text = textGenerationRequestData.SystemInstruction + " Here is the text content: " +
+                                      userMessageDto.Text;
+            }
+            
+            TextMessage userMessage = new()
+            {
+                Contents = userMessageDto.Text,
+                Role = "user"
+            };
+            
+            messages.Add(userMessage);
+            
+            TextGenerationChatRequest chatRequest;
+
+            chatRequest = new TextGenerationChatRequest
+            {
+                Model = textGenerationRequestData.ChatbotModel.Name,
+                Messages = (object[]) messages.ToArray(),
+                Stream = false, 
+            };
+        
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+
+            var chatRequestJson = JsonSerializer.Serialize(chatRequest, options);
+            
+            var httpRequest = new HttpRequestMessage
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri($"{textGenerationRequestData.ApiHost}/v1/chat/completions"),
+                Headers =
+                {
+                    { "Authorization", $"Bearer {textGenerationRequestData.ApiKey}" },
+                },
+                Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
+            };
+        
+            var chatResponseMessage = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
+            var chatResponseMessageContent = await chatResponseMessage.Content.ReadAsStringAsync();
+            
+            if (!chatResponseMessage.IsSuccessStatusCode)
+            {
+                return new AssistantMessageInfoDto
+                {
+                    Status = "error",
+                    Text = chatResponseMessageContent
+                };
+            }
+            
+            TextGenerationChatResponse? chatResponse = JsonSerializer.Deserialize<TextGenerationChatResponse>(chatResponseMessageContent);
+        
+            if (chatResponse is not null && chatResponse.Choices is not null && chatResponse.Choices.Count > 0)
+            {
+                TextMessage? message = chatResponse.Choices[0].Message;
+
+                if (message is not null)
+                {
+                    return new AssistantMessageInfoDto
+                    {
+                        Status = "ok",
+                        Text = message.Contents
+                    };
+                }
+            }
+        }
+        
+        return new AssistantMessageInfoDto()
+        {
+            Status = "error",
+            Text = "No content has been generated"
+        };
+    }
+
     public override ChatbotDefaultConfigurationDto GetDefaultConfiguration()
     {
         return new ChatbotDefaultConfigurationDto()

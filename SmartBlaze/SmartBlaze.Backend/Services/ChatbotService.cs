@@ -50,6 +50,12 @@ public class ChatbotService
     {
         return await chatbot.GenerateImage(imageGenerationRequestData, _httpClient);
     }
+
+    public async Task<AssistantMessageInfoDto> EntitleChatSessionFromUserMessage(Chatbot chatbot,
+        TextGenerationRequestData textGenerationRequestData)
+    {
+        return await chatbot.EntitleChatSession(textGenerationRequestData, _httpClient);
+    }
     
     private void CreateChatbots()
     {

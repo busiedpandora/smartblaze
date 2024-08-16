@@ -230,6 +230,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         var chatSessionInfoDto = new ChatSessionInfoDto()
         {
             Messages = _currentChatSessionMessages,
+            LastUserMessage = userMessage,
             ChatbotName = _currentChatSessionConfiguration.ChatbotName,
             ChatbotModel = _currentChatSessionConfiguration.TextGenerationChatbotModel,
             ApiHost = chatbotDefaultConfiguration.ApiHost,
@@ -238,6 +239,11 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             Temperature = _currentChatSessionConfiguration.Temperature,
             TextStreamDelay = chatbotModel.TextStreamDelay
         };
+
+        if (_currentChatSessionMessages.Count == 1)
+        {
+            await EntitleChatSessionFromUserMessage(chatSessionInfoDto);
+        }
         
         if (chatbotModel.AcceptTextStream && _currentChatSessionConfiguration.TextStream)
         {
@@ -756,6 +762,21 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
 
         return assistantMessageDto;
+    }
+
+    private async Task EntitleChatSessionFromUserMessage(ChatSessionInfoDto chatSessionInfoDto)
+    {
+        var assistantMessageResponse = await 
+            HttpClient.PutAsJsonAsync(
+                $"chat-sessions/{_currentChatSession.Id}/entitle", 
+                chatSessionInfoDto);
+        var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
+
+        if (assistantMessageResponse.IsSuccessStatusCode)
+        {
+            _currentChatSession.Title = assistantMessageResponseContent;
+            NotifyRefreshView();
+        }
     }
 
     private MessageDto CreateNewErrorMessage(string text)

@@ -36,6 +36,8 @@ public abstract class Chatbot
         HttpClient httpClient);
 
     public abstract Task<AssistantMessageInfoDto> GenerateImage(ImageGenerationRequestData imageGenerationRequestData, HttpClient httpClient);
+
+    public abstract Task<AssistantMessageInfoDto> EntitleChatSession(TextGenerationRequestData textGenerationRequestData, HttpClient httpClient);
     
     public abstract ChatbotDefaultConfigurationDto GetDefaultConfiguration();
 }

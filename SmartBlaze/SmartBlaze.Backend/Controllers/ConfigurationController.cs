@@ -109,6 +109,8 @@ public class ConfigurationController : ControllerBase
         
         chatSessionDefaultConfiguration.SystemInstruction = chatSessionDefaultConfigurationDto.SystemInstruction;
         chatSessionDefaultConfiguration.TextStream = chatSessionDefaultConfigurationDto.TextStream;
+        chatSessionDefaultConfiguration.ImageSize = chatSessionDefaultConfiguration.ImageSize;
+        chatSessionDefaultConfiguration.ImagesToGenerate = chatSessionDefaultConfiguration.ImagesToGenerate;
 
         await _configurationService.EditChatSessionDefaultConfiguration(chatSessionDefaultConfiguration);
 

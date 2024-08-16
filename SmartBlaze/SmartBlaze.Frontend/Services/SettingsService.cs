@@ -79,7 +79,7 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             return null;
         }
 
-        return chatbot.TextGenerationChatbotModels.Find(tgm => tgm.Name == chatbotModel);
+        return chatbot.ImageGenerationChatbotModels.Find(tgm => tgm.Name == chatbotModel);
     }
     
     public ChatbotModelDto? GetImageGenerationChatbotModel(string? chatbotName, string? chatbotModel)
@@ -136,21 +136,35 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         NotifyRefreshView();
     }
 
-    public async Task SaveChatbotDefaultSettings(ChatbotSettings chatbotSettings)
+    public async Task SaveChatbotDefaultSettings(ChatbotDefaultSettings chatbotDefaultSettings)
     {
-        var chatbotDefaultConfiguration = new ChatbotDefaultConfigurationDto
+        var chatbotDefaultConfigurationDto = new ChatbotDefaultConfigurationDto
         {
-            ChatbotName = chatbotSettings.ChatbotName,
-            TextGenerationChatbotModel = chatbotSettings.TextGenerationChatbotModel,
-            ImageGenerationChatbotModel = chatbotSettings.ImageGenerationChatbotModel,
-            ApiHost = chatbotSettings.ApiHost,
-            ApiKey = chatbotSettings.ApiKey,
-            Temperature = chatbotSettings.Temperature
+            ChatbotName = chatbotDefaultSettings.ChatbotName,
+            TextGenerationChatbotModel = chatbotDefaultSettings.TextGenerationChatbotModel,
+            ImageGenerationChatbotModel = chatbotDefaultSettings.ImageGenerationChatbotModel,
+            ApiHost = chatbotDefaultSettings.ApiHost,
+            ApiKey = chatbotDefaultSettings.ApiKey,
+            Temperature = chatbotDefaultSettings.Temperature
         };
 
-        _chatbotDefaultConfigurationSelected = chatbotDefaultConfiguration;
-        
-        await HttpClient.PostAsJsonAsync("configuration/chatbot", chatbotDefaultConfiguration);
+        var chatbotDefaultConfiguration = GetChatbotDefaultConfiguration(chatbotDefaultSettings.ChatbotName);
+
+        if (chatbotDefaultConfiguration is not null)
+        {
+            chatbotDefaultConfiguration.ChatbotName = chatbotDefaultConfigurationDto.ChatbotName;
+            chatbotDefaultConfiguration.TextGenerationChatbotModel =
+                chatbotDefaultConfigurationDto.TextGenerationChatbotModel;
+            chatbotDefaultConfiguration.ImageGenerationChatbotModel =
+                chatbotDefaultConfigurationDto.ImageGenerationChatbotModel;
+            chatbotDefaultConfiguration.ApiHost = chatbotDefaultConfigurationDto.ApiHost;
+            chatbotDefaultConfiguration.ApiKey = chatbotDefaultConfigurationDto.ApiKey;
+            chatbotDefaultConfiguration.Temperature = chatbotDefaultConfigurationDto.Temperature;
+
+            _chatbotDefaultConfigurationSelected = chatbotDefaultConfiguration;
+            
+            await HttpClient.PostAsJsonAsync("configuration/chatbot", chatbotDefaultConfigurationDto);
+        }
     }
 
     public async Task SaveChatSessionDefaultSettings(ChatSessionDefaultSettings chatSessionDefaultSettings)
@@ -158,7 +172,9 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         var chatSessionDefaultConfiguration = new ChatSessionDefaultConfigurationDto()
         {
             SystemInstruction = chatSessionDefaultSettings.SystemInstruction,
-            TextStream = chatSessionDefaultSettings.TextStream
+            TextStream = chatSessionDefaultSettings.TextStream,
+            ImageSize = chatSessionDefaultSettings.ImageSize,
+            ImagesToGenerate = chatSessionDefaultSettings.ImagesToGenerate
         };
 
         _chatSessionDefaultConfiguration = chatSessionDefaultConfiguration;

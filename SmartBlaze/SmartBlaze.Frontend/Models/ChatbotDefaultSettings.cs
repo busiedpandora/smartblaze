@@ -1,6 +1,6 @@
 namespace SmartBlaze.Frontend.Models;
 
-public class ChatbotSettings
+public class ChatbotDefaultSettings
 {
     public string ChatbotName { get; set; } = "";
     public string ApiKey { get; set; } = "";

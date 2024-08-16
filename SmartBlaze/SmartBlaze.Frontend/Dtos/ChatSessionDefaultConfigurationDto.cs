@@ -12,4 +12,10 @@ public class ChatSessionDefaultConfigurationDto
     
     [JsonPropertyName("textStream")]
     public bool TextStream { get; set; }
+    
+    [JsonPropertyName("imageSize")]
+    public string? ImageSize { get; set; }
+    
+    [JsonPropertyName("imagesToGenerate")]
+    public int ImagesToGenerate { get; set; }
 }

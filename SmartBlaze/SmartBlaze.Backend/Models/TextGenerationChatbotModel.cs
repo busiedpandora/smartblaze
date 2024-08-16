@@ -11,11 +11,11 @@ public class TextGenerationChatbotModel : ChatbotModel
     private readonly bool _acceptImageVision;
 
 
-    public TextGenerationChatbotModel(string name, bool acceptSystemInstruction, 
-        bool acceptTemperature, float minTemperature, float maxTemperature, 
-        bool acceptBase64ImageInput, bool acceptUrlImageInput, 
+    public TextGenerationChatbotModel(string name, 
+        bool acceptBase64ImageInput, bool acceptUrlImageInput, bool acceptTextFileInput,
+        bool acceptSystemInstruction, bool acceptTemperature, float minTemperature, float maxTemperature, 
         bool acceptTextStream, int textStreamDelay, bool acceptImageVision) 
-        : base(name, acceptBase64ImageInput, acceptUrlImageInput)
+        : base(name, acceptBase64ImageInput, acceptUrlImageInput, acceptTextFileInput)
     {
         _acceptSystemInstruction = acceptSystemInstruction;
         _acceptTemperature = acceptTemperature;

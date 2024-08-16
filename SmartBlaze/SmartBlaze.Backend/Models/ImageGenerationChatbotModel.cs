@@ -4,27 +4,27 @@ public class ImageGenerationChatbotModel : ChatbotModel
 {
     private readonly bool _acceptImageSize;
     private readonly string[] _imageSizeSupport;
-    private readonly bool _acceptMultipleImagesGenerationAtOnce;
-    private readonly int _maxNumberOfGeneratedImagesAtOnce;
+    private readonly bool _acceptMultipleImagesGeneration;
+    private readonly int _maxImagesGenerated;
 
 
     public ImageGenerationChatbotModel(string name, 
-        bool acceptBase64ImageInput, bool acceptUrlImageInput, 
+        bool acceptBase64ImageInput, bool acceptUrlImageInput, bool acceptTextFileInput,
         bool acceptImageSize, string[] imageSizeSupport, 
-        bool acceptMultipleImagesGenerationAtOnce, int maxNumberOfGeneratedImagesAtOnce) 
-        : base(name, acceptBase64ImageInput, acceptUrlImageInput)
+        bool acceptMultipleImagesGeneration, int maxImagesGenerated) 
+        : base(name, acceptBase64ImageInput, acceptUrlImageInput, acceptTextFileInput)
     {
         _acceptImageSize = acceptImageSize;
         _imageSizeSupport = imageSizeSupport;
-        _acceptMultipleImagesGenerationAtOnce = acceptMultipleImagesGenerationAtOnce;
-        _maxNumberOfGeneratedImagesAtOnce = maxNumberOfGeneratedImagesAtOnce;
+        _acceptMultipleImagesGeneration = acceptMultipleImagesGeneration;
+        _maxImagesGenerated = maxImagesGenerated;
     }
 
     public bool AcceptImageSize => _acceptImageSize;
 
     public string[] ImageSizeSupport => _imageSizeSupport;
 
-    public bool AcceptMultipleImagesGenerationAtOnce => _acceptMultipleImagesGenerationAtOnce;
+    public bool AcceptMultipleImagesGeneration => _acceptMultipleImagesGeneration;
 
-    public int MaxNumberOfGeneratedImagesAtOnce => _maxNumberOfGeneratedImagesAtOnce;
+    public int MaxImagesGenerated => _maxImagesGenerated;
 }

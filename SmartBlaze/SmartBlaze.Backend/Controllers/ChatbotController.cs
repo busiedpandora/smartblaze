@@ -30,12 +30,13 @@ public class ChatbotController : ControllerBase
                 {
                     Name = tgm.Name,
                     Type = "textGeneration",
+                    AcceptBase64ImageInput = tgm.AcceptBase64ImageInput,
+                    AcceptTextFileInput = tgm.AcceptTextFileInput,
+                    AcceptUrlImageInput = tgm.AcceptUrlImageInput,
                     AcceptSystemInstruction = tgm.AcceptSystemInstruction,
                     AcceptTemperature = tgm.AcceptTemperature,
                     MinTemperature = tgm.MinTemperature,
                     MaxTemperature = tgm.MaxTemperature,
-                    AcceptBase64ImageInput = tgm.AcceptBase64ImageInput,
-                    AcceptUrlImageInput = tgm.AcceptUrlImageInput,
                     AcceptTextStream = tgm.AcceptTextStream,
                     TextStreamDelay = tgm.TextStreamDelay,
                     AcceptImageVision = tgm.AcceptImageVision
@@ -49,10 +50,11 @@ public class ChatbotController : ControllerBase
                     Type = "imageGeneration",
                     AcceptBase64ImageInput = igm.AcceptBase64ImageInput,
                     AcceptUrlImageInput = igm.AcceptUrlImageInput,
+                    AcceptTextFileInput = igm.AcceptTextFileInput,
                     AcceptImageSize = igm.AcceptImageSize,
                     ImageSizeSupport = igm.ImageSizeSupport,
-                    AcceptMultipleImagesGenerationAtOnce = igm.AcceptMultipleImagesGenerationAtOnce,
-                    MaxNumberOfGeneratedImagesAtOnce = igm.MaxNumberOfGeneratedImagesAtOnce
+                    AcceptMultipleImagesGeneration = igm.AcceptMultipleImagesGeneration,
+                    MaxImagesGenerated = igm.MaxImagesGenerated
                 })
                 .ToList();
             
@@ -60,7 +62,8 @@ public class ChatbotController : ControllerBase
             {
                 Name = chatbot.Name,
                 TextGenerationChatbotModels = textGenerationModels,
-                ImageGenerationChatbotModels = imageGenerationModels
+                ImageGenerationChatbotModels = imageGenerationModels,
+                SupportImageGeneration = chatbot.SupportImageGeneration
             };
             
             chatbotDtos.Add(chatbotDto);

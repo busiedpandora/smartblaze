@@ -8,8 +8,9 @@ namespace SmartBlaze.Backend.Models;
 public class Gemini : Chatbot
 {
     public Gemini(string name, 
-        List<TextGenerationChatbotModel> textGenerationChatbotModels, List<ImageGenerationChatbotModel> imageGenerationChatbotModels) 
-        : base(name, textGenerationChatbotModels, imageGenerationChatbotModels)
+        List<TextGenerationChatbotModel> textGenerationChatbotModels, List<ImageGenerationChatbotModel> imageGenerationChatbotModels,
+        bool supportImageGeneration) 
+        : base(name, textGenerationChatbotModels, imageGenerationChatbotModels, supportImageGeneration)
     {
     }
 
@@ -272,10 +273,18 @@ public class Gemini : Chatbot
     public override async Task<AssistantMessageInfoDto> GenerateImage(ImageGenerationRequestData imageGenerationRequestData, 
         HttpClient httpClient)
     {
-        return new AssistantMessageInfoDto
+        if (!SupportImageGeneration)
         {
-            Status = "error",
-            Text = "Currently, Google Gemini is not able to generate images."
+            return new AssistantMessageInfoDto()
+            {
+                Status = "error",
+                Text = "Currently, ChatGPT is not able to generate images"
+            };
+        }
+
+        return new AssistantMessageInfoDto()
+        {
+            Status = "ok"
         };
     }
 

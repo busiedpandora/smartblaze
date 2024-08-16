@@ -13,6 +13,9 @@ public class ChatbotModelDto
     [JsonPropertyName("acceptUrlImageInput")]
     public bool AcceptUrlImageInput { get; set; }
     
+    [JsonPropertyName("acceptTextFileInput")]
+    public bool AcceptTextFileInput { get; set; }
+    
     //text generation
     [JsonPropertyName("acceptSystemInstruction")]
     public bool AcceptSystemInstruction { get; set; }
@@ -34,8 +37,8 @@ public class ChatbotModelDto
     public bool AcceptImageSize { get; set; }
     [JsonPropertyName("imageSizeSupport")]
     public string[] ImageSizeSupport { get; set; } = [];
-    [JsonPropertyName("acceptMultipleImagesGenerationAtOnce")]
-    public bool AcceptMultipleImagesGenerationAtOnce { get; set; }
-    [JsonPropertyName("maxNumberOfGeneratedImagesAtOnce")]
-    public int MaxNumberOfGeneratedImagesAtOnce { get; set; }
+    [JsonPropertyName("acceptMultipleImagesGeneration")]
+    public bool AcceptMultipleImagesGeneration { get; set; }
+    [JsonPropertyName("maxImagesGenerated")]
+    public int MaxImagesGenerated { get; set; }
 }

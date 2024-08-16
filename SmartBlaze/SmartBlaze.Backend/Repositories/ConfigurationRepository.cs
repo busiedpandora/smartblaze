@@ -128,7 +128,9 @@ public class ConfigurationRepository : AbstractRepository
         var chatSessionDefaultConfigurationDocument = new Dictionary<string, object>()
         {
             { "systemInstruction", chatSessionDefaultConfigurationDto.SystemInstruction ?? "" },
-            { "textStream", chatSessionDefaultConfigurationDto.TextStream}
+            { "textStream", chatSessionDefaultConfigurationDto.TextStream},
+            { "imageSize", chatSessionDefaultConfigurationDto.ImageSize ?? ""},
+            { "imagesToGenerate", chatSessionDefaultConfigurationDto.ImagesToGenerate}
         };
 
         await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatSessionDefaultConfigurationCollectionId,
@@ -145,7 +147,10 @@ public class ConfigurationRepository : AbstractRepository
         var chatSessionConfigurationDocument = new Dictionary<string, object>()
         {
             { "systemInstruction", chatSessionDefaultConfigurationDto.SystemInstruction ?? "" },
-            { "textStream", chatSessionDefaultConfigurationDto.TextStream}
+            { "textStream", chatSessionDefaultConfigurationDto.TextStream},
+            { "imageSize", chatSessionDefaultConfigurationDto.ImageSize ?? ""},
+            { "imagesToGenerate", chatSessionDefaultConfigurationDto.ImagesToGenerate}
+            
         };
 
         await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatSessionDefaultConfigurationCollectionId,
@@ -179,6 +184,8 @@ public class ConfigurationRepository : AbstractRepository
             { "temperature", chatSessionConfigurationDto.Temperature },
             { "systemInstruction", chatSessionConfigurationDto.SystemInstruction ?? ""},
             { "textStream", chatSessionConfigurationDto.TextStream },
+            { "imageSize", chatSessionConfigurationDto.ImageSize ?? ""},
+            { "imagesToGenerate", chatSessionConfigurationDto.ImagesToGenerate},
             { "chatSession", chatSessionId}
         };
 
@@ -201,6 +208,8 @@ public class ConfigurationRepository : AbstractRepository
             { "temperature", chatSessionConfigurationDto.Temperature },
             { "systemInstruction", chatSessionConfigurationDto.SystemInstruction ?? ""},
             { "textStream", chatSessionConfigurationDto.TextStream },
+            { "imageSize", chatSessionConfigurationDto.ImageSize ?? ""},
+            { "imagesToGenerate", chatSessionConfigurationDto.ImagesToGenerate},
             { "chatSession", chatSessionId}
         };
 
@@ -238,7 +247,9 @@ public class ConfigurationRepository : AbstractRepository
         {
             Id = chatSessionDefaultConfigurationDocument.Id,
             SystemInstruction = chatSessionDefaultConfigurationDocument.Data["systemInstruction"].ToString(),
-            TextStream = bool.Parse(chatSessionDefaultConfigurationDocument.Data["textStream"].ToString() ?? "false")
+            TextStream = bool.Parse(chatSessionDefaultConfigurationDocument.Data["textStream"].ToString() ?? "false"),
+            ImageSize = chatSessionDefaultConfigurationDocument.Data["imageSize"].ToString(),
+            ImagesToGenerate = int.Parse(chatSessionDefaultConfigurationDocument.Data["imagesToGenerate"].ToString() ?? "1")
         };
 
         return chatSessionDefaultConfigurationDto;
@@ -254,7 +265,9 @@ public class ConfigurationRepository : AbstractRepository
             ImageGenerationChatbotModel = chatSessionConfigurationDocument.Data["imageGenerationChatbotModel"].ToString(),
             Temperature = float.Parse(chatSessionConfigurationDocument.Data["temperature"].ToString() ?? "0.0"),
             SystemInstruction = chatSessionConfigurationDocument.Data["systemInstruction"].ToString(),
-            TextStream = bool.Parse(chatSessionConfigurationDocument.Data["textStream"].ToString() ?? "false")
+            TextStream = bool.Parse(chatSessionConfigurationDocument.Data["textStream"].ToString() ?? "false"),
+            ImageSize = chatSessionConfigurationDocument.Data["imageSize"].ToString(),
+            ImagesToGenerate = int.Parse(chatSessionConfigurationDocument.Data["imagesToGenerate"].ToString() ?? "1")
         };
 
         return chatSessionConfigurationDto;

@@ -9,8 +9,9 @@ namespace SmartBlaze.Backend.Models;
 public class ChatGpt : Chatbot
 {
     public ChatGpt(string name, 
-        List<TextGenerationChatbotModel> textGenerationChatbotModels, List<ImageGenerationChatbotModel> imageGenerationChatbotModels) 
-        : base(name, textGenerationChatbotModels, imageGenerationChatbotModels)
+        List<TextGenerationChatbotModel> textGenerationChatbotModels, List<ImageGenerationChatbotModel> imageGenerationChatbotModels,
+        bool supportImageGeneration) 
+        : base(name, textGenerationChatbotModels, imageGenerationChatbotModels, supportImageGeneration)
     {
     }
 
@@ -347,11 +348,20 @@ public class ChatGpt : Chatbot
     public override async Task<AssistantMessageInfoDto> GenerateImage(ImageGenerationRequestData imageGenerationRequestData,
         HttpClient httpClient)
     {
+        if (!SupportImageGeneration)
+        {
+            return new AssistantMessageInfoDto()
+            {
+                Status = "error",
+                Text = "Currently, ChatGPT is not able to generate images"
+            };
+        }
+        
         int n;
         string size;
 
-        if (imageGenerationRequestData.ChatbotModel.AcceptMultipleImagesGenerationAtOnce &&
-            imageGenerationRequestData.N <= imageGenerationRequestData.ChatbotModel.MaxNumberOfGeneratedImagesAtOnce)
+        if (imageGenerationRequestData.ChatbotModel.AcceptMultipleImagesGeneration &&
+            imageGenerationRequestData.N <= imageGenerationRequestData.ChatbotModel.MaxImagesGenerated)
         {
             n = imageGenerationRequestData.N;
         }

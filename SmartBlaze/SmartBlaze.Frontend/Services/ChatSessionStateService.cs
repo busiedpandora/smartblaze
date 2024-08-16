@@ -118,19 +118,12 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
 
         var chatSessionConfiguration =
             JsonSerializer.Deserialize<ChatSessionConfigurationDto>(chatSessionConfigurationResponseContent);
-
-        if (chatSessionConfiguration is not null)
-        {
-            var chatbot = _settingsService.GetChatbot(chatSessionConfiguration.ChatbotName);
-            _settingsService.ChatbotSelectedInCurrentChatSession = chatbot;
-
-            var chatbotModel =
-                _settingsService.GetTextGenerationChatbotModel(chatbot,
-                    chatSessionConfiguration.TextGenerationChatbotModel);
-            _settingsService.ChatbotModelSelectedInCurrentChatSession = chatbotModel; //to switch when to image generation
-        }
-
+        
         _currentChatSessionConfiguration = chatSessionConfiguration;
+        
+        var chatbot = _settingsService.GetChatbot(_currentChatSessionConfiguration?.ChatbotName);
+        _settingsService.ChatbotSelectedInCurrentChatSession = chatbot;
+        SwitchToTextGeneration();
         
         var response = await HttpClient.GetAsync($"chat-session/{newSelectedChatSession.Id}/messages");
         var responseContent = await response.Content.ReadAsStringAsync();
@@ -311,6 +304,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             ChatbotModel = _currentChatSessionConfiguration.ImageGenerationChatbotModel,
             ApiHost = chatbotDefaultConfiguration.ApiHost,
             ApiKey = chatbotDefaultConfiguration.ApiKey,
+            ImageSize = _currentChatSessionConfiguration.ImageSize,
+            ImagesToGenerate = _currentChatSessionConfiguration.ImagesToGenerate
         };
 
         var assistantMessage = await GenerateAssistantImageMessage(chatSessionInfoDto);
@@ -372,7 +367,9 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             ImageGenerationChatbotModel = _settingsService.ChatbotDefaultConfigurationSelected.ImageGenerationChatbotModel,
             Temperature = _settingsService.ChatbotDefaultConfigurationSelected.Temperature,
             SystemInstruction = _settingsService.ChatSessionDefaultConfiguration.SystemInstruction,
-            TextStream = _settingsService.ChatSessionDefaultConfiguration.TextStream
+            TextStream = _settingsService.ChatSessionDefaultConfiguration.TextStream,
+            ImageSize = _settingsService.ChatSessionDefaultConfiguration.ImageSize,
+            ImagesToGenerate = _settingsService.ChatSessionDefaultConfiguration.ImagesToGenerate
         };
 
         var chatSessionConfigurationResponse = await HttpClient.PostAsJsonAsync($"configuration/chat-session/{chatSessionDto.Id}", 
@@ -430,7 +427,9 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             ImageGenerationChatbotModel = chatSessionSettings.ImageGenerationChatbotModel,
             Temperature = chatSessionSettings.Temperature,
             SystemInstruction = chatSessionSettings.SystemInstruction,
-            TextStream = chatSessionSettings.TextStream
+            TextStream = chatSessionSettings.TextStream,
+            ImageSize = chatSessionSettings.ImageSize,
+            ImagesToGenerate = chatSessionSettings.ImagesToGenerate
         };
 
         var title = chatSessionSettings.Title.Trim();
@@ -467,14 +466,12 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         _currentChatSessionConfiguration.Temperature = chatSessionSettings.Temperature;
         _currentChatSessionConfiguration.SystemInstruction = chatSessionSettings.SystemInstruction;
         _currentChatSessionConfiguration.TextStream = chatSessionSettings.TextStream;
+        _currentChatSessionConfiguration.ImageSize = chatSessionSettings.ImageSize;
+        _currentChatSessionConfiguration.ImagesToGenerate = chatSessionSettings.ImagesToGenerate;
         
-        var chatbot = _settingsService.GetChatbot(_currentChatSessionConfiguration.ChatbotName);
+        var chatbot = _settingsService.GetChatbot(_currentChatSessionConfiguration?.ChatbotName);
         _settingsService.ChatbotSelectedInCurrentChatSession = chatbot;
-
-        var chatbotModel =
-            _settingsService.GetTextGenerationChatbotModel(chatbot,
-                _currentChatSessionConfiguration.TextGenerationChatbotModel);
-        _settingsService.ChatbotModelSelectedInCurrentChatSession = chatbotModel;
+        SwitchToTextGeneration();
         
         _isChatSessionBeingEdited = false;
         NotifyNavigateToPage("/");
@@ -587,12 +584,28 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
 
     public void SwitchToTextGeneration()
     {
+        var chatbot = _settingsService.ChatbotSelectedInCurrentChatSession;
+
+        var chatbotModel =
+            _settingsService.GetTextGenerationChatbotModel(chatbot,
+                _currentChatSessionConfiguration?.TextGenerationChatbotModel);
+            
+        _settingsService.ChatbotModelSelectedInCurrentChatSession = chatbotModel;
+        
         _currentGenerationType = "text";
         NotifyRefreshView();
     }
 
     public void SwitchToImageGeneration()
     {
+        var chatbot = _settingsService.ChatbotSelectedInCurrentChatSession;
+
+        var chatbotModel =
+            _settingsService.GetImageGenerationChatbotModel(chatbot,
+                _currentChatSessionConfiguration?.ImageGenerationChatbotModel);
+            
+        _settingsService.ChatbotModelSelectedInCurrentChatSession = chatbotModel;
+        
         _currentGenerationType = "image";
         NotifyRefreshView();
     }

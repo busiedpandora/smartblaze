@@ -108,6 +108,11 @@
 
     private async void OnNewChatClicked()
     {
+        if (_settingsService.SettingsPageOpen)
+        {
+            _settingsService.CloseSettings();
+        }
+        
         await _chatSessionStateService.CreateNewChatSession();
     }
 

@@ -111,6 +111,34 @@
             <InputCheckbox id="textStream" class="form-check" @bind-Value="_chatSessionSettings.TextStream"></InputCheckbox>
         </div>
 
+        @if (_imageGenerationChatbotModel?.AcceptImageSize == true)
+        {
+        <div class="mb-4">
+            <label for="imageSize" class="form-label">Image Resolution (For Image Generation)</label>
+            <div class="col-2">
+                <InputSelect id="imageSize" class="form-select" @bind-Value="_chatSessionSettings.ImageSize">
+                    @foreach (var imageSize in _imageGenerationChatbotModel.ImageSizeSupport)
+                    {
+                    <option value="@imageSize">@imageSize</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        }
+
+        @if (_imageGenerationChatbotModel?.AcceptMultipleImagesGeneration == true)
+        {
+        <div class="mb-4">
+            <label for="imagesToGenerate" class="form-label">Images to generate (For Image Generation)</label>
+            <div class="col-2">
+                <InputNumber id="imagesToGenerate"  Step="1" class="form-control"
+                             Min="1" Max="@_imageGenerationChatbotModel.MaxImagesGenerated"
+                             @bind-Value="_chatSessionSettings.ImagesToGenerate">
+                </InputNumber>
+            </div>
+        </div>
+        }
+
         <div class="mt-5">
             <button class="btn btn-primary" type="button" @onclick="OnCancelClicked">
                 Cancel
@@ -134,11 +162,10 @@
     private ChatbotModelDto? _imageGenerationChatbotModel;
     
     private ChatSessionSettings _chatSessionSettings = new();
-
-    //private float _chatbotMinTemperature;
-    //private float _chatbotMaxTemperature;
+    
     private float _badgeTemperature;
 
+    
     protected override Task OnInitializedAsync()
     {
         if (!_applicationStarted)
@@ -169,84 +196,47 @@
             _chatSessionSettings.Temperature = currentChatSessionConfiguration.Temperature;
             _chatSessionSettings.SystemInstruction = currentChatSessionConfiguration.SystemInstruction ?? "";
             _chatSessionSettings.TextStream = currentChatSessionConfiguration.TextStream;
+            _chatSessionSettings.ImageSize = currentChatSessionConfiguration.ImageSize ?? "";
+            _chatSessionSettings.ImagesToGenerate = currentChatSessionConfiguration.ImagesToGenerate;
 
             _badgeTemperature = currentChatSessionConfiguration.Temperature;
         }
-        
-        /*
-        var chatSession = _chatSessionStateService.CurrentChatSession;
-        var chatSessionConfiguration = _chatSessionStateService.CurrentChatSessionConfiguration;
-
-        if (chatSession is not null && chatSessionConfiguration is not null)
-        {
-            _chatSessionSettings.Title = chatSession.Title ?? "";
-            _chatSessionSettings.ChatbotName = chatSessionConfiguration.ChatbotName ?? "";
-            _chatSessionSettings.TextGenerationChatbotModel = chatSessionConfiguration.TextGenerationChatbotModel ?? "";
-            _chatSessionSettings.ImageGenerationChatbotModel = chatSessionConfiguration.ImageGenerationChatbotModel ?? "";
-            
-            var chatbot = _settingsService.Chatbots?.Find(c => c.Name == chatSessionConfiguration.ChatbotName);
-
-            if (chatbot is not null)
-            {
-                _chatSessionSettings.TextGenerationChatbotModels = chatbot.TextGenerationModels;
-                _chatSessionSettings.ImageGenerationChatbotModels = chatbot.ImageGenerationModels;
-                _chatbotMinTemperature = chatbot.MinTemperature;
-                _chatbotMaxTemperature = chatbot.Maxtemperature;
-            }
-
-            _chatSessionSettings.Temperature = chatSessionConfiguration.Temperature;
-            
-            _chatSessionSettings.SystemInstruction = chatSessionConfiguration.SystemInstruction ?? "";
-            _chatSessionSettings.TextStream = chatSessionConfiguration.TextStream;
-
-            _badgeTemperature = chatSessionConfiguration.Temperature;
-        }*/
         
         return base.OnInitializedAsync();
     }
     
     private void OnChatbotSelected(string chatbotName)
     {
-        /*
-        var chatbotSelected = _settingsService.Chatbots?.Find(c => c.Name == chatbotName);
-
-        if (chatbotSelected is not null)
+        if (chatbotName == _settingsService.ChatbotSelectedInCurrentChatSession?.Name)
         {
-            _chatSessionSettings.ChatbotName = chatbotSelected.Name;
-            _chatSessionSettings.TextGenerationChatbotModels = chatbotSelected.TextGenerationModels;
-            _chatSessionSettings.ImageGenerationChatbotModels = chatbotSelected.ImageGenerationModels;
-            _chatSessionSettings.TextGenerationChatbotModel = chatbotSelected.TextGenerationModel;
-            _chatSessionSettings.ImageGenerationChatbotModel = chatbotSelected.ImageGenerationModel;
-            _chatSessionSettings.Temperature = chatbotSelected.Temperature;
-
-            _badgeTemperature = chatbotSelected.Temperature;
-        }*/
-        
-        _selectedChatbot = _settingsService.GetChatbot(chatbotName);
-        
-        if (_selectedChatbot?.TextGenerationChatbotModels.Count > 0)
-        {
-            _textGenerationChatbotModel = _selectedChatbot?.TextGenerationChatbotModels[0];
+            _selectedChatbot = _settingsService.ChatbotSelectedInCurrentChatSession;
+            var selectedChatbotConfiguration = _chatSessionStateService.CurrentChatSessionConfiguration;
+            
+            _textGenerationChatbotModel = _settingsService.GetTextGenerationChatbotModel(_selectedChatbot, 
+                selectedChatbotConfiguration?.TextGenerationChatbotModel);
             _chatSessionSettings.TextGenerationChatbotModel = _textGenerationChatbotModel?.Name ?? "";
-        }
-        else
-        {
-            _textGenerationChatbotModel = null;
-            _chatSessionSettings.TextGenerationChatbotModel = "";
-        }
 
-        if (_selectedChatbot?.ImageGenerationChatbotModels.Count > 0)
-        {
-            _imageGenerationChatbotModel = _selectedChatbot?.ImageGenerationChatbotModels[0];
+            _imageGenerationChatbotModel = _settingsService.GetImageGenerationChatbotModel(_selectedChatbot, 
+                selectedChatbotConfiguration?.ImageGenerationChatbotModel);
             _chatSessionSettings.ImageGenerationChatbotModel = _imageGenerationChatbotModel?.Name ?? "";
+
+            _chatSessionSettings.ChatbotName = chatbotName;
         }
         else
         {
-            _imageGenerationChatbotModel = null;
-            _chatSessionSettings.ImageGenerationChatbotModel = "";
-        }
+            _selectedChatbot = _settingsService.GetChatbot(chatbotName);
+            var selectedChatbotDefaultConfiguration = _settingsService.GetChatbotDefaultConfiguration(chatbotName);
+            
+            _textGenerationChatbotModel = _settingsService.GetTextGenerationChatbotModel(_selectedChatbot, 
+                selectedChatbotDefaultConfiguration?.TextGenerationChatbotModel);
+            _chatSessionSettings.TextGenerationChatbotModel = _textGenerationChatbotModel?.Name ?? "";
 
-        _chatSessionSettings.ChatbotName = chatbotName;
+            _imageGenerationChatbotModel = _settingsService.GetImageGenerationChatbotModel(_selectedChatbot, 
+                selectedChatbotDefaultConfiguration?.ImageGenerationChatbotModel);
+            _chatSessionSettings.ImageGenerationChatbotModel = _imageGenerationChatbotModel?.Name ?? "";
+
+            _chatSessionSettings.ChatbotName = chatbotName;
+        }
     }
     
     private void OnTextGenerationChatbotModelSelected(string chatbotModel)

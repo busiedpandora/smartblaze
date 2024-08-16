@@ -9,13 +9,17 @@ public abstract class Chatbot
     private List<TextGenerationChatbotModel> _textGenerationChatbotModels;
     private List<ImageGenerationChatbotModel> _imageGenerationChatbotModels;
 
+    private bool _supportImageGeneration;
+
     
     protected Chatbot(string name, 
-        List<TextGenerationChatbotModel> textGenerationChatbotModels, List<ImageGenerationChatbotModel> imageGenerationChatbotModels)
+        List<TextGenerationChatbotModel> textGenerationChatbotModels, List<ImageGenerationChatbotModel> imageGenerationChatbotModels,
+        bool supportImageGeneration)
     {
         _name = name;
         _textGenerationChatbotModels = textGenerationChatbotModels;
         _imageGenerationChatbotModels = imageGenerationChatbotModels;
+        _supportImageGeneration = supportImageGeneration;
     }
 
     public string Name => _name;
@@ -23,6 +27,8 @@ public abstract class Chatbot
     public List<TextGenerationChatbotModel> TextGenerationChatbotModels => _textGenerationChatbotModels;
 
     public List<ImageGenerationChatbotModel> ImageGenerationChatbotModels => _imageGenerationChatbotModels;
+
+    public bool SupportImageGeneration => _supportImageGeneration;
 
     public abstract Task<AssistantMessageInfoDto> GenerateText(TextGenerationRequestData textGenerationRequestData, HttpClient httpClient);
     

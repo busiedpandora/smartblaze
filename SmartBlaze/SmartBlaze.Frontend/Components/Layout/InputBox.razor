@@ -19,10 +19,9 @@
             @if (!_imageUrlInputActive && !_imageFileInputActive && !_textFileInputActive)
             {
                 <div class="row">
-                    @if (_chatSessionStateService.CurrentGenerationType == "text")
+                    
+                    @if (_settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptUrlImageInput == true)
                     {
-                        @if (_settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptUrlImageInput == true)
-                        {
                             <div class="col-auto px-1">
                                 <button class="btn btn-light button-double-image" data-bs-toggle="tooltip" data-bs-title="Insert image URL"
                                         @onclick="ShowImageUrlInput">
@@ -30,9 +29,9 @@
                                     <img src="icons/link.svg" alt="image file icon" class="left-image"/>
                                 </button>
                             </div>
-                        }
-                        @if (_settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptBase64ImageInput == true)
-                        {
+                    }
+                    @if (_settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptBase64ImageInput == true)
+                    {
                             <div class="col-auto px-1">
                                 <button class="btn btn-light button-double-image" data-bs-toggle="tooltip" data-bs-title="Attach image file"
                                         @onclick="ShowImageFileInput">
@@ -40,7 +39,9 @@
                                     <img src="icons/paperclip.svg" alt="image file icon" class="left-image"/>
                                 </button>
                             </div>
-                        }
+                    }
+                    @if (_settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptTextFileInput == true)
+                    {
                         <div class="col-auto px-1">
                             <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-title="Attach file"
                                     @onclick="ShowTextFileInput">
@@ -57,7 +58,8 @@
                             </button>
                         </div>
                     }
-                    @if (_chatSessionStateService.CurrentGenerationType == "text")
+                    @if (_settingsService.ChatbotSelectedInCurrentChatSession?.SupportImageGeneration == true
+                         && _chatSessionStateService.CurrentGenerationType == "text")
                     {
                         <div class="col-auto px-1 ms-auto">
                             <button class="btn btn-light"

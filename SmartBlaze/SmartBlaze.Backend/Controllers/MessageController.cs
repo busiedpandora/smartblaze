@@ -319,8 +319,8 @@ public class MessageController : ControllerBase
             ChatbotModel = chatbotModel,
             ApiHost = chatSessionInfoDto.ApiHost,
             ApiKey = chatSessionInfoDto.ApiKey,
-            ImageSize = "1024x1024",
-            N = 1
+            ImageSize = chatSessionInfoDto.ImageSize,
+            N = chatSessionInfoDto.ImagesToGenerate
         };
 
         var assistantMessageInfo = await _chatbotService.GenerateImageInChatSession(chatbot, imageGenerationRequestData);

@@ -55,41 +55,43 @@ public class ChatbotService
     {
         var chatGpt = new ChatGpt("ChatGPT",
             [
-                new TextGenerationChatbotModel("gpt-4o", true, true, 
-                0.0f, 2.0f, true, true, 
+                new TextGenerationChatbotModel("gpt-4o", true, true, true, 
+                true, true, 0.0f, 2.0f, 
                 true, 100, true),
-                new TextGenerationChatbotModel("gpt-4-turbo", true, true, 
-                    0.0f, 2.0f, true, true, 
+                new TextGenerationChatbotModel("gpt-4-turbo", true, true, true, 
+                    true, true, 0.0f, 2.0f, 
                     true, 100, true),
-                new TextGenerationChatbotModel("gpt-4", true, true, 
-                    0.0f, 2.0f, true, true, 
+                new TextGenerationChatbotModel("gpt-4", true, true, true, 
+                    true, true, 0.0f, 2.0f, 
                     true, 100, true),
-                new TextGenerationChatbotModel("gpt-3.5-turbo", true, true, 
-                    0.0f, 2.0f, true, true, 
+                new TextGenerationChatbotModel("gpt-3.5-turbo", true, true, true, 
+                    true, true, 0.0f, 2.0f, 
                     true, 100, true)
             ],
             [
                 new ImageGenerationChatbotModel("dall-e-3", false, 
-                    false, true, ["1024x1024", "1024x1792", "1792x1024"], 
+                    false, false, true, ["1024x1024", "1024x1792", "1792x1024"], 
                     false, 1),
                 new ImageGenerationChatbotModel("dall-e-2", false, 
-                    false, false, ["1024x1024"], 
+                    false, false, false, [], 
                     true, 10)
-            ]);
+            ],
+            true);
         
         _chatbots.Add(chatGpt);
         
         
         var gemini = new Gemini("Google Gemini",
             [
-                new TextGenerationChatbotModel("gemini-1.5-pro", true, true, 
-                    0.0f, 2.0f, true, true, 
+                new TextGenerationChatbotModel("gemini-1.5-pro", true, false, 
+                    true, true, true, 0.0f, 2.0f, 
                     true, 400, true),
-                new TextGenerationChatbotModel("gemini-1.5-flash", true, true, 
-                    0.0f, 2.0f, true, true, 
+                new TextGenerationChatbotModel("gemini-1.5-flash", true, false, 
+                    true, true, true, 0.0f, 2.0f, 
                     true, 400, true),
             ],
-            []
+            [],
+            false
         );
         
         _chatbots.Add(gemini);

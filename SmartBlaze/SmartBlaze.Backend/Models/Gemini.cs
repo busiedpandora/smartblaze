@@ -351,7 +351,7 @@ public class Gemini : Chatbot
         
             var chatResponseMessage = await httpClient.SendAsync(httpRequest);
             var chatResponseMessageContent = await chatResponseMessage.Content.ReadAsStringAsync();
-
+            
             if (!chatResponseMessage.IsSuccessStatusCode)
             {
                 return new AssistantMessageInfoDto
@@ -372,7 +372,7 @@ public class Gemini : Chatbot
                     return new AssistantMessageInfoDto
                     {
                         Status = "ok",
-                        Text = candidate.Content.Parts[0].Text
+                        Text = candidate.Content.Parts[0].Text?.Trim()
                     };
                 }
             }

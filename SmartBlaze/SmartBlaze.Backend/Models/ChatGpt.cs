@@ -543,7 +543,7 @@ public class ChatGpt : Chatbot
                     return new AssistantMessageInfoDto
                     {
                         Status = "ok",
-                        Text = message.Contents
+                        Text = message.Contents?.Trim()
                     };
                 }
             }

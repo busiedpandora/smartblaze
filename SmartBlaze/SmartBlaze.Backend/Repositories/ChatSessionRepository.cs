@@ -47,7 +47,7 @@ public class ChatSessionRepository : AbstractRepository
         return ConvertToChatSession(csd);
     }
 
-    public async Task<ChatSessionDto> EditChatSession(ChatSessionDto chatSessionDto)
+    public async Task EditChatSession(ChatSessionDto chatSessionDto)
     {
         if (string.IsNullOrEmpty(chatSessionDto.Id))
         {
@@ -62,8 +62,6 @@ public class ChatSessionRepository : AbstractRepository
         
         var csd = await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatSessionCollectionId, 
             chatSessionDto.Id, chatSessionDocument);
-
-        return ConvertToChatSession(csd);
     }
     
     private ChatSessionDto ConvertToChatSession(Document chatSessionDocument)

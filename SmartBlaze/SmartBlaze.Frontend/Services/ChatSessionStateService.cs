@@ -313,6 +313,11 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             ImageSize = _currentChatSessionConfiguration.ImageSize,
             ImagesToGenerate = _currentChatSessionConfiguration.ImagesToGenerate
         };
+        
+        if (_currentChatSessionMessages.Count == 1)
+        {
+            await EntitleChatSessionFromUserMessage(chatSessionInfoDto);
+        }
 
         var assistantMessage = await GenerateAssistantImageMessage(chatSessionInfoDto);
         _currentChatSessionMessages.Add(assistantMessage);

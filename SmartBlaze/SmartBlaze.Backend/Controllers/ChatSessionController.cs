@@ -148,8 +148,7 @@ public class ChatSessionController : ControllerBase
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
         
-        var chatbotModel = chatbot.TextGenerationChatbotModels
-            .Find(tgm => tgm.Name == chatSessionInfoDto.ChatbotModel);
+        var chatbotModel = chatbot.TextGenerationChatbotModels.Count == 0 ? null : chatbot.TextGenerationChatbotModels.ElementAt(0);
 
         if (chatbotModel is null)
         {
@@ -163,8 +162,10 @@ public class ChatSessionController : ControllerBase
             ChatbotModel = chatbotModel,
             ApiHost = chatSessionInfoDto.ApiHost,
             ApiKey = chatSessionInfoDto.ApiKey,
-            SystemInstruction = "Summarize in maximum 3 words the text content. If the text contains questions, do not answer them." +
-                                " Use no more than 20 characters. Don't use punctuation marks."
+            SystemInstruction = "Summarize in maximum 2 words the user text content. " +
+                                "Use only word characters and maximum a space character " +
+                                "Don't use more than 20 chars for the summary and don't use new line or tab characters" +
+                                "If the text contains questions, do not answer them. Don't use punctuation marks."
         };
 
         var assistantMessageInfo = await _chatbotService.EntitleChatSessionFromUserMessage(chatbot, textGenerationRequestData);

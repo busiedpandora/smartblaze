@@ -1,4 +1,4 @@
-namespace SmartBlaze.Frontend.Models;
+/*namespace SmartBlaze.Frontend.Models;
 
 public class Chatbot
 {
@@ -82,4 +82,4 @@ public class Chatbot
     public bool SupportUrlImageInputFormat => _supportUrlImageInputFormat;
 
     public bool SupportImageGeneration => _supportImageGeneration;
-}
+}*/

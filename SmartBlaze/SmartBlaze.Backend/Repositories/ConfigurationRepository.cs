@@ -27,6 +27,24 @@ public class ConfigurationRepository : AbstractRepository
         return chatbotDefaultConfiguration;
     }
     
+    /*public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration()
+    {
+        var chatbotDefaultConfigurationDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId,
+            ChatbotDefaultConfigurationCollectionId);
+        
+        var chatbotDefaultConfigurationDocument = chatbotDefaultConfigurationDocuments.Documents.Count > 0 
+            ? chatbotDefaultConfigurationDocuments.Documents.First() : null;
+
+        if (chatbotDefaultConfigurationDocument is null)
+        {
+            return null;
+        }
+        
+        var chatbotDefaultConfiguration = ConvertToChatbotDefaultConfiguration(chatbotDefaultConfigurationDocument);
+
+        return chatbotDefaultConfiguration;
+    }*/
+    
     public async Task<ChatbotDefaultConfigurationDto?> GetSelectedChatbotDefaultConfiguration()
     {
         var chatbotDefaultConfigurationDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId,
@@ -57,14 +75,8 @@ public class ConfigurationRepository : AbstractRepository
             { "imageGenerationChatbotModel", chatbotDefaultConfigurationDto.ImageGenerationChatbotModel ?? ""},
             { "apiHost", chatbotDefaultConfigurationDto.ApiHost ?? ""},
             { "apiKey", chatbotDefaultConfigurationDto.ApiKey ?? ""},
-            { "selected", chatbotDefaultConfigurationDto.Selected },
-            { "textStreamDelay", chatbotDefaultConfigurationDto.TextStreamDelay },
             { "temperature" , chatbotDefaultConfigurationDto.Temperature },
-            { "minTemperature", chatbotDefaultConfigurationDto.MinTemperature },
-            { "maxTemperature", chatbotDefaultConfigurationDto.MaxTemperature },
-            { "supportBase64ImageInputFormat", chatbotDefaultConfigurationDto.SupportBase64ImageInputFormat},
-            { "supportUrlImageInputFormat", chatbotDefaultConfigurationDto.SupportUrlImageInputFormat},
-            { "supportImageGeneration", chatbotDefaultConfigurationDto.SupportImageGeneration}
+            { "selected", chatbotDefaultConfigurationDto.Selected}
         };
 
         await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
@@ -85,14 +97,8 @@ public class ConfigurationRepository : AbstractRepository
             { "imageGenerationChatbotModel", chatbotDefaultConfigurationDto.ImageGenerationChatbotModel ?? ""},
             { "apiHost", chatbotDefaultConfigurationDto.ApiHost ?? ""},
             { "apiKey", chatbotDefaultConfigurationDto.ApiKey ?? ""},
-            { "selected", chatbotDefaultConfigurationDto.Selected},
-            { "textStreamDelay", chatbotDefaultConfigurationDto.TextStreamDelay },
             { "temperature" , chatbotDefaultConfigurationDto.Temperature },
-            { "minTemperature", chatbotDefaultConfigurationDto.MinTemperature },
-            { "maxTemperature", chatbotDefaultConfigurationDto.MaxTemperature },
-            { "supportBase64ImageInputFormat", chatbotDefaultConfigurationDto.SupportBase64ImageInputFormat},
-            { "supportUrlImageInputFormat", chatbotDefaultConfigurationDto.SupportUrlImageInputFormat},
-            { "supportImageGeneration", chatbotDefaultConfigurationDto.SupportImageGeneration}
+            { "selected", chatbotDefaultConfigurationDto.Selected}
         };
         
         await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
@@ -122,7 +128,9 @@ public class ConfigurationRepository : AbstractRepository
         var chatSessionDefaultConfigurationDocument = new Dictionary<string, object>()
         {
             { "systemInstruction", chatSessionDefaultConfigurationDto.SystemInstruction ?? "" },
-            { "textStream", chatSessionDefaultConfigurationDto.TextStream}
+            { "textStream", chatSessionDefaultConfigurationDto.TextStream},
+            { "imageSize", chatSessionDefaultConfigurationDto.ImageSize ?? ""},
+            { "imagesToGenerate", chatSessionDefaultConfigurationDto.ImagesToGenerate}
         };
 
         await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatSessionDefaultConfigurationCollectionId,
@@ -139,7 +147,10 @@ public class ConfigurationRepository : AbstractRepository
         var chatSessionConfigurationDocument = new Dictionary<string, object>()
         {
             { "systemInstruction", chatSessionDefaultConfigurationDto.SystemInstruction ?? "" },
-            { "textStream", chatSessionDefaultConfigurationDto.TextStream}
+            { "textStream", chatSessionDefaultConfigurationDto.TextStream},
+            { "imageSize", chatSessionDefaultConfigurationDto.ImageSize ?? ""},
+            { "imagesToGenerate", chatSessionDefaultConfigurationDto.ImagesToGenerate}
+            
         };
 
         await AppwriteDatabase.UpdateDocument(AppwriteDatabaseId, ChatSessionDefaultConfigurationCollectionId,
@@ -173,6 +184,8 @@ public class ConfigurationRepository : AbstractRepository
             { "temperature", chatSessionConfigurationDto.Temperature },
             { "systemInstruction", chatSessionConfigurationDto.SystemInstruction ?? ""},
             { "textStream", chatSessionConfigurationDto.TextStream },
+            { "imageSize", chatSessionConfigurationDto.ImageSize ?? ""},
+            { "imagesToGenerate", chatSessionConfigurationDto.ImagesToGenerate},
             { "chatSession", chatSessionId}
         };
 
@@ -195,6 +208,8 @@ public class ConfigurationRepository : AbstractRepository
             { "temperature", chatSessionConfigurationDto.Temperature },
             { "systemInstruction", chatSessionConfigurationDto.SystemInstruction ?? ""},
             { "textStream", chatSessionConfigurationDto.TextStream },
+            { "imageSize", chatSessionConfigurationDto.ImageSize ?? ""},
+            { "imagesToGenerate", chatSessionConfigurationDto.ImagesToGenerate},
             { "chatSession", chatSessionId}
         };
 
@@ -218,14 +233,8 @@ public class ConfigurationRepository : AbstractRepository
             ImageGenerationChatbotModel = chatbotDefaultConfigurationDocument.Data["imageGenerationChatbotModel"].ToString(),
             ApiHost = chatbotDefaultConfigurationDocument.Data["apiHost"].ToString(),
             ApiKey = chatbotDefaultConfigurationDocument.Data["apiKey"].ToString(),
-            Selected = bool.Parse(chatbotDefaultConfigurationDocument.Data["selected"].ToString() ?? "false"),
-            TextStreamDelay = int.Parse(chatbotDefaultConfigurationDocument.Data["textStreamDelay"].ToString() ?? "100"),
             Temperature = float.Parse(chatbotDefaultConfigurationDocument.Data["temperature"].ToString() ?? "0.0"),
-            MinTemperature = float.Parse(chatbotDefaultConfigurationDocument.Data["minTemperature"].ToString() ?? "0.0"),
-            MaxTemperature = float.Parse(chatbotDefaultConfigurationDocument.Data["maxTemperature"].ToString() ?? "0.0"),
-            SupportBase64ImageInputFormat = bool.Parse(chatbotDefaultConfigurationDocument.Data["supportBase64ImageInputFormat"].ToString() ?? "false"),
-            SupportUrlImageInputFormat = bool.Parse(chatbotDefaultConfigurationDocument.Data["supportUrlImageInputFormat"].ToString() ?? "false"),
-            SupportImageGeneration = bool.Parse(chatbotDefaultConfigurationDocument.Data["supportImageGeneration"].ToString() ?? "false")
+            Selected = bool.Parse(chatbotDefaultConfigurationDocument.Data["selected"].ToString() ?? "false")
         };
 
         return chatbotDefaultConfigurationDto;
@@ -238,7 +247,9 @@ public class ConfigurationRepository : AbstractRepository
         {
             Id = chatSessionDefaultConfigurationDocument.Id,
             SystemInstruction = chatSessionDefaultConfigurationDocument.Data["systemInstruction"].ToString(),
-            TextStream = bool.Parse(chatSessionDefaultConfigurationDocument.Data["textStream"].ToString() ?? "false")
+            TextStream = bool.Parse(chatSessionDefaultConfigurationDocument.Data["textStream"].ToString() ?? "false"),
+            ImageSize = chatSessionDefaultConfigurationDocument.Data["imageSize"].ToString(),
+            ImagesToGenerate = int.Parse(chatSessionDefaultConfigurationDocument.Data["imagesToGenerate"].ToString() ?? "1")
         };
 
         return chatSessionDefaultConfigurationDto;
@@ -254,7 +265,9 @@ public class ConfigurationRepository : AbstractRepository
             ImageGenerationChatbotModel = chatSessionConfigurationDocument.Data["imageGenerationChatbotModel"].ToString(),
             Temperature = float.Parse(chatSessionConfigurationDocument.Data["temperature"].ToString() ?? "0.0"),
             SystemInstruction = chatSessionConfigurationDocument.Data["systemInstruction"].ToString(),
-            TextStream = bool.Parse(chatSessionConfigurationDocument.Data["textStream"].ToString() ?? "false")
+            TextStream = bool.Parse(chatSessionConfigurationDocument.Data["textStream"].ToString() ?? "false"),
+            ImageSize = chatSessionConfigurationDocument.Data["imageSize"].ToString(),
+            ImagesToGenerate = int.Parse(chatSessionConfigurationDocument.Data["imagesToGenerate"].ToString() ?? "1")
         };
 
         return chatSessionConfigurationDto;

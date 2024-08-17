@@ -8,16 +8,18 @@ namespace SmartBlaze.Backend.Models;
 
 public class ChatGpt : Chatbot
 {
-    public ChatGpt(string name, List<string> textGenerationModels, List<string> imageGenerationModels) 
-        : base(name, textGenerationModels, imageGenerationModels)
+    public ChatGpt(string name, 
+        List<TextGenerationChatbotModel> textGenerationChatbotModels, List<ImageGenerationChatbotModel> imageGenerationChatbotModels,
+        bool supportImageGeneration) 
+        : base(name, textGenerationChatbotModels, imageGenerationChatbotModels, supportImageGeneration)
     {
     }
 
-    public override async Task<AssistantMessageInfoDto> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
+    public override async Task<AssistantMessageInfoDto> GenerateText(TextGenerationRequestData textGenerationRequestData, HttpClient httpClient)
     { 
         List<Message> messages = new();
         
-        foreach (var messageDto in chatSessionInfoDto.Messages)
+        foreach (var messageDto in textGenerationRequestData.Messages)
         {
             if (messageDto.Role == "assistant")
             {
@@ -86,24 +88,41 @@ public class ChatGpt : Chatbot
             }
         }
 
-        if (!String.IsNullOrEmpty(chatSessionInfoDto.SystemInstruction))
+        if (textGenerationRequestData.ChatbotModel.AcceptSystemInstruction && 
+            !String.IsNullOrEmpty(textGenerationRequestData.SystemInstruction))
         {
             TextMessage systemInstructionMessage = new()
             {
                 Role = "system",
-                Contents = chatSessionInfoDto.SystemInstruction
+                Contents = textGenerationRequestData.SystemInstruction
             };
 
             messages.Insert(0, systemInstructionMessage);
         }
 
-        var chatRequest = new TextGenerationChatRequest
+        TextGenerationChatRequest chatRequest;
+
+        if (textGenerationRequestData.ChatbotModel.AcceptTemperature &&
+            textGenerationRequestData.Temperature >= textGenerationRequestData.ChatbotModel.MinTemperature &&
+            textGenerationRequestData.Temperature <= textGenerationRequestData.ChatbotModel.MaxTemperature)
         {
-            Model = chatSessionInfoDto.ChatbotModel,
-            Messages = (object[]) messages.ToArray(),
-            Stream = false,
-            Temperature = chatSessionInfoDto.Temperature
-        };
+            chatRequest = new TextGenerationChatRequest
+            {
+                Model = textGenerationRequestData.ChatbotModel.Name,
+                Messages = (object[]) messages.ToArray(),
+                Stream = false,
+                Temperature = textGenerationRequestData.Temperature
+            };
+        }
+        else
+        {
+            chatRequest = new TextGenerationChatRequest
+            {
+                Model = textGenerationRequestData.ChatbotModel.Name,
+                Messages = (object[]) messages.ToArray(),
+                Stream = false,
+            };
+        }
         
         var options = new JsonSerializerOptions
         {
@@ -115,10 +134,10 @@ public class ChatGpt : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{chatSessionInfoDto.ApiHost}/v1/chat/completions"),
+            RequestUri = new Uri($"{textGenerationRequestData.ApiHost}/v1/chat/completions"),
             Headers =
             {
-                { "Authorization", $"Bearer {chatSessionInfoDto.ApiKey}" },
+                { "Authorization", $"Bearer {textGenerationRequestData.ApiKey}" },
             },
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
@@ -158,12 +177,12 @@ public class ChatGpt : Chatbot
         };
     }
 
-    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto, 
+    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(TextGenerationRequestData textGenerationRequestData, 
         HttpClient httpClient)
     {
         List<Message> messages = new();
         
-        foreach (var messageDto in chatSessionInfoDto.Messages)
+        foreach (var messageDto in textGenerationRequestData.Messages)
         {
             if (messageDto.Role == "assistant")
             {
@@ -232,24 +251,41 @@ public class ChatGpt : Chatbot
             }
         }
         
-        if (!String.IsNullOrEmpty(chatSessionInfoDto.SystemInstruction))
+        if (textGenerationRequestData.ChatbotModel.AcceptSystemInstruction && 
+            !String.IsNullOrEmpty(textGenerationRequestData.SystemInstruction))
         {
             TextMessage systemInstructionMessage = new()
             {
                 Role = "system",
-                Contents = chatSessionInfoDto.SystemInstruction
+                Contents = textGenerationRequestData.SystemInstruction
             };
 
             messages.Insert(0, systemInstructionMessage);
         }
 
-        var chatRequest = new TextGenerationChatRequest
+        TextGenerationChatRequest chatRequest;
+
+        if (textGenerationRequestData.ChatbotModel.AcceptTemperature &&
+            textGenerationRequestData.Temperature >= textGenerationRequestData.ChatbotModel.MinTemperature &&
+            textGenerationRequestData.Temperature <= textGenerationRequestData.ChatbotModel.MaxTemperature)
         {
-            Model = chatSessionInfoDto.ChatbotModel,
-            Messages = (object[]) messages.ToArray(),
-            Stream = true,
-            Temperature = chatSessionInfoDto.Temperature
-        };
+            chatRequest = new TextGenerationChatRequest
+            {
+                Model = textGenerationRequestData.ChatbotModel.Name,
+                Messages = (object[]) messages.ToArray(),
+                Stream = false,
+                Temperature = textGenerationRequestData.Temperature
+            };
+        }
+        else
+        {
+            chatRequest = new TextGenerationChatRequest
+            {
+                Model = textGenerationRequestData.ChatbotModel.Name,
+                Messages = (object[]) messages.ToArray(),
+                Stream = false,
+            };
+        }
         
         var options = new JsonSerializerOptions
         {
@@ -261,10 +297,10 @@ public class ChatGpt : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{chatSessionInfoDto.ApiHost}/v1/chat/completions"),
+            RequestUri = new Uri($"{textGenerationRequestData.ApiHost}/v1/chat/completions"),
             Headers =
             {
-                { "Authorization", $"Bearer {chatSessionInfoDto.ApiKey}" },
+                { "Authorization", $"Bearer {textGenerationRequestData.ApiKey}" },
             },
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
@@ -309,14 +345,47 @@ public class ChatGpt : Chatbot
         }
     }
 
-    public override async Task<AssistantMessageInfoDto> GenerateImage(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
+    public override async Task<AssistantMessageInfoDto> GenerateImage(ImageGenerationRequestData imageGenerationRequestData,
+        HttpClient httpClient)
     {
+        if (!SupportImageGeneration)
+        {
+            return new AssistantMessageInfoDto()
+            {
+                Status = "error",
+                Text = "Currently, ChatGPT is not able to generate images"
+            };
+        }
+        
+        int n;
+        string size;
+
+        if (imageGenerationRequestData.ChatbotModel.AcceptMultipleImagesGeneration &&
+            imageGenerationRequestData.N <= imageGenerationRequestData.ChatbotModel.MaxImagesGenerated)
+        {
+            n = imageGenerationRequestData.N;
+        }
+        else
+        {
+            n = 1;
+        }
+
+        if (imageGenerationRequestData.ChatbotModel.AcceptImageSize && 
+            !string.IsNullOrEmpty(imageGenerationRequestData.ImageSize))
+        {
+            size = imageGenerationRequestData.ImageSize;
+        }
+        else
+        {
+            size = "1024x1024";
+        }
+        
         ImageGenerationChatRequest imageGenerationChatRequest = new()
         {
-            Model = chatSessionInfoDto.ChatbotModel,
-            Prompt = chatSessionInfoDto.LastUserMessage.Text,
-            N = 1,
-            Size = "1024x1024",
+            Model = imageGenerationRequestData.ChatbotModel.Name,
+            Prompt = imageGenerationRequestData.LastUserMessage.Text,
+            N = n,
+            Size = size,
             ResponseFormat = "url"
         };
         
@@ -333,7 +402,7 @@ public class ChatGpt : Chatbot
             RequestUri = new Uri($"https://api.openai.com/v1/images/generations"),
             Headers =
             {
-                { "Authorization", $"Bearer {chatSessionInfoDto.ApiKey}" },
+                { "Authorization", $"Bearer {imageGenerationRequestData.ApiKey}" },
             },
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
@@ -392,6 +461,101 @@ public class ChatGpt : Chatbot
         };
     }
 
+    public override async Task<AssistantMessageInfoDto> EntitleChatSession(TextGenerationRequestData textGenerationRequestData, HttpClient httpClient)
+    {
+        List<Message> messages = new();
+
+        if (textGenerationRequestData.Messages.Count > 0)
+        {
+            var userMessageDto = textGenerationRequestData.Messages.ElementAt(0);
+            
+            if (textGenerationRequestData.ChatbotModel.AcceptSystemInstruction)
+            {
+                TextMessage systemInstructionMessage = new()
+                {
+                    Role = "system",
+                    Contents = textGenerationRequestData.SystemInstruction
+                };
+
+                messages.Insert(0, systemInstructionMessage);
+            }
+            else
+            {
+                userMessageDto.Text = textGenerationRequestData.SystemInstruction + " Here is the text content: " +
+                                      userMessageDto.Text;
+            }
+            
+            TextMessage userMessage = new()
+            {
+                Contents = userMessageDto.Text,
+                Role = "user"
+            };
+            
+            messages.Add(userMessage);
+            
+            TextGenerationChatRequest chatRequest;
+
+            chatRequest = new TextGenerationChatRequest
+            {
+                Model = textGenerationRequestData.ChatbotModel.Name,
+                Messages = (object[]) messages.ToArray(),
+                Stream = false, 
+            };
+        
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+
+            var chatRequestJson = JsonSerializer.Serialize(chatRequest, options);
+            
+            var httpRequest = new HttpRequestMessage
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri($"{textGenerationRequestData.ApiHost}/v1/chat/completions"),
+                Headers =
+                {
+                    { "Authorization", $"Bearer {textGenerationRequestData.ApiKey}" },
+                },
+                Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
+            };
+        
+            var chatResponseMessage = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
+            var chatResponseMessageContent = await chatResponseMessage.Content.ReadAsStringAsync();
+            
+            if (!chatResponseMessage.IsSuccessStatusCode)
+            {
+                return new AssistantMessageInfoDto
+                {
+                    Status = "error",
+                    Text = chatResponseMessageContent
+                };
+            }
+            
+            TextGenerationChatResponse? chatResponse = JsonSerializer.Deserialize<TextGenerationChatResponse>(chatResponseMessageContent);
+        
+            if (chatResponse is not null && chatResponse.Choices is not null && chatResponse.Choices.Count > 0)
+            {
+                TextMessage? message = chatResponse.Choices[0].Message;
+
+                if (message is not null)
+                {
+                    return new AssistantMessageInfoDto
+                    {
+                        Status = "ok",
+                        Text = message.Contents?.Trim()
+                    };
+                }
+            }
+        }
+        
+        return new AssistantMessageInfoDto()
+        {
+            Status = "error",
+            Text = "No content has been generated"
+        };
+    }
+
     public override ChatbotDefaultConfigurationDto GetDefaultConfiguration()
     {
         return new ChatbotDefaultConfigurationDto()
@@ -401,14 +565,8 @@ public class ChatGpt : Chatbot
             ImageGenerationChatbotModel = "dall-e-3",
             ApiHost = "https://api.openai.com",
             ApiKey = "",
-            TextStreamDelay = 100,
             Selected = true,
-            Temperature = 1.0f,
-            MinTemperature = 0.0f,
-            MaxTemperature = 2.0f,
-            SupportBase64ImageInputFormat = true,
-            SupportUrlImageInputFormat = true,
-            SupportImageGeneration = true
+            Temperature = 1.0f
         };
     }
 

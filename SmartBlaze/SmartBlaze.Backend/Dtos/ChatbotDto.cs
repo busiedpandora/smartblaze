@@ -5,20 +5,14 @@ namespace SmartBlaze.Backend.Dtos;
 public class ChatbotDto
 {
     [JsonPropertyName("name")]
-    public string? Name { get; set; }
+    public required string Name { get; set; }
     
-    [JsonPropertyName("models")]
-    public List<string>? Models { get; set; }
+    [JsonPropertyName("textGenerationChatbotModels")]
+    public required List<ChatbotModelDto> TextGenerationChatbotModels { get; set; }
     
-    [JsonPropertyName("model")]
-    public string? Model { get; set; }
+    [JsonPropertyName("imageGenerationChatbotModels")]
+    public required List<ChatbotModelDto> ImageGenerationChatbotModels { get; set; }
     
-    [JsonPropertyName("apiHost")]
-    public string? ApiHost { get; set; }
-    
-    [JsonPropertyName("apiKey")]
-    public string? ApiKey { get; set; }
-    
-    [JsonPropertyName("selected")]
-    public bool? Selected { get; set; }
+    [JsonPropertyName("supportImageGeneration")]
+    public required bool SupportImageGeneration { get; set; }
 }

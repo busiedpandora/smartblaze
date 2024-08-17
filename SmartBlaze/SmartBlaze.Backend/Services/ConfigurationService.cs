@@ -19,7 +19,12 @@ public class ConfigurationService
         return await _configurationRepository.GetChatbotDefaultConfiguration(chatbotName);
     }
     
-    public async Task AddChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
+    /*public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration()
+    {
+        return await _configurationRepository.GetChatbotDefaultConfiguration();
+    }*/
+    
+    public async Task SaveChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
     {
         await _configurationRepository.SaveChatbotDefaultConfiguration(chatbotDefaultConfigurationDto);
     }
@@ -45,7 +50,9 @@ public class ConfigurationService
         return new ChatSessionDefaultConfigurationDto()
         {
             SystemInstruction = "You are a helpful assistant. You can help me by answering my questions.",
-            TextStream = false
+            TextStream = false,
+            ImageSize = "1024x1024",
+            ImagesToGenerate = 1
         };
     }
     

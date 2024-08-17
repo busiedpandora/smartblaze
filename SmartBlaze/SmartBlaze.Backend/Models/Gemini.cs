@@ -7,16 +7,18 @@ namespace SmartBlaze.Backend.Models;
 
 public class Gemini : Chatbot
 {
-    public Gemini(string name, List<string> textGenerationModels, List<string> imageGenerationModels) 
-        : base(name, textGenerationModels, imageGenerationModels)
+    public Gemini(string name, 
+        List<TextGenerationChatbotModel> textGenerationChatbotModels, List<ImageGenerationChatbotModel> imageGenerationChatbotModels,
+        bool supportImageGeneration) 
+        : base(name, textGenerationChatbotModels, imageGenerationChatbotModels, supportImageGeneration)
     {
     }
 
-    public override async Task<AssistantMessageInfoDto> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
+    public override async Task<AssistantMessageInfoDto> GenerateText(TextGenerationRequestData textGenerationRequestData, HttpClient httpClient)
     {
         var contents = new List<RequestContent>();
 
-        foreach (var messageDto in chatSessionInfoDto.Messages)
+        foreach (var messageDto in textGenerationRequestData.Messages)
         {
             List<Part> parts = new();
             
@@ -74,11 +76,12 @@ public class Gemini : Chatbot
             Contents = contents
         };
 
-        if (!String.IsNullOrEmpty(chatSessionInfoDto.SystemInstruction))
+        if (textGenerationRequestData.ChatbotModel.AcceptSystemInstruction && 
+            !String.IsNullOrEmpty(textGenerationRequestData.SystemInstruction))
         {
             TextPart textPart = new()
             {
-                Text = chatSessionInfoDto.SystemInstruction
+                Text = textGenerationRequestData.SystemInstruction
             };
             
             SystemInstruction systemInstruction = new SystemInstruction()
@@ -91,7 +94,7 @@ public class Gemini : Chatbot
         
         GenerationConfig generationConfig = new()
         {
-            Temperature = chatSessionInfoDto.Temperature
+            Temperature = textGenerationRequestData.Temperature
         };
 
         chatRequest.GenerationConfig = generationConfig;
@@ -101,8 +104,8 @@ public class Gemini : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{chatSessionInfoDto.ApiHost}/v1beta/models/" +
-                                 $"{chatSessionInfoDto.ChatbotModel}:generateContent?key={chatSessionInfoDto.ApiKey}"),
+            RequestUri = new Uri($"{textGenerationRequestData.ApiHost}/v1beta/models/" +
+                                 $"{textGenerationRequestData.ChatbotModel.Name}:generateContent?key={textGenerationRequestData.ApiKey}"),
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
         
@@ -141,12 +144,12 @@ public class Gemini : Chatbot
         };
     }
 
-    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto,
+    public override async IAsyncEnumerable<string> GenerateTextStreamEnabled(TextGenerationRequestData textGenerationRequestData,
         HttpClient httpClient)
     {
         var contents = new List<RequestContent>();
 
-        foreach (var messageDto in chatSessionInfoDto.Messages)
+        foreach (var messageDto in textGenerationRequestData.Messages)
         {
             List<Part> parts = new();
             
@@ -204,11 +207,12 @@ public class Gemini : Chatbot
             Contents = contents
         };
 
-        if (!String.IsNullOrEmpty(chatSessionInfoDto.SystemInstruction))
+        if (textGenerationRequestData.ChatbotModel.AcceptSystemInstruction && 
+            !String.IsNullOrEmpty(textGenerationRequestData.SystemInstruction))
         {
             TextPart textPart = new()
             {
-                Text = chatSessionInfoDto.SystemInstruction
+                Text = textGenerationRequestData.SystemInstruction
             };
             
             SystemInstruction systemInstruction = new SystemInstruction()
@@ -221,7 +225,7 @@ public class Gemini : Chatbot
 
         GenerationConfig generationConfig = new()
         {
-            Temperature = chatSessionInfoDto.Temperature
+            Temperature = textGenerationRequestData.Temperature
         };
 
         chatRequest.GenerationConfig = generationConfig;
@@ -231,8 +235,8 @@ public class Gemini : Chatbot
         var httpRequest = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
-            RequestUri = new Uri($"{chatSessionInfoDto.ApiHost}/v1beta/models/" +
-                                 $"{chatSessionInfoDto.ChatbotModel}:streamGenerateContent?key={chatSessionInfoDto.ApiKey}"),
+            RequestUri = new Uri($"{textGenerationRequestData.ApiHost}/v1beta/models/" +
+                                 $"{textGenerationRequestData.ChatbotModel.Name}:streamGenerateContent?key={textGenerationRequestData.ApiKey}"),
             Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
         };
         
@@ -266,12 +270,118 @@ public class Gemini : Chatbot
         }
     }
 
-    public override async Task<AssistantMessageInfoDto> GenerateImage(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient)
+    public override async Task<AssistantMessageInfoDto> GenerateImage(ImageGenerationRequestData imageGenerationRequestData, 
+        HttpClient httpClient)
     {
-        return new AssistantMessageInfoDto
+        if (!SupportImageGeneration)
+        {
+            return new AssistantMessageInfoDto()
+            {
+                Status = "error",
+                Text = "Currently, ChatGPT is not able to generate images"
+            };
+        }
+
+        return new AssistantMessageInfoDto()
+        {
+            Status = "ok"
+        };
+    }
+
+    public override async Task<AssistantMessageInfoDto> EntitleChatSession(TextGenerationRequestData textGenerationRequestData, HttpClient httpClient)
+    {
+        var contents = new List<RequestContent>();
+
+        if (textGenerationRequestData.Messages.Count > 0)
+        {
+            var userMessageDto = textGenerationRequestData.Messages.ElementAt(0);
+
+            if (!textGenerationRequestData.ChatbotModel.AcceptSystemInstruction)
+            {
+                userMessageDto.Text = textGenerationRequestData.SystemInstruction + " Here is the text content: " +
+                                      userMessageDto.Text;
+            }
+            
+            List<Part> parts = new();
+            
+            TextPart textPart = new()
+            {
+                Text = userMessageDto.Text
+            };
+            
+            parts.Add(textPart);
+            
+            RequestContent content = new()
+            {
+                Role = "user",
+                Parts = (object[]) parts.ToArray()
+            };
+            
+            contents.Add(content);
+            
+            var chatRequest = new ChatRequest
+            {
+                Contents = contents
+            };
+
+            if (textGenerationRequestData.ChatbotModel.AcceptSystemInstruction)
+            {
+                TextPart systemInstructionTextPart = new()
+                {
+                    Text = textGenerationRequestData.SystemInstruction
+                };
+            
+                SystemInstruction systemInstruction = new SystemInstruction()
+                {
+                    Part = (object) systemInstructionTextPart
+                };
+            
+                chatRequest.SystemInstruction = systemInstruction;
+            }
+            
+            var chatRequestJson = JsonSerializer.Serialize(chatRequest);
+        
+            var httpRequest = new HttpRequestMessage
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri($"{textGenerationRequestData.ApiHost}/v1beta/models/" +
+                                     $"{textGenerationRequestData.ChatbotModel.Name}:generateContent?key={textGenerationRequestData.ApiKey}"),
+                Content = new StringContent(chatRequestJson, Encoding.UTF8, "application/json")
+            };
+        
+            var chatResponseMessage = await httpClient.SendAsync(httpRequest);
+            var chatResponseMessageContent = await chatResponseMessage.Content.ReadAsStringAsync();
+            
+            if (!chatResponseMessage.IsSuccessStatusCode)
+            {
+                return new AssistantMessageInfoDto
+                {
+                    Status = "error",
+                    Text = chatResponseMessageContent
+                };
+            }
+        
+            ChatResponse? chatResponse = JsonSerializer.Deserialize<ChatResponse>(chatResponseMessageContent);
+
+            if (chatResponse is not null && chatResponse.Candidates is not null)
+            {
+                var candidate = chatResponse.Candidates[0];
+
+                if (candidate.Content is not null && candidate.Content.Parts is not null)
+                {
+                    return new AssistantMessageInfoDto
+                    {
+                        Status = "ok",
+                        Text = candidate.Content.Parts[0].Text?.Trim()
+                    };
+                }
+            }
+        }
+
+        return new AssistantMessageInfoDto()
         {
             Status = "error",
-            Text = "Currently, Google Gemini is not able to generate images."
+            Text = "No content has been generated"
         };
     }
 
@@ -283,14 +393,8 @@ public class Gemini : Chatbot
             TextGenerationChatbotModel = "gemini-1.5-pro",
             ApiHost = "https://generativelanguage.googleapis.com",
             ApiKey = "",
-            TextStreamDelay = 400,
             Selected = false,
-            Temperature = 1.0f,
-            MinTemperature = 0.0f,
-            MaxTemperature = 2.0f,
-            SupportBase64ImageInputFormat = true,
-            SupportUrlImageInputFormat = false,
-            SupportImageGeneration = false
+            Temperature = 1.0f
         };
     }
 

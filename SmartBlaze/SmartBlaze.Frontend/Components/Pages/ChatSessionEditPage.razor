@@ -1,4 +1,5 @@
 @page "/chat/{Id}"
+@using SmartBlaze.Frontend.Dtos
 @using SmartBlaze.Frontend.Models
 
 @rendermode InteractiveServer
@@ -45,45 +46,58 @@
             </div>
         </div>
 
+        @if (_selectedChatbot?.TextGenerationChatbotModels is not null)
+        {
         <div class="mb-4">
             <label for="textGenerationChatbotModel" class="form-label">Text Generation Model</label>
             <div class="col-2">
-                <InputSelect id="textGenerationChatbotModel" @bind-Value="_chatSessionSettings.TextGenerationChatbotModel" 
-                             class="form-select">
-                    @foreach (var chatbotModel in _chatSessionSettings.TextGenerationChatbotModels)
+                <InputSelect id="textGenerationChatbotModel" class="form-select"
+                             Value="_chatSessionSettings.TextGenerationChatbotModel"
+                             ValueExpression="() => _chatSessionSettings.TextGenerationChatbotModel" TValue="string"
+                             ValueChanged="(string chatbotModel) => OnTextGenerationChatbotModelSelected(chatbotModel)">
+                    @foreach (var chatbotModel in _selectedChatbot.TextGenerationChatbotModels)
                     {
-                        <option value="@chatbotModel">@chatbotModel</option>
+                    <option value="@chatbotModel.Name">@chatbotModel.Name</option>
                     }
                 </InputSelect>
             </div>
         </div>
+        }
 
+        @if (_selectedChatbot?.ImageGenerationChatbotModels is not null)
+        {
         <div class="mb-4">
             <label for="imageGenerationChatbotModel" class="form-label">Image Generation Model</label>
             <div class="col-2">
-                <InputSelect id="imageGenerationChatbotModel" @bind-Value="_chatSessionSettings.ImageGenerationChatbotModel"
-                             class="form-select">
-                    @foreach (var chatbotModel in _chatSessionSettings.ImageGenerationChatbotModels)
+                <InputSelect id="imageGenerationChatbotModel" class="form-select"
+                             Value="_chatSessionSettings.ImageGenerationChatbotModel"
+                             ValueExpression="() => _chatSessionSettings.ImageGenerationChatbotModel" TValue="string"
+                             ValueChanged="(string chatbotModel) => OnImageGenerationChatbotModelSelected(chatbotModel)">
+                    @foreach (var chatbotModel in _selectedChatbot.ImageGenerationChatbotModels)
                     {
-                    <option value="@chatbotModel">@chatbotModel</option>
+                    <option value="@chatbotModel.Name">@chatbotModel.Name</option>
                     }
                 </InputSelect>
             </div>
         </div>
+        }
 
+        @if (_textGenerationChatbotModel?.AcceptTemperature == true)
+        {
         <div class="mb-4">
             <label for="temperature" class="form-label">Temperature (For Text Generation)</label>
             <div class="d-flex">
                 <div class="col-4">
                     <input id="temperature" type="range" class="form-range" step="0.1" @bind-value="_chatSessionSettings.Temperature"
                            @oninput="OnTemperatureChanged"
-                           min="@_chatbotMinTemperature" max="@_chatbotMaxTemperature"/>
+                           min="@_textGenerationChatbotModel.MinTemperature" max="@_textGenerationChatbotModel.MaxTemperature"/>
                 </div>
                 <div class="ms-4">
                     <span class="badge bg-primary">@_badgeTemperature</span>
                 </div>
             </div>
         </div>
+        }
         
         <div class="mb-3">
             <label for="systemInstruction" class="form-label">System instruction (For Text Generation)</label>
@@ -96,6 +110,34 @@
             <label for="textStream" class="form-label">Text stream (For Text Generation)</label>
             <InputCheckbox id="textStream" class="form-check" @bind-Value="_chatSessionSettings.TextStream"></InputCheckbox>
         </div>
+
+        @if (_imageGenerationChatbotModel?.AcceptImageSize == true)
+        {
+        <div class="mb-4">
+            <label for="imageSize" class="form-label">Image Resolution (For Image Generation)</label>
+            <div class="col-2">
+                <InputSelect id="imageSize" class="form-select" @bind-Value="_chatSessionSettings.ImageSize">
+                    @foreach (var imageSize in _imageGenerationChatbotModel.ImageSizeSupport)
+                    {
+                    <option value="@imageSize">@imageSize</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        }
+
+        @if (_imageGenerationChatbotModel?.AcceptMultipleImagesGeneration == true)
+        {
+        <div class="mb-4">
+            <label for="imagesToGenerate" class="form-label">Images to generate (For Image Generation)</label>
+            <div class="col-2">
+                <InputNumber id="imagesToGenerate"  Step="1" class="form-control"
+                             Min="1" Max="@_imageGenerationChatbotModel.MaxImagesGenerated"
+                             @bind-Value="_chatSessionSettings.ImagesToGenerate">
+                </InputNumber>
+            </div>
+        </div>
+        }
 
         <div class="mt-5">
             <button class="btn btn-primary" type="button" @onclick="OnCancelClicked">
@@ -114,12 +156,16 @@
     public string? Id { get; set; }
 
     private bool _applicationStarted = false;
+    
+    private ChatbotDto? _selectedChatbot;
+    private ChatbotModelDto? _textGenerationChatbotModel;
+    private ChatbotModelDto? _imageGenerationChatbotModel;
+    
     private ChatSessionSettings _chatSessionSettings = new();
-
-    private float _chatbotMinTemperature;
-    private float _chatbotMaxTemperature;
+    
     private float _badgeTemperature;
 
+    
     protected override Task OnInitializedAsync()
     {
         if (!_applicationStarted)
@@ -128,33 +174,32 @@
             
             _chatSessionStateService.RefreshView += ReloadComponentState;
         }
+        
+        var currentChatSession = _chatSessionStateService.CurrentChatSession;
+        var currentChatSessionConfiguration = _chatSessionStateService.CurrentChatSessionConfiguration;
 
-        var chatSession = _chatSessionStateService.CurrentChatSession;
-        var chatSessionConfiguration = _chatSessionStateService.CurrentChatSessionConfiguration;
-
-        if (chatSession is not null && chatSessionConfiguration is not null)
+        if (currentChatSession is not null 
+            && currentChatSessionConfiguration is not null)
         {
-            _chatSessionSettings.Title = chatSession.Title ?? "";
-            _chatSessionSettings.ChatbotName = chatSessionConfiguration.ChatbotName ?? "";
-            _chatSessionSettings.TextGenerationChatbotModel = chatSessionConfiguration.TextGenerationChatbotModel ?? "";
-            _chatSessionSettings.ImageGenerationChatbotModel = chatSessionConfiguration.ImageGenerationChatbotModel ?? "";
+            _selectedChatbot = _settingsService.ChatbotSelectedInCurrentChatSession;
             
-            var chatbot = _settingsService.Chatbots?.Find(c => c.Name == chatSessionConfiguration.ChatbotName);
+            var textGenerationChatbotModelName = _chatSessionStateService.CurrentChatSessionConfiguration?.TextGenerationChatbotModel;
+            _textGenerationChatbotModel = _settingsService.GetTextGenerationChatbotModel(_selectedChatbot, textGenerationChatbotModelName);
 
-            if (chatbot is not null)
-            {
-                _chatSessionSettings.TextGenerationChatbotModels = chatbot.TextGenerationModels;
-                _chatSessionSettings.ImageGenerationChatbotModels = chatbot.ImageGenerationModels;
-                _chatbotMinTemperature = chatbot.MinTemperature;
-                _chatbotMaxTemperature = chatbot.Maxtemperature;
-            }
-
-            _chatSessionSettings.Temperature = chatSessionConfiguration.Temperature;
+            var imageGenerationChatbotModelName = _chatSessionStateService.CurrentChatSessionConfiguration?.ImageGenerationChatbotModel;
+            _imageGenerationChatbotModel = _settingsService.GetImageGenerationChatbotModel(_selectedChatbot, imageGenerationChatbotModelName);
             
-            _chatSessionSettings.SystemInstruction = chatSessionConfiguration.SystemInstruction ?? "";
-            _chatSessionSettings.TextStream = chatSessionConfiguration.TextStream;
+            _chatSessionSettings.Title = currentChatSession.Title ?? "";
+            _chatSessionSettings.ChatbotName = currentChatSessionConfiguration.ChatbotName ?? "";
+            _chatSessionSettings.TextGenerationChatbotModel = currentChatSessionConfiguration.TextGenerationChatbotModel ?? "";
+            _chatSessionSettings.ImageGenerationChatbotModel = currentChatSessionConfiguration.ImageGenerationChatbotModel ?? "";
+            _chatSessionSettings.Temperature = currentChatSessionConfiguration.Temperature;
+            _chatSessionSettings.SystemInstruction = currentChatSessionConfiguration.SystemInstruction ?? "";
+            _chatSessionSettings.TextStream = currentChatSessionConfiguration.TextStream;
+            _chatSessionSettings.ImageSize = currentChatSessionConfiguration.ImageSize ?? "";
+            _chatSessionSettings.ImagesToGenerate = currentChatSessionConfiguration.ImagesToGenerate;
 
-            _badgeTemperature = chatSessionConfiguration.Temperature;
+            _badgeTemperature = currentChatSessionConfiguration.Temperature;
         }
         
         return base.OnInitializedAsync();
@@ -162,19 +207,48 @@
     
     private void OnChatbotSelected(string chatbotName)
     {
-        var chatbotSelected = _settingsService.Chatbots?.Find(c => c.Name == chatbotName);
-
-        if (chatbotSelected is not null)
+        if (chatbotName == _settingsService.ChatbotSelectedInCurrentChatSession?.Name)
         {
-            _chatSessionSettings.ChatbotName = chatbotSelected.Name;
-            _chatSessionSettings.TextGenerationChatbotModels = chatbotSelected.TextGenerationModels;
-            _chatSessionSettings.ImageGenerationChatbotModels = chatbotSelected.ImageGenerationModels;
-            _chatSessionSettings.TextGenerationChatbotModel = chatbotSelected.TextGenerationModel;
-            _chatSessionSettings.ImageGenerationChatbotModel = chatbotSelected.ImageGenerationModel;
-            _chatSessionSettings.Temperature = chatbotSelected.Temperature;
+            _selectedChatbot = _settingsService.ChatbotSelectedInCurrentChatSession;
+            var selectedChatbotConfiguration = _chatSessionStateService.CurrentChatSessionConfiguration;
+            
+            _textGenerationChatbotModel = _settingsService.GetTextGenerationChatbotModel(_selectedChatbot, 
+                selectedChatbotConfiguration?.TextGenerationChatbotModel);
+            _chatSessionSettings.TextGenerationChatbotModel = _textGenerationChatbotModel?.Name ?? "";
 
-            _badgeTemperature = chatbotSelected.Temperature;
+            _imageGenerationChatbotModel = _settingsService.GetImageGenerationChatbotModel(_selectedChatbot, 
+                selectedChatbotConfiguration?.ImageGenerationChatbotModel);
+            _chatSessionSettings.ImageGenerationChatbotModel = _imageGenerationChatbotModel?.Name ?? "";
+
+            _chatSessionSettings.ChatbotName = chatbotName;
         }
+        else
+        {
+            _selectedChatbot = _settingsService.GetChatbot(chatbotName);
+            var selectedChatbotDefaultConfiguration = _settingsService.GetChatbotDefaultConfiguration(chatbotName);
+            
+            _textGenerationChatbotModel = _settingsService.GetTextGenerationChatbotModel(_selectedChatbot, 
+                selectedChatbotDefaultConfiguration?.TextGenerationChatbotModel);
+            _chatSessionSettings.TextGenerationChatbotModel = _textGenerationChatbotModel?.Name ?? "";
+
+            _imageGenerationChatbotModel = _settingsService.GetImageGenerationChatbotModel(_selectedChatbot, 
+                selectedChatbotDefaultConfiguration?.ImageGenerationChatbotModel);
+            _chatSessionSettings.ImageGenerationChatbotModel = _imageGenerationChatbotModel?.Name ?? "";
+
+            _chatSessionSettings.ChatbotName = chatbotName;
+        }
+    }
+    
+    private void OnTextGenerationChatbotModelSelected(string chatbotModel)
+    {
+        _chatSessionSettings.TextGenerationChatbotModel = chatbotModel;
+        _textGenerationChatbotModel = _settingsService.GetTextGenerationChatbotModel(_selectedChatbot, chatbotModel);
+    }
+
+    private void OnImageGenerationChatbotModelSelected(string chatbotModel)
+    {
+        _chatSessionSettings.ImageGenerationChatbotModel = chatbotModel;
+        _imageGenerationChatbotModel = _settingsService.GetImageGenerationChatbotModel(_selectedChatbot, chatbotModel);
     }
     
     private void OnTemperatureChanged(ChangeEventArgs e)

@@ -12,7 +12,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     private ChatSessionDto? _currentChatSession;
     private List<MessageDto>? _currentChatSessionMessages;
     private ChatSessionConfigurationDto? _currentChatSessionConfiguration;
-
+    
     private bool _areChatSessionsLoadingOnStartup;
     private bool _isNewChatSessionBeingCreated;
     private bool _isChatSessionBeingSelected;
@@ -118,19 +118,12 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
 
         var chatSessionConfiguration =
             JsonSerializer.Deserialize<ChatSessionConfigurationDto>(chatSessionConfigurationResponseContent);
-
-        if (chatSessionConfiguration is not null)
-        {
-            var chatbot = _settingsService.GetChatbotByName(chatSessionConfiguration.ChatbotName);
-            if (chatbot is not null)
-            {
-                chatSessionConfiguration.SupportBase64InputImageFormat = chatbot.SupportBase64ImageInputFormat;
-                chatSessionConfiguration.SupportUrlInputImageFormat = chatbot.SupportUrlImageInputFormat;
-                chatSessionConfiguration.SupportImageGeneration = chatbot.SupportImageGeneration;
-            }
-        }
-
+        
         _currentChatSessionConfiguration = chatSessionConfiguration;
+        
+        var chatbot = _settingsService.GetChatbot(_currentChatSessionConfiguration?.ChatbotName);
+        _settingsService.ChatbotSelectedInCurrentChatSession = chatbot;
+        SwitchToTextGeneration();
         
         var response = await HttpClient.GetAsync($"chat-session/{newSelectedChatSession.Id}/messages");
         var responseContent = await response.Content.ReadAsStringAsync();
@@ -183,13 +176,15 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             _currentChatSession = null;
             _currentChatSessionMessages = null;
             _currentChatSessionConfiguration = null;
+
+            _settingsService.ChatbotSelectedInCurrentChatSession = null;
+            _settingsService.ChatbotModelSelectedInCurrentChatSession = null;
             
             NotifyRefreshView();
         }
     }
 
-    public async Task RequestNewAssistantTextMessage(string text, List<MediaDto> fileInputs, string apiHost, string apiKey, 
-        int textStreamDelay)
+    public async Task RequestNewAssistantTextMessage(string text, List<MediaDto> fileInputs)
     {
         if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null 
             || _currentChatSessionConfiguration is null)
@@ -198,6 +193,22 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
         
         if (!CanUserInteract())
+        {
+            return;
+        }
+
+        var chatbotDefaultConfiguration =
+            _settingsService.GetChatbotDefaultConfiguration(_currentChatSessionConfiguration.ChatbotName);
+
+        if (chatbotDefaultConfiguration is null)
+        {
+            return;
+        }
+
+        var chatbotModel = _settingsService.GetTextGenerationChatbotModel(_currentChatSessionConfiguration.ChatbotName,
+            _currentChatSessionConfiguration.TextGenerationChatbotModel);
+
+        if (chatbotModel is null)
         {
             return;
         }
@@ -219,16 +230,22 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         var chatSessionInfoDto = new ChatSessionInfoDto()
         {
             Messages = _currentChatSessionMessages,
+            LastUserMessage = userMessage,
             ChatbotName = _currentChatSessionConfiguration.ChatbotName,
             ChatbotModel = _currentChatSessionConfiguration.TextGenerationChatbotModel,
-            ApiHost = apiHost,
-            ApiKey = apiKey,
+            ApiHost = chatbotDefaultConfiguration.ApiHost,
+            ApiKey = chatbotDefaultConfiguration.ApiKey,
             SystemInstruction = _currentChatSessionConfiguration.SystemInstruction,
             Temperature = _currentChatSessionConfiguration.Temperature,
-            TextStreamDelay = textStreamDelay
+            TextStreamDelay = chatbotModel.TextStreamDelay
         };
+
+        if (_currentChatSessionMessages.Count == 1)
+        {
+            await EntitleChatSessionFromUserMessage(chatSessionInfoDto);
+        }
         
-        if (_currentChatSessionConfiguration.TextStream)
+        if (chatbotModel.AcceptTextStream && _currentChatSessionConfiguration.TextStream)
         {
             await GenerateAssistantTextMessageWithStreamEnabled(chatSessionInfoDto);
         }
@@ -243,7 +260,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         NotifyRefreshView();
     }
 
-    public async Task RequestNewAssistantImageMessage(string text, string apiHost, string apiKey)
+    public async Task RequestNewAssistantImageMessage(string text)
     {
         if (_chatSessions is null || _currentChatSession is null || _currentChatSessionMessages is null 
             || _currentChatSessionConfiguration is null)
@@ -252,6 +269,22 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
         
         if (!CanUserInteract())
+        {
+            return;
+        }
+        
+        var chatbotDefaultConfiguration =
+            _settingsService.GetChatbotDefaultConfiguration(_currentChatSessionConfiguration.ChatbotName);
+
+        if (chatbotDefaultConfiguration is null)
+        {
+            return;
+        }
+
+        var chatbotModel = _settingsService.GetImageGenerationChatbotModel(_currentChatSessionConfiguration.ChatbotName,
+            _currentChatSessionConfiguration.ImageGenerationChatbotModel);
+
+        if (chatbotModel is null)
         {
             return;
         }
@@ -275,9 +308,16 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             LastUserMessage = _currentChatSessionMessages.Last(),
             ChatbotName = _currentChatSessionConfiguration.ChatbotName,
             ChatbotModel = _currentChatSessionConfiguration.ImageGenerationChatbotModel,
-            ApiHost = apiHost,
-            ApiKey = apiKey,
+            ApiHost = chatbotDefaultConfiguration.ApiHost,
+            ApiKey = chatbotDefaultConfiguration.ApiKey,
+            ImageSize = _currentChatSessionConfiguration.ImageSize,
+            ImagesToGenerate = _currentChatSessionConfiguration.ImagesToGenerate
         };
+        
+        if (_currentChatSessionMessages.Count == 1)
+        {
+            await EntitleChatSessionFromUserMessage(chatSessionInfoDto);
+        }
 
         var assistantMessage = await GenerateAssistantImageMessage(chatSessionInfoDto);
         _currentChatSessionMessages.Add(assistantMessage);
@@ -287,10 +327,15 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         NotifyRefreshView();
     }
 
-    public async Task CreateNewChatSession(string title, string chatbotName, string textGenerationChatbotModel, 
-        string imageGenerationChatbotModel, float temperature, string systemInstruction, bool textStream)
+    public async Task CreateNewChatSession()
     {
         if (!CanUserInteract())
+        {
+            return;
+        }
+
+        if (_settingsService.ChatbotDefaultConfigurationSelected is null 
+            || _settingsService.ChatSessionDefaultConfiguration is null)
         {
             return;
         }
@@ -304,7 +349,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
         
         ChatSessionDto? chatSessionDto = new ChatSessionDto();
-        chatSessionDto.Title = title;
+        chatSessionDto.Title = "Undefined";
         
         var newChatSessionResponse = await HttpClient.PostAsJsonAsync("chat-sessions/new", chatSessionDto);
         var newChatSessionResponseContent = await newChatSessionResponse.Content.ReadAsStringAsync();
@@ -322,18 +367,20 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         {
             _isNewChatSessionBeingCreated = false;
             HandleError("Error occured while creating a new chat session", 
-                "The assistant message could not be deserialized");
+                "The chat session could not be deserialized");
             return;
         }
         
         ChatSessionConfigurationDto chatSessionConfigurationDto = new()
         {
-            ChatbotName = chatbotName,
-            TextGenerationChatbotModel = textGenerationChatbotModel,
-            ImageGenerationChatbotModel = imageGenerationChatbotModel,
-            Temperature = temperature,
-            SystemInstruction = systemInstruction,
-            TextStream = textStream
+            ChatbotName = _settingsService.ChatbotDefaultConfigurationSelected.ChatbotName,
+            TextGenerationChatbotModel = _settingsService.ChatbotDefaultConfigurationSelected.TextGenerationChatbotModel,
+            ImageGenerationChatbotModel = _settingsService.ChatbotDefaultConfigurationSelected.ImageGenerationChatbotModel,
+            Temperature = _settingsService.ChatbotDefaultConfigurationSelected.Temperature,
+            SystemInstruction = _settingsService.ChatSessionDefaultConfiguration.SystemInstruction,
+            TextStream = _settingsService.ChatSessionDefaultConfiguration.TextStream,
+            ImageSize = _settingsService.ChatSessionDefaultConfiguration.ImageSize,
+            ImagesToGenerate = _settingsService.ChatSessionDefaultConfiguration.ImagesToGenerate
         };
 
         var chatSessionConfigurationResponse = await HttpClient.PostAsJsonAsync($"configuration/chat-session/{chatSessionDto.Id}", 
@@ -391,7 +438,9 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             ImageGenerationChatbotModel = chatSessionSettings.ImageGenerationChatbotModel,
             Temperature = chatSessionSettings.Temperature,
             SystemInstruction = chatSessionSettings.SystemInstruction,
-            TextStream = chatSessionSettings.TextStream
+            TextStream = chatSessionSettings.TextStream,
+            ImageSize = chatSessionSettings.ImageSize,
+            ImagesToGenerate = chatSessionSettings.ImagesToGenerate
         };
 
         var title = chatSessionSettings.Title.Trim();
@@ -428,14 +477,12 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         _currentChatSessionConfiguration.Temperature = chatSessionSettings.Temperature;
         _currentChatSessionConfiguration.SystemInstruction = chatSessionSettings.SystemInstruction;
         _currentChatSessionConfiguration.TextStream = chatSessionSettings.TextStream;
+        _currentChatSessionConfiguration.ImageSize = chatSessionSettings.ImageSize;
+        _currentChatSessionConfiguration.ImagesToGenerate = chatSessionSettings.ImagesToGenerate;
         
-        var chatbot = _settingsService.GetChatbotByName(chatSessionSettings.ChatbotName);
-        if (chatbot is not null)
-        {
-            _currentChatSessionConfiguration.SupportBase64InputImageFormat = chatbot.SupportBase64ImageInputFormat;
-            _currentChatSessionConfiguration.SupportUrlInputImageFormat = chatbot.SupportUrlImageInputFormat;
-            _currentChatSessionConfiguration.SupportImageGeneration = chatbot.SupportImageGeneration;
-        }
+        var chatbot = _settingsService.GetChatbot(_currentChatSessionConfiguration?.ChatbotName);
+        _settingsService.ChatbotSelectedInCurrentChatSession = chatbot;
+        SwitchToTextGeneration();
         
         _isChatSessionBeingEdited = false;
         NotifyNavigateToPage("/");
@@ -544,6 +591,34 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
                && !_isGeneratingResponse
                && !_isChatSessionBeingDeleted
                && !_isChatSessionBeingEdited;
+    }
+
+    public void SwitchToTextGeneration()
+    {
+        var chatbot = _settingsService.ChatbotSelectedInCurrentChatSession;
+
+        var chatbotModel =
+            _settingsService.GetTextGenerationChatbotModel(chatbot,
+                _currentChatSessionConfiguration?.TextGenerationChatbotModel);
+            
+        _settingsService.ChatbotModelSelectedInCurrentChatSession = chatbotModel;
+        
+        _currentGenerationType = "text";
+        NotifyRefreshView();
+    }
+
+    public void SwitchToImageGeneration()
+    {
+        var chatbot = _settingsService.ChatbotSelectedInCurrentChatSession;
+
+        var chatbotModel =
+            _settingsService.GetImageGenerationChatbotModel(chatbot,
+                _currentChatSessionConfiguration?.ImageGenerationChatbotModel);
+            
+        _settingsService.ChatbotModelSelectedInCurrentChatSession = chatbotModel;
+        
+        _currentGenerationType = "image";
+        NotifyRefreshView();
     }
 
     private bool IsChatSessionValid(ChatSessionDto chatSessionDto)
@@ -692,6 +767,21 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
 
         return assistantMessageDto;
+    }
+
+    private async Task EntitleChatSessionFromUserMessage(ChatSessionInfoDto chatSessionInfoDto)
+    {
+        var assistantMessageResponse = await 
+            HttpClient.PutAsJsonAsync(
+                $"chat-sessions/{_currentChatSession.Id}/entitle", 
+                chatSessionInfoDto);
+        var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
+
+        if (assistantMessageResponse.IsSuccessStatusCode)
+        {
+            _currentChatSession.Title = assistantMessageResponseContent;
+            NotifyRefreshView();
+        }
     }
 
     private MessageDto CreateNewErrorMessage(string text)

@@ -5,46 +5,109 @@ namespace SmartBlaze.Frontend.Services;
 
 public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
 {
-    private List<Chatbot>? _chatbots;
-    private Chatbot? _defaultChatbotSelected;
+    private List<ChatbotDto>? _chatbots;
+    
+    private ChatbotDto? _chatbotSelectedInCurrentChatSession;
+    private ChatbotModelDto? _chatbotModelSelectedInCurrentChatSession;
 
-    private string _systemInstruction = "";
-    private bool _textStream;
+    private List<ChatbotDefaultConfigurationDto>? _chatbotDefaultConfigurations;
+    
+    private ChatbotDefaultConfigurationDto? _chatbotDefaultConfigurationSelected;
+    private ChatSessionDefaultConfigurationDto? _chatSessionDefaultConfiguration;
     
     private bool _settingsPageOpen = false;
     private string _settingsMenuSelected = "chatbot";
-    
-    
-    public bool SettingsPageOpen
+
+    public List<ChatbotDto>? Chatbots => _chatbots;
+
+    public ChatbotDto? ChatbotSelectedInCurrentChatSession
     {
-        get => _settingsPageOpen;
+        get => _chatbotSelectedInCurrentChatSession;
+        set => _chatbotSelectedInCurrentChatSession = value;
     }
 
+    public ChatbotModelDto? ChatbotModelSelectedInCurrentChatSession
+    {
+        get => _chatbotModelSelectedInCurrentChatSession;
+        set => _chatbotModelSelectedInCurrentChatSession = value;
+    }
+
+    public ChatbotDefaultConfigurationDto? ChatbotDefaultConfigurationSelected => _chatbotDefaultConfigurationSelected;
+
+    public ChatSessionDefaultConfigurationDto? ChatSessionDefaultConfiguration => _chatSessionDefaultConfiguration;
+
+    public bool SettingsPageOpen => _settingsPageOpen;
+
     public string SettingsMenuSelected => _settingsMenuSelected;
-    
-    public List<Chatbot>? Chatbots => _chatbots;
 
-    public Chatbot? DefaultChatbotSelected => _defaultChatbotSelected;
-    
-    public string SystemInstruction => _systemInstruction;
-
-    public bool TextStream => _textStream;
-
-    public Chatbot? GetChatbotByName(string? chatbotName)
+    public ChatbotDto? GetChatbot(string? chatbotName)
     {
         if (chatbotName is null)
         {
             return null;
         }
         
-        var chatbot = _chatbots?.Find(c => c.Name == chatbotName);
+        return _chatbots?.Find(c => c.Name == chatbotName);
+    }
 
-        return chatbot;
+    public ChatbotModelDto? GetTextGenerationChatbotModel(ChatbotDto? chatbot, string? chatbotModel)
+    {
+        if (chatbot is null || chatbotModel is null)
+        {
+            return null;
+        }
+
+        return chatbot.TextGenerationChatbotModels.Find(tgm => tgm.Name == chatbotModel);
+    }
+    
+    public ChatbotModelDto? GetTextGenerationChatbotModel(string? chatbotName, string? chatbotModel)
+    {
+        if (chatbotName is null || chatbotModel is null)
+        {
+            return null;
+        }
+
+        var chatbot = _chatbots?.Find(c => c.Name == chatbotName);
+        
+        return chatbot?.TextGenerationChatbotModels.Find(tgm => tgm.Name == chatbotModel);
+    }
+    
+    public ChatbotModelDto? GetImageGenerationChatbotModel(ChatbotDto? chatbot, string? chatbotModel)
+    {
+        if (chatbot is null || chatbotModel is null)
+        {
+            return null;
+        }
+
+        return chatbot.ImageGenerationChatbotModels.Find(tgm => tgm.Name == chatbotModel);
+    }
+    
+    public ChatbotModelDto? GetImageGenerationChatbotModel(string? chatbotName, string? chatbotModel)
+    {
+        if (chatbotName is null || chatbotModel is null)
+        {
+            return null;
+        }
+
+        var chatbot = _chatbots?.Find(c => c.Name == chatbotName);
+        
+        return chatbot?.ImageGenerationChatbotModels.Find(tgm => tgm.Name == chatbotModel);
+    }
+
+    public ChatbotDefaultConfigurationDto? GetChatbotDefaultConfiguration(string? chatbotName)
+    {
+        if (chatbotName is null)
+        {
+            return null;
+        }
+
+        return _chatbotDefaultConfigurations?.Find(cdc => cdc.ChatbotName == chatbotName);
     }
 
     public async Task SetUpConfiguration()
     {
-        await LoadChatbotDefaultConfiguration();
+        await LoadChatbots();
+        await LoadChatbotDefaultConfigurations();
         await LoadChatSessionDefaultConfiguration();
     }
     
@@ -73,39 +136,34 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         NotifyRefreshView();
     }
 
-    public async Task SaveChatbotDefaultSettings(ChatbotSettings chatbotSettings)
+    public async Task SaveChatbotDefaultSettings(ChatbotDefaultSettings chatbotDefaultSettings)
     {
-        var chatbot = _chatbots?.Find(c => c.Name == chatbotSettings.ChatbotName);
-
-        if (chatbot is not null)
+        var chatbotDefaultConfigurationDto = new ChatbotDefaultConfigurationDto
         {
-            chatbot.TextGenerationModel = chatbotSettings.TextGenerationChatbotModel;
-            chatbot.ApiHost = chatbotSettings.ApiHost;
-            chatbot.ApiKey = chatbotSettings.ApiKey;
-            chatbot.Temperature = (float)Math.Round(chatbotSettings.Temperature, 1);
+            ChatbotName = chatbotDefaultSettings.ChatbotName,
+            TextGenerationChatbotModel = chatbotDefaultSettings.TextGenerationChatbotModel,
+            ImageGenerationChatbotModel = chatbotDefaultSettings.ImageGenerationChatbotModel,
+            ApiHost = chatbotDefaultSettings.ApiHost,
+            ApiKey = chatbotDefaultSettings.ApiKey,
+            Temperature = chatbotDefaultSettings.Temperature
+        };
+
+        var chatbotDefaultConfiguration = GetChatbotDefaultConfiguration(chatbotDefaultSettings.ChatbotName);
+
+        if (chatbotDefaultConfiguration is not null)
+        {
+            chatbotDefaultConfiguration.ChatbotName = chatbotDefaultConfigurationDto.ChatbotName;
+            chatbotDefaultConfiguration.TextGenerationChatbotModel =
+                chatbotDefaultConfigurationDto.TextGenerationChatbotModel;
+            chatbotDefaultConfiguration.ImageGenerationChatbotModel =
+                chatbotDefaultConfigurationDto.ImageGenerationChatbotModel;
+            chatbotDefaultConfiguration.ApiHost = chatbotDefaultConfigurationDto.ApiHost;
+            chatbotDefaultConfiguration.ApiKey = chatbotDefaultConfigurationDto.ApiKey;
+            chatbotDefaultConfiguration.Temperature = chatbotDefaultConfigurationDto.Temperature;
+
+            _chatbotDefaultConfigurationSelected = chatbotDefaultConfiguration;
             
-            SetDefaultChatbotAsSelected(chatbot);
-
-            var chatbotConfigurationDto = new ChatbotDefaultConfigurationDto()
-            {
-                ChatbotName = chatbot.Name,
-                TextGenerationChatbotModel = chatbot.TextGenerationModel,
-                ImageGenerationChatbotModel = chatbot.ImageGenerationModel,
-                ApiHost = chatbot.ApiHost,
-                ApiKey = chatbot.ApiKey,
-                TextStreamDelay = chatbot.TextStreamDelay,
-                Temperature = chatbot.Temperature,
-                Selected = true,
-            };
-
-            var chatbotConfigurationResponse = await HttpClient.PostAsJsonAsync("configuration/chatbot", chatbotConfigurationDto);
-
-            if (!chatbotConfigurationResponse.IsSuccessStatusCode)
-            {
-                var chatbotConfigurationResponseContent = await chatbotConfigurationResponse.Content.ReadAsStringAsync();
-                NotifyNavigateToErrorPage($"Error occured while configuring the chatbot {chatbot.Name}",
-                    chatbotConfigurationResponseContent);
-            }
+            await HttpClient.PostAsJsonAsync("configuration/chatbot", chatbotDefaultConfigurationDto);
         }
     }
 
@@ -114,113 +172,61 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
         var chatSessionDefaultConfiguration = new ChatSessionDefaultConfigurationDto()
         {
             SystemInstruction = chatSessionDefaultSettings.SystemInstruction,
-            TextStream = chatSessionDefaultSettings.TextStream
+            TextStream = chatSessionDefaultSettings.TextStream,
+            ImageSize = chatSessionDefaultSettings.ImageSize,
+            ImagesToGenerate = chatSessionDefaultSettings.ImagesToGenerate
         };
-        
-        var chatSessionDefaultConfigurationResponse = await HttpClient.PostAsJsonAsync("configuration/chat-session", 
-            chatSessionDefaultConfiguration);
 
-        if (!chatSessionDefaultConfigurationResponse.IsSuccessStatusCode)
-        {
-            var chatSessionDefaultConfigurationResponseContent =
-                await chatSessionDefaultConfigurationResponse.Content.ReadAsStringAsync();
-            NotifyNavigateToErrorPage("Error occured while configuring the chat session", 
-                chatSessionDefaultConfigurationResponseContent);
-            return;
-        }
+        _chatSessionDefaultConfiguration = chatSessionDefaultConfiguration;
         
-        _systemInstruction = chatSessionDefaultSettings.SystemInstruction;
-        _textStream = chatSessionDefaultSettings.TextStream;
+        await HttpClient.PostAsJsonAsync("configuration/chat-session", chatSessionDefaultConfiguration);
     }
-    
-    private void SetDefaultChatbotAsSelected(Chatbot chatbot)
-    {
-        if (_chatbots is null)
-        {
-            return;
-        }
 
-        if (chatbot.TextGenerationModels.Count == 0)
-        {
-            NotifyNavigateToErrorPage($"Error occured while selecting the chatbot {chatbot.Name}", 
-                $"No models for chatbot {chatbot.Name} found");
-            NotifyRefreshView();
-            return;
-        }
-
-        _defaultChatbotSelected = chatbot;
-        
-        NotifyRefreshView();
-    }
-    
-    private async Task LoadChatbotDefaultConfiguration()
+    private async Task LoadChatbots()
     {
         if (_chatbots is not null)
         {
             return;
         }
+        
+        var chatbots = await HttpClient.GetFromJsonAsync<List<ChatbotDto>>("chatbot");
 
-        var chatbotConfigurationDtos = await HttpClient.GetFromJsonAsync<List<ChatbotDefaultConfigurationDto>>("configuration/chatbot");
-
-        if (chatbotConfigurationDtos is null || chatbotConfigurationDtos.Count == 0)
+        if (chatbots is null || chatbots.Count == 0)
         {
-            NotifyNavigateToErrorPage("Error occured while loading the chatbot configurations", 
+            NotifyNavigateToErrorPage("Error occured while loading the chatbots", 
+                "No chatbot found");
+            return;
+        }
+
+        _chatbots = chatbots;
+    }
+    
+    private async Task LoadChatbotDefaultConfigurations()
+    {
+        if (_chatbotDefaultConfigurations is not null)
+        {
+            return;
+        }
+
+        var chatbotDefaultConfigurations = await HttpClient.GetFromJsonAsync<List<ChatbotDefaultConfigurationDto>>("configuration/chatbot");
+
+        if (chatbotDefaultConfigurations is null || chatbotDefaultConfigurations.Count == 0)
+        {
+            NotifyNavigateToErrorPage("Error occured while loading the chatbot default configuration", 
                 "No chatbot configuration found");
             return;
         }
 
-        var chatbots = new List<Chatbot>();
-        Chatbot? chatbotToSelect = null;
+        var chatbotDefaultConfigurationSelected = chatbotDefaultConfigurations
+            .Find(cdc => cdc.Selected);
 
-        foreach (var chatbotConfigurationDto in chatbotConfigurationDtos)
+        if (chatbotDefaultConfigurationSelected is null)
         {
-            if (IsChatbotConfigurationValid(chatbotConfigurationDto))
-            {
-                var chatbot = new Chatbot(chatbotConfigurationDto.ChatbotName, 
-                    chatbotConfigurationDto.TextGenerationChatbotModels, chatbotConfigurationDto.ImageGenerationChatbotModels,
-                    chatbotConfigurationDto.MinTemperature, chatbotConfigurationDto.MaxTemperature,
-                    chatbotConfigurationDto.SupportBase64ImageInputFormat, chatbotConfigurationDto.SupportUrlImageInputFormat,
-                    chatbotConfigurationDto.SupportImageGeneration);
-                
-                chatbot.ApiHost = chatbotConfigurationDto.ApiHost;
-                chatbot.ApiKey = chatbotConfigurationDto.ApiKey;
-                chatbot.TextGenerationModel = chatbotConfigurationDto.TextGenerationChatbotModel;
-                chatbot.ImageGenerationModel = chatbotConfigurationDto.ImageGenerationChatbotModel;
-                chatbot.TextStreamDelay = chatbotConfigurationDto.TextStreamDelay;
-                chatbot.Temperature = chatbotConfigurationDto.Temperature;
-                
-                chatbots.Add(chatbot);
-
-                if (chatbotConfigurationDto.Selected)
-                {
-                    chatbotToSelect = chatbot;
-                }
-            }
+            chatbotDefaultConfigurationSelected = chatbotDefaultConfigurations.ElementAt(0);
         }
 
-        _chatbots = chatbots;
-        
-        if (_chatbots is null || _chatbots.Count == 0)
-        {
-            NotifyNavigateToErrorPage("Error occured while loading the chatbots", "No chatbot found");
-            return;
-        }
-        
-        if (chatbotToSelect?.TextGenerationModels.Count == 0)
-        {
-            NotifyNavigateToErrorPage("Error occured while loading the chatbots", 
-                $"No model found for chatbot {chatbotToSelect.Name}");
-            return;
-        }
-
-        if (chatbotToSelect is null)
-        {
-            chatbotToSelect = _chatbots.ElementAt(0);
-        }
-        
-        SetDefaultChatbotAsSelected(chatbotToSelect);
-        
-        NotifyRefreshView();
+        _chatbotDefaultConfigurations = chatbotDefaultConfigurations;
+        _chatbotDefaultConfigurationSelected = chatbotDefaultConfigurationSelected;
     }
 
     private async Task LoadChatSessionDefaultConfiguration()
@@ -234,27 +240,6 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             return;
         }
 
-        if (chatSessionDefaultConfigurationDto.SystemInstruction is null)
-        {
-            NotifyNavigateToErrorPage("Error occured while loading the chat session configuration", 
-                "The system instruction and text stream must be specified");
-            return;
-        }
-        
-        _systemInstruction = chatSessionDefaultConfigurationDto.SystemInstruction;
-        _textStream = chatSessionDefaultConfigurationDto.TextStream;
-        
-        NotifyRefreshView();
-    }
-
-    private bool IsChatbotConfigurationValid(ChatbotDefaultConfigurationDto chatbotConfigurationDto)
-    {
-        return chatbotConfigurationDto.ChatbotName is not null
-               && chatbotConfigurationDto.TextGenerationChatbotModels is not null
-               && chatbotConfigurationDto.ImageGenerationChatbotModels is not null
-               && chatbotConfigurationDto.ApiHost is not null
-               && chatbotConfigurationDto.ApiKey is not null
-               && chatbotConfigurationDto.TextGenerationChatbotModel is not null
-               && chatbotConfigurationDto.ImageGenerationChatbotModel is not null;
+        _chatSessionDefaultConfiguration = chatSessionDefaultConfigurationDto;
     }
 }

@@ -27,4 +27,10 @@ public class ChatSessionInfoDto
     
     [JsonPropertyName("temperature")]
     public float Temperature { get; set; }
+    
+    [JsonPropertyName("imageSize")]
+    public string? ImageSize { get; set; }
+    
+    [JsonPropertyName("imagesToGenerate")]
+    public int ImagesToGenerate { get; set; }
 }

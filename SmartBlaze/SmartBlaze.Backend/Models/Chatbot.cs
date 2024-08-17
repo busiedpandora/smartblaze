@@ -5,29 +5,39 @@ namespace SmartBlaze.Backend.Models;
 public abstract class Chatbot
 {
     private string _name;
-    private List<string> _textGenerationModels;
-    private List<string> _imageGenerationModels;
+
+    private List<TextGenerationChatbotModel> _textGenerationChatbotModels;
+    private List<ImageGenerationChatbotModel> _imageGenerationChatbotModels;
+
+    private bool _supportImageGeneration;
 
     
-    protected Chatbot(string name, List<string> textGenerationModels, List<string> imageGenerationModels)
+    protected Chatbot(string name, 
+        List<TextGenerationChatbotModel> textGenerationChatbotModels, List<ImageGenerationChatbotModel> imageGenerationChatbotModels,
+        bool supportImageGeneration)
     {
         _name = name;
-        _textGenerationModels = textGenerationModels;
-        _imageGenerationModels = imageGenerationModels;
+        _textGenerationChatbotModels = textGenerationChatbotModels;
+        _imageGenerationChatbotModels = imageGenerationChatbotModels;
+        _supportImageGeneration = supportImageGeneration;
     }
 
     public string Name => _name;
-    
-    public List<string> TextGenerationModels => _textGenerationModels;
-    
-    public List<string> ImageGenerationModels => _imageGenerationModels;
 
-    public abstract Task<AssistantMessageInfoDto> GenerateText(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient);
+    public List<TextGenerationChatbotModel> TextGenerationChatbotModels => _textGenerationChatbotModels;
+
+    public List<ImageGenerationChatbotModel> ImageGenerationChatbotModels => _imageGenerationChatbotModels;
+
+    public bool SupportImageGeneration => _supportImageGeneration;
+
+    public abstract Task<AssistantMessageInfoDto> GenerateText(TextGenerationRequestData textGenerationRequestData, HttpClient httpClient);
     
-    public abstract IAsyncEnumerable<string> GenerateTextStreamEnabled(ChatSessionInfoDto chatSessionInfoDto, 
+    public abstract IAsyncEnumerable<string> GenerateTextStreamEnabled(TextGenerationRequestData textGenerationRequestData, 
         HttpClient httpClient);
 
-    public abstract Task<AssistantMessageInfoDto> GenerateImage(ChatSessionInfoDto chatSessionInfoDto, HttpClient httpClient);
+    public abstract Task<AssistantMessageInfoDto> GenerateImage(ImageGenerationRequestData imageGenerationRequestData, HttpClient httpClient);
+
+    public abstract Task<AssistantMessageInfoDto> EntitleChatSession(TextGenerationRequestData textGenerationRequestData, HttpClient httpClient);
     
     public abstract ChatbotDefaultConfigurationDto GetDefaultConfiguration();
 }

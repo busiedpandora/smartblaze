@@ -93,8 +93,27 @@ public class MessageController : ControllerBase
         {
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
+
+        var chatbotModel = chatbot.TextGenerationChatbotModels
+            .Find(tgm => tgm.Name == chatSessionInfoDto.ChatbotModel);
+
+        if (chatbotModel is null)
+        {
+            return NotFound(
+                $"No model with name {chatSessionInfoDto.ChatbotModel} found for chatbot {chatSessionInfoDto.ChatbotName}");
+        }
+
+        var textGenerationRequestData = new TextGenerationRequestData
+        {
+            Messages = chatSessionInfoDto.Messages,
+            ChatbotModel = chatbotModel,
+            ApiHost = chatSessionInfoDto.ApiHost,
+            ApiKey = chatSessionInfoDto.ApiKey,
+            SystemInstruction = chatSessionInfoDto.SystemInstruction,
+            Temperature = chatSessionInfoDto.Temperature
+        };
         
-        var assistantMessageInfo = await _chatbotService.GenerateTextInChatSession(chatbot, chatSessionInfoDto);
+        var assistantMessageInfo = await _chatbotService.GenerateTextInChatSession(chatbot, textGenerationRequestData);
 
         MessageDto assistantMessageDto = _messageService.CreateNewAssistantTextMessage(assistantMessageInfo.Text ?? "", 
             chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel, assistantMessageInfo.Status);
@@ -208,9 +227,38 @@ public class MessageController : ControllerBase
             yield break;
         }
         
+        var chatbotModel = chatbot.TextGenerationChatbotModels
+            .Find(tgm => tgm.Name == chatSessionInfoDto.ChatbotModel);
+
+        if (chatbotModel is null)
+        {
+            var result =  NotFound(
+                $"No model with name {chatSessionInfoDto.ChatbotModel} found for chatbot {chatSessionInfoDto.ChatbotName}");
+            var responseDetails = new
+            {
+                StatusCode = result.StatusCode,
+                Message = result.Value,
+                Type = result.GetType().Name,
+            };
+
+            var fullResponse = JsonConvert.SerializeObject(responseDetails);
+            yield return fullResponse;
+            yield break;
+        }
+
+        var textGenerationRequestData = new TextGenerationRequestData
+        {
+            Messages = chatSessionInfoDto.Messages,
+            ChatbotModel = chatbotModel,
+            ApiHost = chatSessionInfoDto.ApiHost,
+            ApiKey = chatSessionInfoDto.ApiKey,
+            SystemInstruction = chatSessionInfoDto.SystemInstruction,
+            Temperature = chatSessionInfoDto.Temperature
+        };
+        
         var output = new StringBuilder();
         
-        await foreach (var chunk in _chatbotService.GenerateTextStreamInChatSession(chatbot, chatSessionInfoDto))
+        await foreach (var chunk in _chatbotService.GenerateTextStreamInChatSession(chatbot, textGenerationRequestData))
         {
             output.Append(chunk);
             yield return chunk;
@@ -255,8 +303,27 @@ public class MessageController : ControllerBase
         {
             return NotFound($"Chat session with id {id} has no chatbot specified");
         }
+        
+        var chatbotModel = chatbot.ImageGenerationChatbotModels
+            .Find(tgm => tgm.Name == chatSessionInfoDto.ChatbotModel);
 
-        var assistantMessageInfo = await _chatbotService.GenerateImageInChatSession(chatbot, chatSessionInfoDto);
+        if (chatbotModel is null)
+        {
+            return NotFound(
+                $"No model with name {chatSessionInfoDto.ChatbotModel} found for chatbot {chatSessionInfoDto.ChatbotName}");
+        }
+
+        var imageGenerationRequestData = new ImageGenerationRequestData()
+        {
+            LastUserMessage = chatSessionInfoDto.LastUserMessage,
+            ChatbotModel = chatbotModel,
+            ApiHost = chatSessionInfoDto.ApiHost,
+            ApiKey = chatSessionInfoDto.ApiKey,
+            ImageSize = chatSessionInfoDto.ImageSize,
+            N = chatSessionInfoDto.ImagesToGenerate
+        };
+
+        var assistantMessageInfo = await _chatbotService.GenerateImageInChatSession(chatbot, imageGenerationRequestData);
         
         MessageDto assistantMessageDto = _messageService.CreateNewAssistantImageMessage(assistantMessageInfo.Text, 
             assistantMessageInfo.MediaDtos, chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel, 

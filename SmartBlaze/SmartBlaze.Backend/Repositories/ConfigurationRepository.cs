@@ -6,11 +6,12 @@ namespace SmartBlaze.Backend.Repositories;
 
 public class ConfigurationRepository : AbstractRepository
 {
-    public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration(string chatbotName)
+    public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration(string chatbotName, string userId)
     {
         var chatbotDefaultConfigurationDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId,
             ChatbotDefaultConfigurationCollectionId,
             [
+                Query.Equal("user", userId),
                 Query.Equal("chatbotName", chatbotName)
             ]);
 
@@ -45,11 +46,12 @@ public class ConfigurationRepository : AbstractRepository
         return chatbotDefaultConfiguration;
     }*/
     
-    public async Task<ChatbotDefaultConfigurationDto?> GetSelectedChatbotDefaultConfiguration()
+    public async Task<ChatbotDefaultConfigurationDto?> GetSelectedChatbotDefaultConfiguration(string userId)
     {
         var chatbotDefaultConfigurationDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId,
             ChatbotDefaultConfigurationCollectionId,
             [
+                Query.Equal("user", userId),
                 Query.Equal("selected", true)
             ]);
         
@@ -66,7 +68,7 @@ public class ConfigurationRepository : AbstractRepository
         return selectedChatbotDefaultConfiguration;
     }
     
-    public async Task SaveChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
+    public async Task SaveChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto, string userId)
     {
         var chatbotDefaultConfigurationDocument = new Dictionary<string, object>()
         {
@@ -76,7 +78,8 @@ public class ConfigurationRepository : AbstractRepository
             { "apiHost", chatbotDefaultConfigurationDto.ApiHost ?? ""},
             { "apiKey", chatbotDefaultConfigurationDto.ApiKey ?? ""},
             { "temperature" , chatbotDefaultConfigurationDto.Temperature },
-            { "selected", chatbotDefaultConfigurationDto.Selected}
+            { "selected", chatbotDefaultConfigurationDto.Selected},
+            { "user", userId}
         };
 
         await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatbotDefaultConfigurationCollectionId, 
@@ -105,10 +108,13 @@ public class ConfigurationRepository : AbstractRepository
             chatbotDefaultConfigurationDto.Id, chatbotConfigurationDocument);
     }
     
-    public async Task<ChatSessionDefaultConfigurationDto?> GetChatSessionDefaultConfiguration()
+    public async Task<ChatSessionDefaultConfigurationDto?> GetChatSessionDefaultConfiguration(string userId)
     {
         var chatSessionDefaultConfigurationDocuments =
-            await AppwriteDatabase.ListDocuments(AppwriteDatabaseId, ChatSessionDefaultConfigurationCollectionId);
+            await AppwriteDatabase.ListDocuments(AppwriteDatabaseId, ChatSessionDefaultConfigurationCollectionId,
+                [
+                    Query.Equal("user", userId)
+                ]);
 
         var chatSessionDefaultConfigurationDocument =
             chatSessionDefaultConfigurationDocuments.Documents.Count > 0 ? chatSessionDefaultConfigurationDocuments.Documents.First() : null;
@@ -123,14 +129,16 @@ public class ConfigurationRepository : AbstractRepository
         return chatSessionDefaultConfiguration;
     }
     
-    public async Task SaveChatSessionDefaultConfiguration(ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto)
+    public async Task SaveChatSessionDefaultConfiguration(ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto,
+        string userId)
     {
         var chatSessionDefaultConfigurationDocument = new Dictionary<string, object>()
         {
             { "systemInstruction", chatSessionDefaultConfigurationDto.SystemInstruction ?? "" },
             { "textStream", chatSessionDefaultConfigurationDto.TextStream},
             { "imageSize", chatSessionDefaultConfigurationDto.ImageSize ?? ""},
-            { "imagesToGenerate", chatSessionDefaultConfigurationDto.ImagesToGenerate}
+            { "imagesToGenerate", chatSessionDefaultConfigurationDto.ImagesToGenerate},
+            { "user", userId}
         };
 
         await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatSessionDefaultConfigurationCollectionId,

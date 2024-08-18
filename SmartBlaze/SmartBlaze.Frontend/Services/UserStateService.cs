@@ -7,14 +7,7 @@ namespace SmartBlaze.Frontend.Services;
 public class UserStateService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
 {
     private UserDto? _userLogged;
-
-    private SettingsService _settingsService;
-
-
-    public UserStateService(IHttpClientFactory httpClientFactory, SettingsService settingsService) : this(httpClientFactory)
-    {
-        _settingsService = settingsService;
-    }
+    
 
     public UserDto? UserLogged => _userLogged;
 

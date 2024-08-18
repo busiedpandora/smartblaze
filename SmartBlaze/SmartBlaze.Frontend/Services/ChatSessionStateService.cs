@@ -7,6 +7,7 @@ namespace SmartBlaze.Frontend.Services;
 public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
 {
     private SettingsService _settingsService;
+    private UserStateService _userStateService;
     
     private List<ChatSessionDto>? _chatSessions;
     private ChatSessionDto? _currentChatSession;
@@ -23,10 +24,12 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     private string _currentGenerationType = "text";
 
 
-    public ChatSessionStateService(IHttpClientFactory httpClientFactory, SettingsService settingsService) 
+    public ChatSessionStateService(IHttpClientFactory httpClientFactory, SettingsService settingsService,
+        UserStateService userStateService) 
         : this(httpClientFactory)
     {
         _settingsService = settingsService;
+        _userStateService = userStateService;
     }
 
     public List<ChatSessionDto>? ChatSessions
@@ -402,21 +405,6 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         NotifyRefreshView();
     }
 
-    public void OpenChatSessionSettings()
-    {
-        if(_currentChatSession is not null)
-        {
-            NotifyNavigateToPage($"chat/{_currentChatSession.Id}");
-            NotifyRefreshView();
-        }
-    }
-
-    public void CloseChatSessionSettings()
-    {
-        NotifyNavigateToPage("/");
-        NotifyRefreshView();
-    }
-
     public async Task EditCurrentChatSession(ChatSessionSettings chatSessionSettings)
     {
         if (_chatSessions is null)
@@ -529,10 +517,6 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             {
                 await SelectChatSession(_chatSessions.ElementAt(0));
             }
-            else
-            {
-                NotifyNavigateToPage("/welcome");
-            }
         }
         
         NotifyRefreshView();
@@ -546,6 +530,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
 
         _areChatSessionsLoadingOnStartup = true;
+        NotifyRefreshView();
         
         var response = await HttpClient.GetAsync($"chat-sessions");
         var responseContent = await response.Content.ReadAsStringAsync();
@@ -561,16 +546,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
                               ?? new List<ChatSessionDto>();
         
          _chatSessions = chatSessionsDto;
-
-         if (_chatSessions.Count > 0)
-         {
-             NotifyNavigateToPage("/");
-         }
-         else
-         {
-             NotifyNavigateToPage("/welcome");
-         }
-        
+         
         _areChatSessionsLoadingOnStartup = false;
         
         NotifyRefreshView();

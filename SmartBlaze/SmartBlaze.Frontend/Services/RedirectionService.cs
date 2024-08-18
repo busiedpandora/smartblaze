@@ -2,7 +2,7 @@ namespace SmartBlaze.Frontend.Services;
 
 public class RedirectionService
 {
-    private string _url = "/";
+    private string _url = "/welcome";
     private string _errorTitle = string.Empty;
     private string _errorMessage = string.Empty;
 

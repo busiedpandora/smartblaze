@@ -140,9 +140,9 @@
         }
 
         <div class="mt-5">
-            <button class="btn btn-primary" type="button" @onclick="OnCancelClicked">
+            <NavLink class="btn btn-primary" href="/">
                 Cancel
-            </button>
+            </NavLink>
 
             <button class="btn btn-primary ms-2" type="submit" value="Submit">
                 Save
@@ -259,11 +259,6 @@
     private async void OnSaveClicked()
     {
         await _chatSessionStateService.EditCurrentChatSession(_chatSessionSettings);
-    }
-    
-    private void OnCancelClicked()
-    {
-        _chatSessionStateService.CloseChatSessionSettings();
     }
     
     private void ReloadComponentState()

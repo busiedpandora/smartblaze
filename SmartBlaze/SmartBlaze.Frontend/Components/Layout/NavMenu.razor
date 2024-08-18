@@ -16,7 +16,7 @@
 
 <div id="chatList" class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
-        @if (_chatSessionStateService.ChatSessions is null)
+        @if (_chatSessionStateService.AreChatSessionsLoadingOnStartup)
         {
             <div class="nav-item px-3">
                 <NavLink class="nav-link">
@@ -26,30 +26,33 @@
         }
         else
         {
-            @foreach (var chatSession in _chatSessionStateService.ChatSessions)
+            @if (_chatSessionStateService.ChatSessions is not null)
             {
-                @if (chatSession.Title is not null)
+                @foreach (var chatSession in _chatSessionStateService.ChatSessions)
                 {
-                    <div class="nav-item px-3">
-                        <NavLink class="@(chatSession.Selected ? "nav-link active" : "nav-link")" 
-                                 @onclick="() => OnChatClicked(chatSession)">
-                            <div class="d-flex col-12 justify-content-between">
-                                <div>
-                                    <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2" data-bs-toggle="dropdown"/>
-                                    @if (chatSession.Title.Length > 15)
-                                    {
-                                        <span class="user-select-none">
-                                            @(chatSession.Title.Substring(0, 15) + "...")
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="user-select-none">@chatSession.Title</span>
-                                    }
+                    @if (chatSession.Title is not null)
+                    {
+                        <div class="nav-item px-3">
+                            <NavLink class="@(chatSession.Selected ? "nav-link active" : "nav-link")" 
+                                     @onclick="() => OnChatClicked(chatSession)">
+                                <div class="d-flex col-12 justify-content-between">
+                                    <div>
+                                        <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2" data-bs-toggle="dropdown"/>
+                                        @if (chatSession.Title.Length > 15)
+                                        {
+                                            <span class="user-select-none">
+                                                @(chatSession.Title.Substring(0, 15) + "...")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="user-select-none">@chatSession.Title</span>
+                                        }
+                                    </div>
                                 </div>
-                            </div>
-                        </NavLink>
-                    </div>
+                            </NavLink>
+                        </div>
+                    }
                 }
             }
         }

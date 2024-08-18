@@ -4,6 +4,7 @@
 @inject RedirectionService _redirectionService
 @inject ChatSessionStateService _chatSessionStateService
 @inject SettingsService _settingsService
+@inject UserStateService _userStateService
 
 @code {
     private bool _applicationStarted = false;
@@ -19,6 +20,10 @@
             _settingsService.RefreshView += ReloadComponentState;
             _settingsService.NavigateToPage += UpdatePageUrl;
             _settingsService.NavigateToErrorPage += UpdateErrorInfo;
+
+            _userStateService.RefreshView += ReloadComponentState;
+            _userStateService.NavigateToPage += UpdatePageUrl;
+            _userStateService.NavigateToErrorPage += UpdateErrorInfo;
         }
         
         return base.OnInitializedAsync();
@@ -30,8 +35,8 @@
         {
             _applicationStarted = true;
             
-            await _settingsService.SetUpConfiguration();
-            await _chatSessionStateService.LoadChatSessions();
+            //await _settingsService.SetUpConfiguration();
+            //await _chatSessionStateService.LoadChatSessions();
         }
         
         if (_navigationManager.Uri.EndsWith("/error"))

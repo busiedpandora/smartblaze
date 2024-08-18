@@ -26,8 +26,10 @@
                 </div>
             </div>
             <div class="col-auto">
-                <img src="icons/pen-fill.svg" width="20" height="20" alt="edit icon" class="me-2 edit-icon"
-                     @onclick="OnEditChatSessionClicked" />
+                <NavLink class="edit-icon" href=@("/chat/" + _chatSessionStateService.CurrentChatSession.Id)>
+                    <img src="icons/pen-fill.svg" width="20" height="20" alt="edit icon" class="me-2"/>
+                </NavLink>
+                
                 <img src="icons/trash3-fill.svg" width="20" height="20" alt="delete icon" class="me-2 delete-icon"
                      @onclick="OnDeleteChatSessionClicked"/>
             </div>
@@ -219,10 +221,10 @@
         await base.OnAfterRenderAsync(firstRender);
     }
 
-    private void OnEditChatSessionClicked()
+    /*private void OnEditChatSessionClicked()
     {
         _chatSessionStateService.OpenChatSessionSettings();
-    }
+    }*/
 
     private async void OnDeleteChatSessionClicked()
     {

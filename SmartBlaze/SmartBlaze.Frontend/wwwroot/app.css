@@ -115,3 +115,15 @@ pre .quoted-text {
 .error {
     color: red;
 }
+
+#userRegisterContainer {
+    padding-left: 100px;
+    padding-right: 100px;
+    padding-top: 50px;
+}
+
+#userLoginContainer {
+    padding-left: 100px;
+    padding-right: 100px;
+    padding-top: 50px;
+}

@@ -8,10 +8,12 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ChatSessionRepository>();
 builder.Services.AddSingleton<MessageRepository>();
 builder.Services.AddSingleton<ConfigurationRepository>();
+builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<ChatSessionService>();
 builder.Services.AddSingleton<MessageService>();
 builder.Services.AddSingleton<ChatbotService>();
 builder.Services.AddSingleton<ConfigurationService>();
+builder.Services.AddSingleton<UserService>();
 
 var app = builder.Build();
 

@@ -342,6 +342,11 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         {
             return;
         }
+
+        if (_userStateService.UserLogged is null)
+        {
+            return;
+        }
         
         _isNewChatSessionBeingCreated = true;
         NotifyRefreshView();
@@ -354,7 +359,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         ChatSessionDto? chatSessionDto = new ChatSessionDto();
         chatSessionDto.Title = "Undefined";
         
-        var newChatSessionResponse = await HttpClient.PostAsJsonAsync("chat-sessions/new", chatSessionDto);
+        var newChatSessionResponse = await HttpClient.PostAsJsonAsync(
+            $"chat-sessions/{_userStateService.UserLogged.Id}/new", chatSessionDto);
         var newChatSessionResponseContent = await newChatSessionResponse.Content.ReadAsStringAsync();
 
         if (!newChatSessionResponse.IsSuccessStatusCode)
@@ -529,10 +535,15 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             return;
         }
 
+        if (_userStateService.UserLogged is null)
+        {
+            return;
+        }
+
         _areChatSessionsLoadingOnStartup = true;
         NotifyRefreshView();
         
-        var response = await HttpClient.GetAsync($"chat-sessions");
+        var response = await HttpClient.GetAsync($"chat-sessions/{_userStateService.UserLogged.Id}");
         var responseContent = await response.Content.ReadAsStringAsync();
         
         if (!response.IsSuccessStatusCode)

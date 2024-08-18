@@ -7,12 +7,13 @@ namespace SmartBlaze.Backend.Repositories;
 
 public class ChatSessionRepository : AbstractRepository
 { 
-    public async Task<List<ChatSessionDto>> GetAllChatSessions()
+    public async Task<List<ChatSessionDto>> GetAllChatSessions(string userId)
     {
         var chatSessionDocuments = await AppwriteDatabase.ListDocuments(
                 AppwriteDatabaseId, 
                 ChatSessionCollectionId,
                 [
+                    Query.Equal("user", userId),
                     Query.OrderDesc("creationDate")
                 ]
             );
@@ -33,12 +34,13 @@ public class ChatSessionRepository : AbstractRepository
         return chatSessionDto;
     }
     
-    public async Task<ChatSessionDto> SaveChatSession(ChatSessionDto chatSessionDto)
+    public async Task<ChatSessionDto> SaveChatSession(ChatSessionDto chatSessionDto, string userId)
     {
         var chatSessionDocument = new Dictionary<string, object>()
         {
             {"title", chatSessionDto.Title ?? ""},
             {"creationDate", chatSessionDto.CreationDate ?? DateTime.MinValue},
+            {"user", userId}
         };
         
         var csd = await AppwriteDatabase.CreateDocument(AppwriteDatabaseId, ChatSessionCollectionId, 

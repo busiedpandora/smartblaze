@@ -202,6 +202,16 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             $"configuration/{_userStateService.UserLogged.Id}/chat-session/chat-session", chatSessionDefaultConfiguration);
     }
 
+    public void Logout()
+    {
+        _chatbotDefaultConfigurationSelected = null;
+        _chatSessionDefaultConfiguration = null;
+
+        _chatbotDefaultConfigurations = null;
+
+        _chatbots = null;
+    }
+
     private async Task LoadChatbots()
     {
         if (_chatbots is not null)

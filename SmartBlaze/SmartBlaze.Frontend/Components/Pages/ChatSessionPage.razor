@@ -8,193 +8,216 @@
 @inject ChatSessionStateService _chatSessionStateService
 @inject SettingsService _settingsService
 @inject IJSRuntime _jsRuntime
+@inject UserStateService _userStateService
 
 <PageTitle>SmartBlaze</PageTitle>
 
 <div id="pageRow">
     @if (_chatSessionStateService.CurrentChatSession is not null)
     {
-        <div class="row justify-content-between align-items-center h-100">
-            <div class="d-flex justify-content-center col align-items-center pe-0">
-                <div class="col-auto px-0">
-                    <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/>
+        <div class="row align-items-center h-100">
+            <div class="col-3">
+                <div class="d-flex justify-content-start align-items-center ms-3">
+                    
                 </div>
-                <div class="col-auto">
-                    <span id="pageTitle" class="user-select-none">
-                        @_chatSessionStateService.CurrentChatSession.Title
-                    </span>
                 </div>
-            </div>
-            <div class="col-auto">
-                <NavLink class="edit-icon" href=@("/chat/" + _chatSessionStateService.CurrentChatSession.Id)>
-                    <img src="icons/pen-fill.svg" width="20" height="20" alt="edit icon" class="me-2"/>
-                </NavLink>
-                
-                <img src="icons/trash3-fill.svg" width="20" height="20" alt="delete icon" class="me-2 delete-icon"
-                     @onclick="OnDeleteChatSessionClicked"/>
-            </div>
-        </div>
-    }
-</div>
-
-<div id="conversationContainer">
-    @if (_chatSessionStateService.CurrentChatSessionConfiguration is not null 
-         && _chatSessionStateService.CurrentGenerationType == "text"
-         && _settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptSystemInstruction == true
-         && !string.IsNullOrEmpty(_chatSessionStateService.CurrentChatSessionConfiguration.SystemInstruction))
-    {
-        <div class="d-flex">
-            <img src="icons/gear-wide.svg" width="25" height="25" alt="system icon" title="system"/>
-
-            <div class="ps-3 pe-3 pb-5 pt-1">
-                <pre class="mb-0">@_chatSessionStateService.CurrentChatSessionConfiguration.SystemInstruction</pre>
-            </div>
-        </div>
-    }
-
-    @if (_chatSessionStateService.CurrentChatSessionMessages is not null)
-    {
-        @foreach (var message in _chatSessionStateService.CurrentChatSessionMessages)
-        {
-            <div class="d-flex">
-                @if (message.Role == "user")
-                {
-                    <div>
-                        <img src="icons/person-fill.svg" width="28" height="28" alt="user icon" title="user"/>
-                    </div>
-                    <div class="ps-3 pe-3 pb-5 pt-1">
+                <div class="col-6">
+                    <div class="d-flex justify-content-center align-items-center">
                         <div>
-                            <pre class="mb-0">@message.Text</pre>
+                            <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/>
                         </div>
+                        <div>
+                            <span id="pageTitle" class="user-select-none">
+                                @_chatSessionStateService.CurrentChatSession.Title
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="d-flex justify-content-end align-items-center me-3">
+                        <div>
+                            <NavLink class="edit-icon" href=@("/chat/" + _chatSessionStateService.CurrentChatSession.Id)>
+                                <img src="icons/pen-fill.svg" width="20" height="20" alt="edit icon" class="me-2"/>
+                            </NavLink>
+                        </div>
+                        <div class="ms-3">
+                            <img src="icons/trash3-fill.svg" width="20" height="20" alt="delete icon" class="me-2 delete-icon"
+                                 @onclick="OnDeleteChatSessionClicked"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
 
-                        @if (message.MediaDtos is not null && message.MediaDtos.Count > 0)
+        <div id="conversationContainer">
+            @if (_chatSessionStateService.CurrentChatSessionMessages is not null)
+            {
+                @if (_chatSessionStateService.CurrentChatSessionConfiguration is not null
+                     && _chatSessionStateService.CurrentGenerationType == "text"
+                     && _settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptSystemInstruction == true
+                     && !string.IsNullOrEmpty(_chatSessionStateService.CurrentChatSessionConfiguration.SystemInstruction))
+                {
+                    <div class="d-flex">
+                        <img src="icons/gear-wide.svg" width="25" height="25" alt="system icon" title="system"/>
+
+                        <div class="ps-3 pe-3 pb-5 pt-1">
+                            <pre class="mb-0">@_chatSessionStateService.CurrentChatSessionConfiguration.SystemInstruction</pre>
+                        </div>
+                    </div>
+                }
+
+                @foreach (var message in _chatSessionStateService.CurrentChatSessionMessages)
+                {
+                    <div class="d-flex">
+                        @if (message.Role == "user")
                         {
-                            <div class="row row-cols-4 align-items-center justify-content-start mb-1">
-                                @foreach (var mediaDto in message.MediaDtos)
+                            <div>
+                                <img src="icons/person-fill.svg" width="28" height="28" alt="user icon" title="user"/>
+                            </div>
+                            <div class="ps-3 pe-3 pb-5 pt-1">
+                                <div>
+                                    <pre class="mb-0">@message.Text</pre>
+                                </div>
+
+                                @if (message.MediaDtos is not null && message.MediaDtos.Count > 0)
                                 {
-                                    @if (mediaDto.ContentType.StartsWith("image"))
-                                    {
-                                        @if (mediaDto.Data is not null)
+                                    <div class="row row-cols-4 align-items-center justify-content-start mb-1">
+                                        @foreach (var mediaDto in message.MediaDtos)
                                         {
-                                            <div class="col py-2 image-container">
-                                                @if (mediaDto.Data.StartsWith("http"))
+                                            @if (mediaDto.ContentType.StartsWith("image"))
+                                            {
+                                                @if (mediaDto.Data is not null)
                                                 {
-                                                    <img src="@mediaDto.Data" alt="user image" class="img-thumbnail"
-                                                         title="@mediaDto.Name"/>
-                                                }
-                                                else
-                                                {
-                                                    <img src="data:@mediaDto.ContentType;base64, @mediaDto.Data" alt="user image" class="img-thumbnail" title="@mediaDto.Name"/>
-                                                }
-                                            </div>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <div class="col-1 py-2">
-                                            <div class="border border-3 rounded-3 px-2 py-3 file-input-container" title="@mediaDto.Name">
-                                                <div class="d-flex justify-content-center mb-1">
-                                                    <img src="icons/file-earmark-text.svg" width="20" alt="file icon"/>
-                                                </div>
-                                                <div class="d-flex justify-content-center">
-                                                    <span class="file-name" >
-                                                        @if (mediaDto.Name?.Length > 10)
+                                                    <div class="col py-2 image-container">
+                                                        @if (mediaDto.Data.StartsWith("http"))
                                                         {
-                                                            @(mediaDto.Name.Substring(0, 9).Replace(" ", "") + "..")
+                                                            <img src="@mediaDto.Data" alt="user image" class="img-thumbnail"
+                                                                 title="@mediaDto.Name"/>
                                                         }
                                                         else
                                                         {
-                                                            @mediaDto.Name?.Replace(" ", "")
+                                                            <img src="data:@mediaDto.ContentType;base64, @mediaDto.Data" alt="user image" class="img-thumbnail" title="@mediaDto.Name"/>
                                                         }
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                }
-                            </div>
-                        }
-                    </div>
-                }
-                else if (message.Role == "assistant")
-                {
-                    <div>
-                        <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
-                    </div>
-                    <div class="ps-3 pe-3 pb-5 pt-1">
-                        @{
-                            var encodedText = HttpUtility.HtmlEncode(message.Text ?? "");
-                        
-                            var quotesRegex = new Regex(@"[`'´]([^`\r\n\t]+?)[`'´]");
-                            var codeRegex = new Regex(@"```(.*)((?:(?!```)[\s\S])*)```");
-
-                            var processedText = quotesRegex.Replace(encodedText, 
-                                "<span class=\"quoted-text\">`$1`</span>");
-                            processedText = codeRegex.Replace(processedText, 
-                                match => 
-                                {
-                                    var language = !string.IsNullOrEmpty(match.Groups[1].Value) ? match.Groups[1].Value : "text";
-                                    var code = match.Groups[2].Value;
-                                    return $"<code class=\"language-{language}\">{language.ToUpper()}{code}</code>";
-                                });
-                        }
-                        <div>
-                            <pre class="mb-0 @message.Status">@(new MarkupString(processedText))</pre>
-                        </div>
-
-                        @if (message.MediaDtos is not null && message.MediaDtos.Count > 0)
-                        {
-                            <div class="row row-cols-4 align-items-center justify-content-start mb-1">
-                                @foreach (var mediaDto in message.MediaDtos)
-                                {
-                                    @if (mediaDto.Data is not null)
-                                    {
-                                        <div class="col py-2 image-container">
-                                            @if (mediaDto.Data.StartsWith("http"))
-                                            {
-                                                <img src="@mediaDto.Data" alt="assistant generated image" class="img-thumbnail"
-                                                     title="@mediaDto.Name"/>
+                                                    </div>
+                                                }
                                             }
                                             else
                                             {
-                                                <img src="data:@mediaDto.ContentType;base64, @mediaDto.Data" alt="user image" class="img-thumbnail" title="@mediaDto.Name"/>
+                                                <div class="col-1 py-2">
+                                                    <div class="border border-3 rounded-3 px-2 py-3 file-input-container" title="@mediaDto.Name">
+                                                        <div class="d-flex justify-content-center mb-1">
+                                                            <img src="icons/file-earmark-text.svg" width="20" alt="file icon"/>
+                                                        </div>
+                                                        <div class="d-flex justify-content-center">
+                                                            <span class="file-name">
+                                                                @if (mediaDto.Name?.Length > 10)
+                                                                {
+                                                                    @(mediaDto.Name.Substring(0, 9).Replace(" ", "") + "..")
+                                                                }
+                                                                else
+                                                                {
+                                                                    @mediaDto.Name?.Replace(" ", "")
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             }
-                                        </div>
-                                    }
+                                        }
+                                    </div>
                                 }
                             </div>
                         }
-                        
+                        else if (message.Role == "assistant")
+                        {
+                            <div>
+                                <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
+                            </div>
+                            <div class="ps-3 pe-3 pb-5 pt-1">
+                                @{
+                                    var encodedText = HttpUtility.HtmlEncode(message.Text ?? "");
+
+                                    var quotesRegex = new Regex(@"[`'´]([^`\r\n\t]+?)[`'´]");
+                                    var codeRegex = new Regex(@"```(.*)((?:(?!```)[\s\S])*)```");
+
+                                    var processedText = quotesRegex.Replace(encodedText,
+                                        "<span class=\"quoted-text\">`$1`</span>");
+                                    processedText = codeRegex.Replace(processedText,
+                                        match =>
+                                        {
+                                            var language = !string.IsNullOrEmpty(match.Groups[1].Value) ? match.Groups[1].Value : "text";
+                                            var code = match.Groups[2].Value;
+                                            return $"<code class=\"language-{language}\">{language.ToUpper()}{code}</code>";
+                                        });
+                                }
+                                <div>
+                                    <pre class="mb-0 @message.Status">@(new MarkupString(processedText))</pre>
+                                </div>
+
+                                @if (message.MediaDtos is not null && message.MediaDtos.Count > 0)
+                                {
+                                    <div class="row row-cols-4 align-items-center justify-content-start mb-1">
+                                        @foreach (var mediaDto in message.MediaDtos)
+                                        {
+                                            @if (mediaDto.Data is not null)
+                                            {
+                                                <div class="col py-2 image-container">
+                                                    @if (mediaDto.Data.StartsWith("http"))
+                                                    {
+                                                        <img src="@mediaDto.Data" alt="assistant generated image" class="img-thumbnail"
+                                                             title="@mediaDto.Name"/>
+                                                    }
+                                                    else
+                                                    {
+                                                        <img src="data:@mediaDto.ContentType;base64, @mediaDto.Data" alt="user image" class="img-thumbnail" title="@mediaDto.Name"/>
+                                                    }
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                }
+
+                                <div>
+                                    @if (!string.IsNullOrEmpty(message.ChatbotName) && !string.IsNullOrEmpty(message.ChatbotModel))
+                                    {
+                                        <span class="text-secondary chatbot-info">@message.ChatbotName</span>
+                                        <span> - </span>
+                                        <span class="text-secondary chatbot-info">@message.ChatbotModel</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (_chatSessionStateService.IsGeneratingResponse)
+                {
+                    <div class="d-flex">
                         <div>
-                            @if (!string.IsNullOrEmpty(message.ChatbotName) && !string.IsNullOrEmpty(message.ChatbotModel))
-                            {
-                                <span class="text-secondary chatbot-info">@message.ChatbotName</span>
-                                <span> - </span>
-                                <span class="text-secondary chatbot-info">@message.ChatbotModel</span>
-                            }
+                            <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
+                        </div>
+                        <div class="ps-3 pe-3 pb-5 pt-1">
+                            <span class="text-secondary">I'm elaborating message...</span>
                         </div>
                     </div>
                 }
-            </div>
-        }
-    
-        @if (_chatSessionStateService.IsGeneratingResponse)
-        {
-            <div class="d-flex">
-                <div>
-                    <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
+            }
+            @if (_chatSessionStateService.ChatSessions?.Count == 0)
+            {
+                <div class="alert alert-light" role="alert">
+                    <h4>Start a new chat session by clicking on '
+                        <span>
+                            <img src="icons/plus-circle-fill.svg" width="20" height="20" alt="new chat icon" class="mb-1"/>
+                            New chat
+                        </span> '</h4>
                 </div>
-                <div class="ps-3 pe-3 pb-5 pt-1">
-                    <span class="text-secondary">I'm elaborating message...</span>
-                </div>
-            </div>
-        }
-    }
-</div>
+            }
+        </div>
 
-<div>
-    <InputBox/>
-</div>
+        <div>
+            <InputBox/>
+        </div>
 
 
 @code {

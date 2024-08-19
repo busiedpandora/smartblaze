@@ -569,6 +569,18 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         
         NotifyRefreshView();
     }
+
+    public void Logout()
+    {
+        if (_currentGenerationType != "text")
+        {
+            SwitchToTextGeneration();
+        }
+        
+        DeselectCurrentChatSession();
+
+        _chatSessions = null;
+    }
     
     public bool CanUserInteract()
     {

@@ -54,4 +54,12 @@ public class UserStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         NotifyNavigateToPage("/");
         NotifyRefreshView();
     }
+
+    public void Logout()
+    {
+        _userLogged = null;
+        
+        NotifyNavigateToPage("/welcome");
+        NotifyRefreshView();
+    }
 }

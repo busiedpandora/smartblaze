@@ -21,20 +21,20 @@ public class ConfigurationController : ControllerBase
         _chatSessionService = chatSessionService;
     }
     
-    [HttpGet("chatbot")]
-    public async Task<ActionResult<List<ChatbotDefaultConfigurationDto>>> GetChatbotDefaultConfigurations()
+    [HttpGet("{userId}/chatbot")]
+    public async Task<ActionResult<List<ChatbotDefaultConfigurationDto>>> GetChatbotDefaultConfigurations(string userId)
     {
         var chatbots = _chatbotService.GetAllChatbots();
         var chatbotConfigurationDtos = new List<ChatbotDefaultConfigurationDto>();
 
         foreach (var chatbot in chatbots)
         {
-            var chatbotDefaultConfiguration = await _configurationService.GetChatbotDefaultConfiguration(chatbot.Name);
+            var chatbotDefaultConfiguration = await _configurationService.GetChatbotDefaultConfiguration(chatbot.Name, userId);
 
             if (chatbotDefaultConfiguration is null)
             {
                 chatbotDefaultConfiguration = chatbot.GetDefaultConfiguration();
-                await _configurationService.SaveChatbotDefaultConfiguration(chatbotDefaultConfiguration);
+                await _configurationService.SaveChatbotDefaultConfiguration(chatbotDefaultConfiguration, userId);
             }
             
             chatbotConfigurationDtos.Add(chatbotDefaultConfiguration);
@@ -43,16 +43,17 @@ public class ConfigurationController : ControllerBase
         return Ok(chatbotConfigurationDtos);
     }
 
-    [HttpPost("chatbot")]
-    public async Task<ActionResult> EditChatbotDefaultConfiguration([FromBody] ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
+    [HttpPut("{userId}/chatbot")]
+    public async Task<ActionResult> EditChatbotDefaultConfiguration(string userId,
+        [FromBody] ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
     {
-        if (chatbotDefaultConfigurationDto.ChatbotName is null || chatbotDefaultConfigurationDto.TextGenerationChatbotModel is null
-                                                               || chatbotDefaultConfigurationDto.ImageGenerationChatbotModel is null)
+        if (chatbotDefaultConfigurationDto.ChatbotName is null)
         {
-            return BadRequest("The chatbot name and model cannot be null");
+            return BadRequest("The chatbot name cannot be null");
         }
         
-        var chatbotDefaultConfiguration = await _configurationService.GetChatbotDefaultConfiguration(chatbotDefaultConfigurationDto.ChatbotName);
+        var chatbotDefaultConfiguration = 
+            await _configurationService.GetChatbotDefaultConfiguration(chatbotDefaultConfigurationDto.ChatbotName, userId);
 
         if (chatbotDefaultConfiguration is null)
         {
@@ -61,7 +62,7 @@ public class ConfigurationController : ControllerBase
         
         if (chatbotDefaultConfiguration.Selected == false)
         {
-            await _configurationService.DeselectCurrentChatbotDefaultConfiguration();
+            await _configurationService.DeselectCurrentChatbotDefaultConfiguration(userId);
         }
 
         chatbotDefaultConfiguration.TextGenerationChatbotModel = chatbotDefaultConfigurationDto.TextGenerationChatbotModel;
@@ -76,22 +77,22 @@ public class ConfigurationController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("chat-session")]
-    public async Task<ActionResult<ChatSessionDefaultConfigurationDto>> GetChatSessionDefaultConfiguration()
+    [HttpGet("{userId}/chat-session/")]
+    public async Task<ActionResult<ChatSessionDefaultConfigurationDto>> GetChatSessionDefaultConfiguration(string userId)
     {
-        var chatSessionDefaultConfiguration = await _configurationService.GetChatSessionDefaultConfiguration();
+        var chatSessionDefaultConfiguration = await _configurationService.GetChatSessionDefaultConfiguration(userId);
 
         if (chatSessionDefaultConfiguration is null)
         {
             chatSessionDefaultConfiguration = _configurationService.CreateChatSessionDefaultConfiguration();
-            await _configurationService.SaveChatSessionDefaultConfiguration(chatSessionDefaultConfiguration);
+            await _configurationService.SaveChatSessionDefaultConfiguration(chatSessionDefaultConfiguration, userId);
         }
 
         return Ok(chatSessionDefaultConfiguration);
     }
 
-    [HttpPost("chat-session")]
-    public async Task<ActionResult> EditChatSessionDefaultConfiguration(
+    [HttpPut("{userId}/chat-session")]
+    public async Task<ActionResult> EditChatSessionDefaultConfiguration(string userId,
         [FromBody] ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto)
     {
         if (chatSessionDefaultConfigurationDto.SystemInstruction is null)
@@ -100,7 +101,7 @@ public class ConfigurationController : ControllerBase
                 $"Properties of chat session configuration with id {chatSessionDefaultConfigurationDto.Id} specified incorrectly");
         }
 
-        var chatSessionDefaultConfiguration = await _configurationService.GetChatSessionDefaultConfiguration();
+        var chatSessionDefaultConfiguration = await _configurationService.GetChatSessionDefaultConfiguration(userId);
 
         if (chatSessionDefaultConfiguration is null)
         {

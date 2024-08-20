@@ -7,6 +7,7 @@ namespace SmartBlaze.Frontend.Services;
 public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
 {
     private SettingsService _settingsService;
+    private UserStateService _userStateService;
     
     private List<ChatSessionDto>? _chatSessions;
     private ChatSessionDto? _currentChatSession;
@@ -23,10 +24,12 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     private string _currentGenerationType = "text";
 
 
-    public ChatSessionStateService(IHttpClientFactory httpClientFactory, SettingsService settingsService) 
+    public ChatSessionStateService(IHttpClientFactory httpClientFactory, SettingsService settingsService,
+        UserStateService userStateService) 
         : this(httpClientFactory)
     {
         _settingsService = settingsService;
+        _userStateService = userStateService;
     }
 
     public List<ChatSessionDto>? ChatSessions
@@ -339,6 +342,11 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         {
             return;
         }
+
+        if (_userStateService.UserLogged is null)
+        {
+            return;
+        }
         
         _isNewChatSessionBeingCreated = true;
         NotifyRefreshView();
@@ -351,7 +359,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         ChatSessionDto? chatSessionDto = new ChatSessionDto();
         chatSessionDto.Title = "Undefined";
         
-        var newChatSessionResponse = await HttpClient.PostAsJsonAsync("chat-sessions/new", chatSessionDto);
+        var newChatSessionResponse = await HttpClient.PostAsJsonAsync(
+            $"chat-sessions/{_userStateService.UserLogged.Id}/new", chatSessionDto);
         var newChatSessionResponseContent = await newChatSessionResponse.Content.ReadAsStringAsync();
 
         if (!newChatSessionResponse.IsSuccessStatusCode)
@@ -399,21 +408,6 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         _chatSessions.Insert(0, chatSessionDto);
         _isNewChatSessionBeingCreated = false;
         await SelectChatSession(chatSessionDto);
-        NotifyRefreshView();
-    }
-
-    public void OpenChatSessionSettings()
-    {
-        if(_currentChatSession is not null)
-        {
-            NotifyNavigateToPage($"chat/{_currentChatSession.Id}");
-            NotifyRefreshView();
-        }
-    }
-
-    public void CloseChatSessionSettings()
-    {
-        NotifyNavigateToPage("/");
         NotifyRefreshView();
     }
 
@@ -529,10 +523,6 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             {
                 await SelectChatSession(_chatSessions.ElementAt(0));
             }
-            else
-            {
-                NotifyNavigateToPage("/welcome");
-            }
         }
         
         NotifyRefreshView();
@@ -545,9 +535,15 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             return;
         }
 
+        if (_userStateService.UserLogged is null)
+        {
+            return;
+        }
+
         _areChatSessionsLoadingOnStartup = true;
+        NotifyRefreshView();
         
-        var response = await HttpClient.GetAsync($"chat-sessions");
+        var response = await HttpClient.GetAsync($"chat-sessions/{_userStateService.UserLogged.Id}");
         var responseContent = await response.Content.ReadAsStringAsync();
         
         if (!response.IsSuccessStatusCode)
@@ -561,16 +557,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
                               ?? new List<ChatSessionDto>();
         
          _chatSessions = chatSessionsDto;
-
-         if (_chatSessions.Count > 0)
-         {
-             NotifyNavigateToPage("/");
-         }
-         else
-         {
-             NotifyNavigateToPage("/welcome");
-         }
-        
+         
         _areChatSessionsLoadingOnStartup = false;
         
         NotifyRefreshView();
@@ -581,6 +568,18 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         }
         
         NotifyRefreshView();
+    }
+
+    public void Logout()
+    {
+        if (_currentGenerationType != "text")
+        {
+            SwitchToTextGeneration();
+        }
+        
+        DeselectCurrentChatSession();
+
+        _chatSessions = null;
     }
     
     public bool CanUserInteract()

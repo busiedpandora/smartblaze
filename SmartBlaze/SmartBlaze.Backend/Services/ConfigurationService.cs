@@ -14,9 +14,9 @@ public class ConfigurationService
         _configurationRepository = configurationRepository;
     }
 
-    public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration(string chatbotName)
+    public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration(string chatbotName, string userId)
     {
-        return await _configurationRepository.GetChatbotDefaultConfiguration(chatbotName);
+        return await _configurationRepository.GetChatbotDefaultConfiguration(chatbotName, userId);
     }
     
     /*public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration()
@@ -24,9 +24,9 @@ public class ConfigurationService
         return await _configurationRepository.GetChatbotDefaultConfiguration();
     }*/
     
-    public async Task SaveChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
+    public async Task SaveChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto, string userId)
     {
-        await _configurationRepository.SaveChatbotDefaultConfiguration(chatbotDefaultConfigurationDto);
+        await _configurationRepository.SaveChatbotDefaultConfiguration(chatbotDefaultConfigurationDto, userId);
     }
     
     public async Task EditChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto)
@@ -34,9 +34,9 @@ public class ConfigurationService
         await _configurationRepository.EditChatbotDefaultConfiguration(chatbotDefaultConfigurationDto);
     }
 
-    public async Task DeselectCurrentChatbotDefaultConfiguration()
+    public async Task DeselectCurrentChatbotDefaultConfiguration(string userId)
     {
-        var selectedChatbotDefaultConfiguration = await _configurationRepository.GetSelectedChatbotDefaultConfiguration();
+        var selectedChatbotDefaultConfiguration = await _configurationRepository.GetSelectedChatbotDefaultConfiguration(userId);
 
         if (selectedChatbotDefaultConfiguration is not null)
         {
@@ -56,14 +56,15 @@ public class ConfigurationService
         };
     }
     
-    public async Task<ChatSessionDefaultConfigurationDto?> GetChatSessionDefaultConfiguration()
+    public async Task<ChatSessionDefaultConfigurationDto?> GetChatSessionDefaultConfiguration(string userId)
     {
-        return await _configurationRepository.GetChatSessionDefaultConfiguration();
+        return await _configurationRepository.GetChatSessionDefaultConfiguration(userId);
     }
     
-    public async Task SaveChatSessionDefaultConfiguration(ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto)
+    public async Task SaveChatSessionDefaultConfiguration(ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto,
+        string userId)
     {
-        await _configurationRepository.SaveChatSessionDefaultConfiguration(chatSessionDefaultConfigurationDto);
+        await _configurationRepository.SaveChatSessionDefaultConfiguration(chatSessionDefaultConfigurationDto, userId);
     }
     
     public async Task EditChatSessionDefaultConfiguration(ChatSessionDefaultConfigurationDto chatSessionDefaultConfigurationDto)

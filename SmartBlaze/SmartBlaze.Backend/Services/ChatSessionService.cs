@@ -13,9 +13,9 @@ public class ChatSessionService
         _chatSessionRepository = chatSessionRepository;
     }
     
-    public async Task<List<ChatSessionDto>?> GetAllChatSessions()
+    public async Task<List<ChatSessionDto>?> GetAllChatSessions(string userId)
     {
-        var chatSessionDtos = await _chatSessionRepository.GetAllChatSessions();
+        var chatSessionDtos = await _chatSessionRepository.GetAllChatSessions(userId);
 
         return chatSessionDtos;
     }
@@ -36,9 +36,9 @@ public class ChatSessionService
         };
     }
 
-    public async Task<ChatSessionDto> AddChatSession(ChatSessionDto chatSessionDto)
+    public async Task<ChatSessionDto> AddChatSession(ChatSessionDto chatSessionDto, string userId)
     {
-        var csDto = await _chatSessionRepository.SaveChatSession(chatSessionDto);
+        var csDto = await _chatSessionRepository.SaveChatSession(chatSessionDto, userId);
 
         return csDto;
     }

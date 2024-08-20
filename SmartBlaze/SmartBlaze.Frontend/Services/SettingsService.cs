@@ -5,6 +5,8 @@ namespace SmartBlaze.Frontend.Services;
 
 public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
 {
+    private UserStateService _userStateService;
+    
     private List<ChatbotDto>? _chatbots;
     
     private ChatbotDto? _chatbotSelectedInCurrentChatSession;
@@ -17,6 +19,12 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
     
     private bool _settingsPageOpen = false;
     private string _settingsMenuSelected = "chatbot";
+
+
+    public SettingsService(IHttpClientFactory httpClientFactory, UserStateService userStateService) : this(httpClientFactory)
+    {
+        _userStateService = userStateService;
+    }
 
     public List<ChatbotDto>? Chatbots => _chatbots;
 
@@ -138,6 +146,11 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
     public async Task SaveChatbotDefaultSettings(ChatbotDefaultSettings chatbotDefaultSettings)
     {
+        if (_userStateService.UserLogged is null)
+        {
+            return;
+        }
+        
         var chatbotDefaultConfigurationDto = new ChatbotDefaultConfigurationDto
         {
             ChatbotName = chatbotDefaultSettings.ChatbotName,
@@ -163,12 +176,18 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
             _chatbotDefaultConfigurationSelected = chatbotDefaultConfiguration;
             
-            await HttpClient.PostAsJsonAsync("configuration/chatbot", chatbotDefaultConfigurationDto);
+            await HttpClient.PutAsJsonAsync(
+                $"configuration/{_userStateService.UserLogged.Id}/chatbot", chatbotDefaultConfigurationDto);
         }
     }
 
     public async Task SaveChatSessionDefaultSettings(ChatSessionDefaultSettings chatSessionDefaultSettings)
     {
+        if (_userStateService.UserLogged is null)
+        {
+            return;
+        }
+        
         var chatSessionDefaultConfiguration = new ChatSessionDefaultConfigurationDto()
         {
             SystemInstruction = chatSessionDefaultSettings.SystemInstruction,
@@ -179,7 +198,18 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
         _chatSessionDefaultConfiguration = chatSessionDefaultConfiguration;
         
-        await HttpClient.PostAsJsonAsync("configuration/chat-session", chatSessionDefaultConfiguration);
+        await HttpClient.PutAsJsonAsync(
+            $"configuration/{_userStateService.UserLogged.Id}/chat-session/chat-session", chatSessionDefaultConfiguration);
+    }
+
+    public void Logout()
+    {
+        _chatbotDefaultConfigurationSelected = null;
+        _chatSessionDefaultConfiguration = null;
+
+        _chatbotDefaultConfigurations = null;
+
+        _chatbots = null;
     }
 
     private async Task LoadChatbots()
@@ -208,7 +238,14 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
             return;
         }
 
-        var chatbotDefaultConfigurations = await HttpClient.GetFromJsonAsync<List<ChatbotDefaultConfigurationDto>>("configuration/chatbot");
+        if (_userStateService.UserLogged is null)
+        {
+            return;
+        }
+
+        var chatbotDefaultConfigurations = 
+            await HttpClient.GetFromJsonAsync<List<ChatbotDefaultConfigurationDto>>(
+                $"configuration/{_userStateService.UserLogged.Id}/chatbot");
 
         if (chatbotDefaultConfigurations is null || chatbotDefaultConfigurations.Count == 0)
         {
@@ -231,7 +268,14 @@ public class SettingsService(IHttpClientFactory httpClientFactory) : AbstractSer
 
     private async Task LoadChatSessionDefaultConfiguration()
     {
-        var chatSessionDefaultConfigurationDto = await HttpClient.GetFromJsonAsync<ChatSessionDefaultConfigurationDto>("configuration/chat-session");
+        if (_userStateService.UserLogged is null)
+        {
+            return;
+        }
+        
+        var chatSessionDefaultConfigurationDto = 
+            await HttpClient.GetFromJsonAsync<ChatSessionDefaultConfigurationDto>(
+                $"configuration/{_userStateService.UserLogged.Id}/chat-session");
 
         if (chatSessionDefaultConfigurationDto is null)
         {

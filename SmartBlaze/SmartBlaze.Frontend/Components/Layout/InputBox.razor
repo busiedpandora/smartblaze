@@ -18,7 +18,7 @@
             
             @if (!_imageUrlInputActive && !_imageFileInputActive && !_textFileInputActive)
             {
-                <div class="row">
+                <div class="row col-11 ms-1">
                     
                     @if (_settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptUrlImageInput == true)
                     {
@@ -49,25 +49,19 @@
                             </button>
                         </div>
                     }
-                    @if (_chatSessionStateService.CurrentGenerationType == "image")
-                    {
-                        <div class="col-auto px-1 ms-auto">
-                            <button class="btn btn-light"
-                                    @onclick="SwitchToTextGeneration">
-                                <span>Switch to text generation</span>
-                            </button>
-                        </div>
-                    }
-                    @if (_settingsService.ChatbotSelectedInCurrentChatSession?.SupportImageGeneration == true
-                         && _chatSessionStateService.CurrentGenerationType == "text")
-                    {
-                        <div class="col-auto px-1 ms-auto">
-                            <button class="btn btn-light"
-                                    @onclick="SwitchToImageGeneration">
-                                <span>Switch to image generation</span>
-                            </button>
-                        </div>
-                    }
+                    <div class="col-auto px-1 ms-auto">
+                        <InputSelect class="form-select"
+                                     Value="_chatSessionStateService.CurrentGenerationType" 
+                                     ValueExpression="() => _chatSessionStateService.CurrentGenerationType" 
+                                     TValue="string"
+                                     ValueChanged="(string type) => OnGenerationTypeSelected(type)">
+                            <option value="text">Text Generation</option>
+                            @if (_settingsService.ChatbotSelectedInCurrentChatSession?.SupportImageGeneration == true)
+                            {
+                                <option value="image">Image Generation</option>
+                            }
+                        </InputSelect>
+                    </div>
                 </div>
             }
             
@@ -140,7 +134,7 @@
             </div>
             
             <div>
-                <div class="row row-cols-4 align-items-center justify-content-start">
+                <div id="fileInputContainer" class="row row-cols-4 align-items-start justify-content-start">
                     @{
                         var index = 0;
                     }
@@ -455,6 +449,19 @@
         }
 
         return text.ToString();
+    }
+
+    private void OnGenerationTypeSelected(string type)
+    {
+        switch (type)
+        {
+            case "text":
+                SwitchToTextGeneration();
+                break;
+            case "image":
+                SwitchToImageGeneration();
+                break;
+        }
     }
 
     private void SwitchToTextGeneration()

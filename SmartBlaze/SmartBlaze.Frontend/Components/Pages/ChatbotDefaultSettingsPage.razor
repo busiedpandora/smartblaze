@@ -115,6 +115,18 @@
                             <input id="temperature" type="range" class="form-range" step="0.1" @bind-value="_chatbotDefaultSettings.Temperature"
                                    @oninput="OnTemperatureChanged"
                                    min="@_textGenerationChatbotModel.MinTemperature" max="@_textGenerationChatbotModel.MaxTemperature"/>
+                            <div class="row align-items-center text-center">
+                                <div class="col">
+                                    <span class="temperature-info">
+                                        Meticulous
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <span class="temperature-info">
+                                        Creative
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                         <div class="ms-4">
                             <span class="badge bg-primary">@_badgeTemperature</span>

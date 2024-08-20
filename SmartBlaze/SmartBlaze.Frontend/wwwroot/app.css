@@ -146,3 +146,10 @@ pre .quoted-text {
 .logout-icon {
     cursor: pointer;
 }
+
+.temperature-info {
+    font-size: 14px;
+    background-color: lightskyblue;
+    border-radius: .3rem;
+    padding-left: .25rem;
+}

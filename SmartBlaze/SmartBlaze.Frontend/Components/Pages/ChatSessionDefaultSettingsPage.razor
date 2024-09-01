@@ -29,6 +29,10 @@
     <SettingsMenu/>
 
     <EditForm Model="_chatSessionDefaultSettings" OnSubmit="@OnSaveClicked" autocomplete="off">
+        <div class="alert alert-primary col-6" role="alert">
+            The settings below will be applied to newly created chat sessions.
+        </div>
+        
         @if (_textGenerationChatbotModel?.AcceptSystemInstruction == true)
         {
             <div class="mb-4">
@@ -38,7 +42,7 @@
                 </div>
             </div>
         }
-        
+
         @if (_textGenerationChatbotModel?.AcceptTextStream == true)
         {
             <div class="mb-4">
@@ -61,20 +65,20 @@
                 </div>
             </div>
         }
-        
+
         @if (_imageGenerationChatbotModel?.AcceptMultipleImagesGeneration == true)
         {
             <div class="mb-4">
                 <label for="imagesToGenerate" class="form-label">Images to generate (For Image Generation)</label>
                 <div class="col-2">
-                    <InputNumber id="imagesToGenerate"  Step="1" class="form-control"
+                    <InputNumber id="imagesToGenerate" Step="1" class="form-control"
                                  Min="1" Max="@_imageGenerationChatbotModel.MaxImagesGenerated"
                                  @bind-Value="_chatSessionDefaultSettings.ImagesToGenerate">
                     </InputNumber>
                 </div>
             </div>
         }
-        
+
         <div class="mt-5">
             <button class="btn btn-primary" type="button" @onclick="() => OnCancelClicked()">
                 Cancel

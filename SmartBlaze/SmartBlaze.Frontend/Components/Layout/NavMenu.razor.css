@@ -111,3 +111,12 @@
 #chatList {
     height: 65%;
 }
+
+.nav-item-bottom {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.chat-session-title {
+    font-weight: bold;
+}

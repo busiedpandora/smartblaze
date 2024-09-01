@@ -41,13 +41,13 @@
                                         <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2" data-bs-toggle="dropdown"/>
                                         @if (chatSession.Title.Length > 15)
                                         {
-                                            <span class="user-select-none">
+                                            <span class="user-select-none chat-session-title">
                                                 @(chatSession.Title.Substring(0, 15) + "...")
                                             </span>
                                         }
                                         else
                                         {
-                                            <span class="user-select-none">@chatSession.Title</span>
+                                            <span class="user-select-none chat-session-title">@chatSession.Title</span>
                                         }
                                     </div>
                                 </div>
@@ -67,14 +67,14 @@
             <NavLink class="nav-link user-select-none"
                      @onclick="() => OnNewChatClicked()">
                 <img src="icons/plus-circle-fill.svg" width="20" height="20" alt="new chat icon" class="me-2"/>
-                <span>New chat</span>
+                <span class="nav-item-bottom">New chat</span>
             </NavLink>
         </div>
         <div class="nav-item px-3">
             <NavLink class="@(_settingsService.SettingsPageOpen ? "nav-link user-select-none active" : "nav-link user-select-none")"
                      @onclick="() => OnSettingsClicked()">
                 <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
-                <span>Settings</span>
+                <span class="nav-item-bottom">Settings</span>
             </NavLink>
         </div>
         <div id="userNavItem" class="nav-item ps-3">
@@ -85,9 +85,21 @@
                             <img src="icons/person-fill.svg" width="25" alt="user icon" title="user" class="me-2"/>
                         </div>
                         <div>
-                            <span class="username user-select-none">
-                                @_userStateService.UserLogged.Username
-                            </span>
+                            @if (_userStateService.UserLogged is not null)
+                            {
+                                @if (_userStateService.UserLogged.Username?.Length > 10)
+                                {
+                                    <span class="username user-select-none nav-item-bottom">
+                                        @_userStateService.UserLogged.Username.Substring(0, 10)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="username user-select-none nav-item-bottom">
+                                        @_userStateService.UserLogged.Username
+                                    </span>
+                                }
+                            }
                         </div>
                     </div>
                 </div>

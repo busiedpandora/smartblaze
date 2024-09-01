@@ -21,14 +21,17 @@
                 </div>
                 <div class="col-6">
                     <div class="d-flex justify-content-center align-items-center">
-                        <div>
-                            <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/>
-                        </div>
-                        <div>
-                            <span id="pageTitle" class="user-select-none">
-                                @_chatSessionStateService.CurrentChatSession.Title
-                            </span>
-                        </div>
+                        @if (!_chatSessionStateService.IsChatSessionBeingSelected)
+                        {
+                            <div>
+                                <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/>
+                            </div>
+                            <div>
+                                <span id="pageTitle" class="user-select-none">
+                                    @_chatSessionStateService.CurrentChatSession.Title
+                                </span>
+                            </div>
+                        }
                     </div>
                 </div>
                 <div class="col-3">

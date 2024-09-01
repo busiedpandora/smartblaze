@@ -64,11 +64,12 @@ h1:focus {
 
 #pageTitle {
     font-size: 1.5rem;
+    font-weight: bold;
 }
 
 #conversationContainer {
-    height: 60vh;
-    overflow-y: auto;
+    height: 60vh !important;
+    overflow-y: auto !important;
     margin-bottom: 40px;
     padding-left: 100px;
     padding-right: 100px;
@@ -91,6 +92,8 @@ h1:focus {
     padding-left: 100px;
     padding-right: 100px;
     padding-top: 50px;
+    overflow-y: auto !important;
+    height: 99vh !important;
 }
 
 #settingsMenusContainer {
@@ -98,7 +101,7 @@ h1:focus {
 }
 
 .settingsMenuTitle {
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     cursor: pointer;
 }
 

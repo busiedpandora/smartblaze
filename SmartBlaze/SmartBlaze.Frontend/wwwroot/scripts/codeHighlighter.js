@@ -3,3 +3,10 @@ window.highlightAllCodeBlocks = function() {
         hljs.highlightElement(block);
     });
 }
+
+window.highlightCodeBlock = function() {
+    let code = document.querySelector('pre code');
+    if(code) {
+        hljs.highlightElement(code);
+    }
+}

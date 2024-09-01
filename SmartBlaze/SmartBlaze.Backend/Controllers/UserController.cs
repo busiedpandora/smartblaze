@@ -37,8 +37,8 @@ public class UserController : ControllerBase
             {
                 return Conflict($"A user with the username {userDto.Username} does not exist.");
             }
-
-            if (user.Password != userDto.Password)
+            
+            if (!_userService.VerifyPassword(user, user.Password ?? "", userDto.Password))
             {
                 return Conflict("Incorrect password");
             }
@@ -72,6 +72,8 @@ public class UserController : ControllerBase
             {
                 return Conflict($"A user with the username {userDto.Username} already exists.");
             }
+
+            userDto.Password = _userService.HashPassword(userDto, userDto.Password);
 
             user = await _userService.AddNewUser(userDto);
 

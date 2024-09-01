@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Identity;
 using SmartBlaze.Backend.Dtos;
 using SmartBlaze.Backend.Repositories;
 
@@ -7,11 +8,12 @@ namespace SmartBlaze.Backend.Services;
 public class UserService
 {
     private readonly UserRepository _userRepository;
+    private readonly IPasswordHasher<UserDto> _passwordHasher;
 
-
-    public UserService(UserRepository userRepository)
+    public UserService(UserRepository userRepository, IPasswordHasher<UserDto> passwordHasher)
     {
         _userRepository = userRepository;
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<UserDto?> GetUserByUsername(string username)
@@ -22,5 +24,17 @@ public class UserService
     public async Task<UserDto> AddNewUser(UserDto userDto)
     {
         return await _userRepository.SaveUser(userDto);
+    }
+
+    public string HashPassword(UserDto user, string password)
+    {
+        return _passwordHasher.HashPassword(user, password);
+    }
+
+    public bool VerifyPassword(UserDto user, string hashedPassword, string providedPassword)
+    {
+        var result = _passwordHasher.VerifyHashedPassword(user, hashedPassword, providedPassword);
+
+        return result == PasswordVerificationResult.Success;
     }
 }

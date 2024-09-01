@@ -36,6 +36,11 @@ public class ChatSessionRepository : AbstractRepository
     
     public async Task<ChatSessionDto> SaveChatSession(ChatSessionDto chatSessionDto, string userId)
     {
+        if (chatSessionDto.Title?.Length > 30)
+        {
+            chatSessionDto.Title = chatSessionDto.Title.Substring(0, 30);
+        }
+        
         var chatSessionDocument = new Dictionary<string, object>()
         {
             {"title", chatSessionDto.Title ?? ""},

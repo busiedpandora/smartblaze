@@ -162,9 +162,9 @@ public class ChatSessionController : ControllerBase
             ChatbotModel = chatbotModel,
             ApiHost = chatSessionInfoDto.ApiHost,
             ApiKey = chatSessionInfoDto.ApiKey,
-            SystemInstruction = "Summarize in maximum 2 words the user text content. " +
-                                "Use only word characters and maximum a space character " +
-                                "Don't use more than 20 chars for the summary and don't use new line or tab characters" +
+            SystemInstruction = "Summarize in maximum 4 words the user text content. " +
+                                "Use only word characters. " +
+                                "Don't use more than 30 chars for the summary and don't use new line or tab characters" +
                                 "If the text contains questions, do not answer them. Don't use punctuation marks."
         };
 

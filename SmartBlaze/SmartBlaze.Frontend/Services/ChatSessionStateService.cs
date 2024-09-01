@@ -433,9 +433,9 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         {
             title = "Undefined";
         }
-        else if (title.Length > 20)
+        else if (title.Length > 30)
         {
-            title = title.Substring(0, 20);
+            title = title.Substring(0, 30);
         }
 
         ChatSessionEditDto chatSessionEditDto = new()

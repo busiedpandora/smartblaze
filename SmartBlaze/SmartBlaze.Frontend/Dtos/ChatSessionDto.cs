@@ -14,4 +14,8 @@ public class ChatSessionDto
     public DateTime? CreationDate { get; set; }
     
     public bool Selected { get; set; }
+    
+    public List<MessageDto>? Messages { get; set; }
+    
+    public ChatSessionConfigurationDto? ChatSessionConfiguration { get; set; }
 }

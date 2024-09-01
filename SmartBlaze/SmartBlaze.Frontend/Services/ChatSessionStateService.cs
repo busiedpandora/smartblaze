@@ -100,54 +100,45 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         
         ChatSessionDto? newSelectedChatSession = _chatSessions.Find(c => c.Id == chatSession.Id);
 
-        if (newSelectedChatSession is null)
+        if (newSelectedChatSession is null || newSelectedChatSession.Id is null)
         {
             _isChatSessionBeingSelected = false;
             HandleError("Error occured while selecting the chat session", $"chat session with id {chatSession.Id} not found");
             return;
         }
-        
-        var chatSessionConfigurationResponse = await HttpClient.GetAsync($"configuration/chat-session/{newSelectedChatSession.Id}");
-        var chatSessionConfigurationResponseContent =
-            await chatSessionConfigurationResponse.Content.ReadAsStringAsync();
 
-        if (!chatSessionConfigurationResponse.IsSuccessStatusCode)
+        if (newSelectedChatSession.ChatSessionConfiguration is null)
         {
-            _isChatSessionBeingSelected = false;
-            HandleError($"Error occured while selecting the chat session {chatSession.Title}", 
-                chatSessionConfigurationResponseContent);
-            return;
-        }
+            var chatSessionConfiguration = await GetChatSessionConfiguration(newSelectedChatSession.Id,
+                newSelectedChatSession.Title ?? "");
 
-        var chatSessionConfiguration =
-            JsonSerializer.Deserialize<ChatSessionConfigurationDto>(chatSessionConfigurationResponseContent);
+            if (chatSessionConfiguration is null)
+            {
+                return;
+            }
+
+            newSelectedChatSession.ChatSessionConfiguration = chatSessionConfiguration;
+        }
         
-        _currentChatSessionConfiguration = chatSessionConfiguration;
+        _currentChatSessionConfiguration = newSelectedChatSession.ChatSessionConfiguration;
         
         var chatbot = _settingsService.GetChatbot(_currentChatSessionConfiguration?.ChatbotName);
         _settingsService.ChatbotSelectedInCurrentChatSession = chatbot;
         SwitchToTextGeneration();
-        
-        var response = await HttpClient.GetAsync($"chat-session/{newSelectedChatSession.Id}/messages");
-        var responseContent = await response.Content.ReadAsStringAsync();
-        
-        if (!response.IsSuccessStatusCode)
+
+        if (newSelectedChatSession.Messages is null)
         {
-            _isChatSessionBeingSelected = false;
-            HandleError("Error occured while selecting the chat session", responseContent);
-            return;
+            var messages = await GetChatSessionMessages(newSelectedChatSession.Id);
+
+            if (messages is null)
+            {
+                return;
+            }
+
+            newSelectedChatSession.Messages = messages;
         }
-        
-        if (responseContent == string.Empty)
-        {
-            _currentChatSessionMessages = new List<MessageDto>();
-            
-        }
-        else
-        {
-            List<MessageDto>? messagesDto = JsonSerializer.Deserialize<List<MessageDto>>(responseContent) ?? new List<MessageDto>();
-            _currentChatSessionMessages = messagesDto;
-        }
+
+        _currentChatSessionMessages = newSelectedChatSession.Messages;
         
         newSelectedChatSession.Selected = true;
 
@@ -791,6 +782,48 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             Status = "error",
             Text = text
         };
+    }
+
+    private async Task<ChatSessionConfigurationDto?> GetChatSessionConfiguration(string chatSessionId, string chatSessionTitle)
+    {
+        var chatSessionConfigurationResponse = await HttpClient.GetAsync($"configuration/chat-session/{chatSessionId}");
+        var chatSessionConfigurationResponseContent =
+            await chatSessionConfigurationResponse.Content.ReadAsStringAsync();
+
+        if (!chatSessionConfigurationResponse.IsSuccessStatusCode)
+        {
+            _isChatSessionBeingSelected = false;
+            HandleError($"Error occured while selecting the chat session {chatSessionTitle}", 
+                chatSessionConfigurationResponseContent);
+            return null;
+        }
+
+        var chatSessionConfiguration =
+            JsonSerializer.Deserialize<ChatSessionConfigurationDto>(chatSessionConfigurationResponseContent);
+
+        return chatSessionConfiguration;
+    }
+
+    private async Task<List<MessageDto>?> GetChatSessionMessages(string chatSessionId)
+    {
+        var response = await HttpClient.GetAsync($"chat-session/{chatSessionId}/messages");
+        var responseContent = await response.Content.ReadAsStringAsync();
+            
+        if (!response.IsSuccessStatusCode)
+        {
+            _isChatSessionBeingSelected = false;
+            HandleError("Error occured while selecting the chat session", responseContent);
+            return null;
+        }
+
+        var messages = new List<MessageDto>();
+
+        if (responseContent != string.Empty)
+        {
+            messages = JsonSerializer.Deserialize<List<MessageDto>>(responseContent) ?? new List<MessageDto>();
+        }
+
+        return messages;
     }
 
     private void HandleError(string errorTitle, string errorMessage)

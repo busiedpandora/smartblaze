@@ -6,7 +6,7 @@ namespace SmartBlaze.Backend.Services;
 
 public class ConfigurationService
 {
-    private ConfigurationRepository _configurationRepository;
+    private readonly ConfigurationRepository _configurationRepository;
     
 
     public ConfigurationService(ConfigurationRepository configurationRepository)

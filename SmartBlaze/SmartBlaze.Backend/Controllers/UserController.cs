@@ -8,7 +8,7 @@ namespace SmartBlaze.Backend.Controllers;
 [Route("user")]
 public class UserController : ControllerBase
 {
-    private UserService _userService;
+    private readonly UserService _userService;
 
 
     public UserController(UserService userService)

@@ -34,3 +34,7 @@ textarea {
     overflow-y: auto;
     margin-top: 5px;
 }
+
+.generation-type-select {
+    background-color: #f8f9fa;
+}

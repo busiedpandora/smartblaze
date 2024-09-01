@@ -8,7 +8,7 @@ namespace SmartBlaze.Backend.Controllers;
 [Route("chatbot")]
 public class ChatbotController : ControllerBase
 {
-    private ChatbotService _chatbotService;
+    private readonly ChatbotService _chatbotService;
 
 
     public ChatbotController(ChatbotService chatbotService)

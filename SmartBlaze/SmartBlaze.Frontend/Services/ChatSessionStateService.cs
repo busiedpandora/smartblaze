@@ -641,7 +641,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         userTextMessageDto.MediaDtos = fileInputs;
         
         var userMessageResponse = await HttpClient
-            .PostAsJsonAsync($"chat-session/{_currentChatSession.Id}/new-user-message", 
+            .PostAsJsonAsync($"chat-session/{_currentChatSession?.Id}/new-user-message", 
                 userTextMessageDto);
         var userMessageResponseContent = await userMessageResponse.Content.ReadAsStringAsync();
 
@@ -664,7 +664,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     {
         var assistantMessageResponse = await 
             HttpClient.PostAsJsonAsync(
-                $"chat-session/{_currentChatSession.Id}/new-assistant-message", 
+                $"chat-session/{_currentChatSession?.Id}/new-assistant-message", 
                 chatSessionInfoDto);
         var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
             
@@ -687,7 +687,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     {
         var assistantEmptyMessageResponse = await 
                 HttpClient.PostAsJsonAsync(
-                $"chat-session/{_currentChatSession.Id}/new-assistant-empty-message", 
+                $"chat-session/{_currentChatSession?.Id}/new-assistant-empty-message", 
                 chatSessionInfoDto);
             var assistantEmptyMessageResponseContent = await assistantEmptyMessageResponse.Content.ReadAsStringAsync();
             
@@ -711,7 +711,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             _currentChatSessionMessages.Add(assistantEmptyMessageDto);
             
             using var assistantStreamMessageRequest = new HttpRequestMessage(HttpMethod.Post, 
-                $"chat-session/{_currentChatSession.Id}/generate-assistant-stream-message");
+                $"chat-session/{_currentChatSession?.Id}/generate-assistant-stream-message");
             assistantStreamMessageRequest.Content = JsonContent.Create(chatSessionInfoDto);
         
             using var assistantStreamMessageResponse = await HttpClient.SendAsync(assistantStreamMessageRequest, 
@@ -749,7 +749,7 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     {
         var assistantMessageResponse = await 
             HttpClient.PostAsJsonAsync(
-                $"chat-session/{_currentChatSession.Id}/new-assistant-image-message", 
+                $"chat-session/{_currentChatSession?.Id}/new-assistant-image-message", 
                 chatSessionInfoDto);
         var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
             
@@ -772,11 +772,11 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
     {
         var assistantMessageResponse = await 
             HttpClient.PutAsJsonAsync(
-                $"chat-sessions/{_currentChatSession.Id}/entitle", 
+                $"chat-sessions/{_currentChatSession?.Id}/entitle", 
                 chatSessionInfoDto);
         var assistantMessageResponseContent = await assistantMessageResponse.Content.ReadAsStringAsync();
 
-        if (assistantMessageResponse.IsSuccessStatusCode)
+        if (assistantMessageResponse.IsSuccessStatusCode && _currentChatSession is not null)
         {
             _currentChatSession.Title = assistantMessageResponseContent;
             NotifyRefreshView();

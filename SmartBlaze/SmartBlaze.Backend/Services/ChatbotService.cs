@@ -5,9 +5,9 @@ namespace SmartBlaze.Backend.Services;
 
 public class ChatbotService
 {
-    private HttpClient _httpClient;
+    private readonly HttpClient _httpClient;
     
-    private List<Chatbot> _chatbots;
+    private readonly List<Chatbot> _chatbots;
 
     public ChatbotService(HttpClient httpClient)
     {

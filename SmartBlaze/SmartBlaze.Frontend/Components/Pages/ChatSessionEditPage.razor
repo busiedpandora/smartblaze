@@ -35,12 +35,15 @@
             <label for="chatbot" class="form-label">Chatbot</label>
             <div class="col-2">
                 <InputSelect id="chatbot" class="form-select"
-                             Value="_chatSessionSettings.ChatbotName" ValueExpression="() => _chatSessionSettings.ChatbotName" 
+                             Value="_chatSessionSettings.ChatbotName" ValueExpression="() => _chatSessionSettings.ChatbotName"
                              TValue="string"
                              ValueChanged="(string chatbotName) => OnChatbotSelected(chatbotName)">
-                    @foreach (var chatbot in _settingsService.Chatbots)
+                    @if (_settingsService.Chatbots is not null)
                     {
-                        <option value="@chatbot.Name">@chatbot.Name</option>
+                        @foreach (var chatbot in _settingsService.Chatbots)
+                        {
+                            <option value="@chatbot.Name">@chatbot.Name</option>
+                        }
                     }
                 </InputSelect>
             </div>

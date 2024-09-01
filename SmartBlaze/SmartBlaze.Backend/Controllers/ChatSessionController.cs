@@ -9,9 +9,9 @@ namespace SmartBlaze.Backend.Controllers;
 [Route("chat-sessions")]
 public class ChatSessionController : ControllerBase
 {
-    private ChatSessionService _chatSessionService;
-    private ConfigurationService _configurationService;
-    private ChatbotService _chatbotService;
+    private readonly ChatSessionService _chatSessionService;
+    private readonly ConfigurationService _configurationService;
+    private readonly ChatbotService _chatbotService;
 
 
     public ChatSessionController(ChatSessionService chatSessionService, ConfigurationService configurationService,

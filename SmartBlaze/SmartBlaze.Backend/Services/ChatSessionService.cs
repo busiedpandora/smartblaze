@@ -6,7 +6,7 @@ namespace SmartBlaze.Backend.Services;
 
 public class ChatSessionService
 {
-    private ChatSessionRepository _chatSessionRepository;
+    private readonly ChatSessionRepository _chatSessionRepository;
     
     public ChatSessionService(ChatSessionRepository chatSessionRepository)
     {

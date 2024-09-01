@@ -11,9 +11,9 @@ namespace SmartBlaze.Backend.Controllers;
 [Route("chat-session/{id}")]
 public class MessageController : ControllerBase
 {
-    private ChatSessionService _chatSessionService;
-    private MessageService _messageService;
-    private ChatbotService _chatbotService;
+    private readonly ChatSessionService _chatSessionService;
+    private readonly MessageService _messageService;
+    private readonly ChatbotService _chatbotService;
 
 
     public MessageController(ChatSessionService chatSessionService, MessageService messageService, 

@@ -6,7 +6,7 @@ namespace SmartBlaze.Backend.Services;
 
 public class MessageService
 {
-    private MessageRepository _messageRepository;
+    private readonly MessageRepository _messageRepository;
 
 
     public MessageService(MessageRepository messageRepository)
@@ -55,12 +55,12 @@ public class MessageService
     
     public async Task AddNewMessageToChatSession(MessageDto messageDto, ChatSessionDto chatSessionDto)
     {
-        await _messageRepository.SaveMessage(messageDto, chatSessionDto.Id);
+        await _messageRepository.SaveMessage(messageDto, chatSessionDto.Id ?? "");
     }
 
     public async Task<List<MessageDto>> GetMessagesFromChatSession(ChatSessionDto chatSessionDto)
     {
-        var messages = await _messageRepository.GetMessagesFromChatSession(chatSessionDto.Id);
+        var messages = await _messageRepository.GetMessagesFromChatSession(chatSessionDto.Id ?? "");
 
         return messages;
     }

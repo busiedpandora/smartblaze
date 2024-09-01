@@ -51,7 +51,7 @@
             }
         </div>
 
-        <div id="conversationContainer">
+        <div id="conversationContainer" @ref="_conversationContainer">
             @if (_chatSessionStateService.CurrentChatSessionMessages is not null 
                  && !_chatSessionStateService.IsChatSessionBeingSelected)
             {
@@ -105,7 +105,10 @@
 
 @code {
     private bool _applicationStarted = false;
-    
+
+    private bool _scrollToBottom = false;
+
+    private ElementReference _conversationContainer;
     
     protected override async Task OnInitializedAsync()
     {
@@ -115,6 +118,7 @@
             
             _chatSessionStateService.RefreshView += ReloadComponentState;
             _settingsService.RefreshView += ReloadComponentState;
+            _chatSessionStateService.ScrollToBottom += ScrollToBottom;
         }
 
         await base.OnInitializedAsync();
@@ -123,14 +127,15 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await _jsRuntime.InvokeVoidAsync("highlightAllCodeBlocks");
+
+        if (_scrollToBottom)
+        {
+            await _jsRuntime.InvokeVoidAsync("scrollToBottom", _conversationContainer);
+            _scrollToBottom = false;
+        }
         
         await base.OnAfterRenderAsync(firstRender);
     }
-
-    /*private void OnEditChatSessionClicked()
-    {
-        _chatSessionStateService.OpenChatSessionSettings();
-    }*/
 
     private async void OnDeleteChatSessionClicked()
     {
@@ -140,6 +145,11 @@
         {
             await _chatSessionStateService.DeleteChatSession(chatSession);
         }
+    }
+
+    private void ScrollToBottom()
+    {
+        _scrollToBottom = true;
     }
 
     private void ReloadComponentState()

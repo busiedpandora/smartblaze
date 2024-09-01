@@ -77,6 +77,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         get => _currentGenerationType;
         set => _currentGenerationType = value ?? throw new ArgumentNullException(nameof(value));
     }
+    
+    public event Action? ScrollToBottom;
 
     public async Task SelectChatSession(ChatSessionDto chatSession)
     {
@@ -154,6 +156,8 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
         _isChatSessionBeingSelected = false;
         
         NotifyRefreshView();
+        
+        NotifyScrollToBottom();
     }
 
     public void DeselectCurrentChatSession()
@@ -839,4 +843,6 @@ public class ChatSessionStateService(IHttpClientFactory httpClientFactory) : Abs
             NotifyRefreshView();
         }
     }
+
+    private void NotifyScrollToBottom() => ScrollToBottom?.Invoke();
 }

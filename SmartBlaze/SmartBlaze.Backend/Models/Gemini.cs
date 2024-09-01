@@ -390,7 +390,7 @@ public class Gemini : Chatbot
         return new ChatbotDefaultConfigurationDto()
         {
             ChatbotName = "Google Gemini",
-            TextGenerationChatbotModel = "gemini-1.5-pro",
+            TextGenerationChatbotModel = "gemini-1.5-flash",
             ApiHost = "https://generativelanguage.googleapis.com",
             ApiKey = "",
             Selected = false,

@@ -273,7 +273,7 @@ public class ChatGpt : Chatbot
             {
                 Model = textGenerationRequestData.ChatbotModel.Name,
                 Messages = (object[]) messages.ToArray(),
-                Stream = false,
+                Stream = true,
                 Temperature = textGenerationRequestData.Temperature
             };
         }

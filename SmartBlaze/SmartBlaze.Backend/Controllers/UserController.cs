@@ -28,20 +28,27 @@ public class UserController : ControllerBase
         {
             return BadRequest("The password for the user must be specified");
         }
-        
-        var user = await _userService.GetUserByUsername(userDto.Username);
 
-        if (user is null)
+        try
         {
-            return Conflict($"A user with the username {userDto.Username} does not exist.");
-        }
+            var user = await _userService.GetUserByUsername(userDto.Username);
+            
+            if (user is null)
+            {
+                return Conflict($"A user with the username {userDto.Username} does not exist.");
+            }
 
-        if (user.Password != userDto.Password)
+            if (user.Password != userDto.Password)
+            {
+                return Conflict("Incorrect password");
+            }
+
+            return Ok(user);
+        }
+        catch (Exception e)
         {
-            return Conflict("Incorrect password");
+            return StatusCode(500, $"Request Error: {e.Message}");
         }
-
-        return Ok(user);
     }
 
     [HttpPost("register")]
@@ -57,15 +64,22 @@ public class UserController : ControllerBase
             return BadRequest("The password for the user must be specified");
         }
 
-        var user = await _userService.GetUserByUsername(userDto.Username);
-
-        if (user is not null)
+        try
         {
-            return Conflict($"A user with the username {userDto.Username} already exists.");
+            var user = await _userService.GetUserByUsername(userDto.Username);
+
+            if (user is not null)
+            {
+                return Conflict($"A user with the username {userDto.Username} already exists.");
+            }
+
+            user = await _userService.AddNewUser(userDto);
+
+            return Ok(user);
         }
-
-        user = await _userService.AddNewUser(userDto);
-
-        return Ok(user);
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
+        }
     }
 }

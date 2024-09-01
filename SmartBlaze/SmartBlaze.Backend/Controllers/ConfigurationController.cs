@@ -34,7 +34,14 @@ public class ConfigurationController : ControllerBase
             if (chatbotDefaultConfiguration is null)
             {
                 chatbotDefaultConfiguration = chatbot.GetDefaultConfiguration();
-                await _configurationService.SaveChatbotDefaultConfiguration(chatbotDefaultConfiguration, userId);
+                try
+                {
+                    await _configurationService.SaveChatbotDefaultConfiguration(chatbotDefaultConfiguration, userId);
+                }
+                catch (Exception e)
+                {
+                    return StatusCode(500, $"Request Error: {e.Message}");
+                }
             }
             
             chatbotConfigurationDtos.Add(chatbotDefaultConfiguration);
@@ -72,7 +79,14 @@ public class ConfigurationController : ControllerBase
         chatbotDefaultConfiguration.Temperature = chatbotDefaultConfigurationDto.Temperature;
         chatbotDefaultConfiguration.Selected = true;
 
-        await _configurationService.EditChatbotDefaultConfiguration(chatbotDefaultConfiguration);
+        try
+        {
+            await _configurationService.EditChatbotDefaultConfiguration(chatbotDefaultConfiguration);
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
+        }
 
         return Ok();
     }
@@ -85,7 +99,15 @@ public class ConfigurationController : ControllerBase
         if (chatSessionDefaultConfiguration is null)
         {
             chatSessionDefaultConfiguration = _configurationService.CreateChatSessionDefaultConfiguration();
-            await _configurationService.SaveChatSessionDefaultConfiguration(chatSessionDefaultConfiguration, userId);
+            try
+            {
+                await _configurationService.SaveChatSessionDefaultConfiguration(chatSessionDefaultConfiguration,
+                    userId);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, $"Request Error: {e.Message}");
+            }
         }
 
         return Ok(chatSessionDefaultConfiguration);
@@ -113,7 +135,14 @@ public class ConfigurationController : ControllerBase
         chatSessionDefaultConfiguration.ImageSize = chatSessionDefaultConfiguration.ImageSize;
         chatSessionDefaultConfiguration.ImagesToGenerate = chatSessionDefaultConfiguration.ImagesToGenerate;
 
-        await _configurationService.EditChatSessionDefaultConfiguration(chatSessionDefaultConfiguration);
+        try
+        {
+            await _configurationService.EditChatSessionDefaultConfiguration(chatSessionDefaultConfiguration);
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
+        }
 
         return Ok();
     }
@@ -128,9 +157,16 @@ public class ConfigurationController : ControllerBase
             return NotFound($"Chat session with id {id} not found");
         }
 
-        var chatSessionConfiguration = await _configurationService.GetChatSessionConfiguration(id);
+        try
+        {
+            var chatSessionConfiguration = await _configurationService.GetChatSessionConfiguration(id);
 
-        return Ok(chatSessionConfiguration);
+            return Ok(chatSessionConfiguration);
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
+        }
     }
 
     [HttpPost("chat-session/{id}")]
@@ -150,7 +186,14 @@ public class ConfigurationController : ControllerBase
             return BadRequest($"No chatbot specified for chat session with id {id}");
         }
 
-        await _configurationService.SaveChatSessionConfiguration(chatSessionConfigurationDto, id);
+        try
+        {
+            await _configurationService.SaveChatSessionConfiguration(chatSessionConfigurationDto, id);
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
+        }
 
         return Ok();
     }

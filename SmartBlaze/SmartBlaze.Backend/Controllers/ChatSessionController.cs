@@ -25,14 +25,21 @@ public class ChatSessionController : ControllerBase
     [HttpGet("{userId}")]
     public async Task<ActionResult<List<ChatSessionDto>>> GetAllChatSessions(string userId)
     {
-        var chatSessionDtos = await _chatSessionService.GetAllChatSessions(userId);
-
-        if (chatSessionDtos is null)
+        try
         {
-            return NotFound($"Chat sessions not found");
-        }
+            var chatSessionDtos = await _chatSessionService.GetAllChatSessions(userId);
+            
+            if (chatSessionDtos is null)
+            {
+                return NotFound($"Chat sessions not found");
+            }
         
-        return Ok(chatSessionDtos);
+            return Ok(chatSessionDtos);
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
+        }
     }
 
     /*[HttpGet("{id}")]
@@ -57,7 +64,14 @@ public class ChatSessionController : ControllerBase
         }
         
         chatSessionDto = _chatSessionService.CreateNewChatSession(chatSessionDto.Title);
-        chatSessionDto = await _chatSessionService.AddChatSession(chatSessionDto, userId);
+        try
+        {
+            chatSessionDto = await _chatSessionService.AddChatSession(chatSessionDto, userId);
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
+        }
         
         return Ok(chatSessionDto);
     }
@@ -72,7 +86,14 @@ public class ChatSessionController : ControllerBase
             return NotFound($"Chat session with id {id} not found");
         }
 
-        await _configurationService.DeleteChatSessionAndItsConfiguration(id);
+        try
+        {
+            await _configurationService.DeleteChatSessionAndItsConfiguration(id);
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
+        }
         
         return Ok();
     }
@@ -92,21 +113,29 @@ public class ChatSessionController : ControllerBase
             return BadRequest("Chat session not specified correctly. Title must be provided");
         }
 
-        if (chatSessionDto.Title != chatSessionEditDto.Title)
+        try
         {
-            chatSessionDto.Title = chatSessionEditDto.Title;
-            await _chatSessionService.EditChatSession(chatSessionDto);
-        }
-
-        if (chatSessionEditDto.ChatSessionConfigurationDto is not null)
-        {
-            var chatSessionConfiguration = await _configurationService.GetChatSessionConfiguration(id);
-
-            if (chatSessionConfiguration is not null)
+            if (chatSessionDto.Title != chatSessionEditDto.Title)
             {
-                chatSessionEditDto.ChatSessionConfigurationDto.Id = chatSessionConfiguration.Id;
-                await _configurationService.EditChatSessionConfiguration(chatSessionEditDto.ChatSessionConfigurationDto, id);
+                chatSessionDto.Title = chatSessionEditDto.Title;
+                await _chatSessionService.EditChatSession(chatSessionDto);
             }
+
+            if (chatSessionEditDto.ChatSessionConfigurationDto is not null)
+            {
+                var chatSessionConfiguration = await _configurationService.GetChatSessionConfiguration(id);
+
+                if (chatSessionConfiguration is not null)
+                {
+                    chatSessionEditDto.ChatSessionConfigurationDto.Id = chatSessionConfiguration.Id;
+                    await _configurationService.EditChatSessionConfiguration(
+                        chatSessionEditDto.ChatSessionConfigurationDto, id);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
         }
 
         return Ok();
@@ -173,8 +202,15 @@ public class ChatSessionController : ControllerBase
         if (assistantMessageInfo.Status == "ok")
         {
             chatSessionDto.Title = assistantMessageInfo.Text;
-            await _chatSessionService.EditChatSession(chatSessionDto);
-            
+            try
+            {
+                await _chatSessionService.EditChatSession(chatSessionDto);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, $"Request Error: {e.Message}");
+            }
+
             return Ok(assistantMessageInfo.Text);
         }
         

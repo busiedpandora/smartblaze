@@ -27,16 +27,23 @@ public class MessageController : ControllerBase
     [HttpGet("messages")]
     public async Task<ActionResult<List<MessageDto>>> GetMessagesFromChatSession(string id)
     {
-        ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
-        
-        if (chatSessionDto is null)
+        try
         {
-            return NotFound($"Chat session with id {id} not found");
+            ChatSessionDto? chatSessionDto = await _chatSessionService.GetChatSessionById(id);
+
+            if (chatSessionDto is null)
+            {
+                return NotFound($"Chat session with id {id} not found");
+            }
+
+            var messages = await _messageService.GetMessagesFromChatSession(chatSessionDto);
+
+            return messages;
         }
-
-        var messages = await _messageService.GetMessagesFromChatSession(chatSessionDto);
-
-        return messages;
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
+        }
     }
     
     [HttpPost("new-user-message")]
@@ -54,9 +61,16 @@ public class MessageController : ControllerBase
         }
 
         MessageDto userMessageDto = _messageService.CreateNewUserMessage(messageDto.Text, messageDto.MediaDtos);
-        await _messageService.AddNewMessageToChatSession(userMessageDto, chatSessionDto);
+        try
+        {
+            await _messageService.AddNewMessageToChatSession(userMessageDto, chatSessionDto);
 
-        return Ok(userMessageDto);
+            return Ok(userMessageDto);
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
+        }
     }
     
     [HttpPost("new-assistant-message")]
@@ -117,7 +131,14 @@ public class MessageController : ControllerBase
 
         MessageDto assistantMessageDto = _messageService.CreateNewAssistantTextMessage(assistantMessageInfo.Text ?? "", 
             chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel, assistantMessageInfo.Status);
-        await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
+        try
+        {
+            await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
+        }
 
         return Ok(assistantMessageDto);
     }
@@ -328,8 +349,14 @@ public class MessageController : ControllerBase
         MessageDto assistantMessageDto = _messageService.CreateNewAssistantImageMessage(assistantMessageInfo.Text, 
             assistantMessageInfo.MediaDtos, chatSessionInfoDto.ChatbotName, chatSessionInfoDto.ChatbotModel, 
             assistantMessageInfo.Status);
-        
-        await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
+        try
+        {
+            await _messageService.AddNewMessageToChatSession(assistantMessageDto, chatSessionDto);
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, $"Request Error: {e.Message}");
+        }
 
         return Ok(assistantMessageDto);
     }

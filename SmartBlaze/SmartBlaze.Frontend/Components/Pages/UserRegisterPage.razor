@@ -37,6 +37,13 @@
             </div>
         </div>
 
+        @if (_userStateService.AuthError != string.Empty)
+        {
+            <div class="mb-4 error">
+                <span>@_userStateService.AuthError</span>
+            </div>
+        }
+
         <div class="mt-5">
             <a type="button" class="btn btn-primary" href="/welcome">
                 Back
@@ -52,7 +59,16 @@
 
 @code {
     private UserRegister _userRegister = new();
-    
+
+
+    protected override Task OnInitializedAsync()
+    {
+        _userStateService.RefreshView += ReloadComponentState;
+        
+        _userStateService.AuthError = "";
+        
+        return base.OnInitializedAsync();
+    }
 
     private async void OnRegisterClicked()
     {
@@ -72,5 +88,10 @@
             await _settingsService.SetUpConfiguration();
             await _chatSessionStateService.LoadChatSessions();
         }
+    }
+    
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
     }
 }

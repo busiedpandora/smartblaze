@@ -7,9 +7,22 @@ namespace SmartBlaze.Frontend.Services;
 public class UserStateService(IHttpClientFactory httpClientFactory) : AbstractService(httpClientFactory)
 {
     private UserDto? _userLogged;
-    
+    private RedirectionService _redirectionService;
+
+    private string _authError = "";
+
+    public UserStateService(IHttpClientFactory httpClientFactory, RedirectionService redirectionService) : this(httpClientFactory)
+    {
+        _redirectionService = redirectionService;
+    }
 
     public UserDto? UserLogged => _userLogged;
+
+    public string AuthError
+    {
+        get => _authError;
+        set => _authError = value ?? throw new ArgumentNullException(nameof(value));
+    }
 
     public async Task Register(UserRegister userRegister)
     {
@@ -24,9 +37,13 @@ public class UserStateService(IHttpClientFactory httpClientFactory) : AbstractSe
 
         if (!registerUserResponse.IsSuccessStatusCode)
         {
+            _authError = registerUserResponseContent;
+            NotifyNavigateToPage("/register");
+            NotifyRefreshView();
             return;
         }
 
+        _authError = "";
         _userLogged = JsonSerializer.Deserialize<UserDto>(registerUserResponseContent);
         
         NotifyNavigateToPage("/");
@@ -46,9 +63,13 @@ public class UserStateService(IHttpClientFactory httpClientFactory) : AbstractSe
         
         if (!loginUserResponse.IsSuccessStatusCode)
         {
+            _authError = loginUserResponseContent;
+            NotifyNavigateToPage("/login");
+            NotifyRefreshView();
             return;
         }
-        
+
+        _authError = "";
         _userLogged = JsonSerializer.Deserialize<UserDto>(loginUserResponseContent);
         
         NotifyNavigateToPage("/");

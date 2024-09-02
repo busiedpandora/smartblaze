@@ -5,7 +5,7 @@ using SmartBlaze.Backend.Dtos;
 
 namespace SmartBlaze.Backend.Repositories;
 
-public class ChatSessionRepository : AbstractRepository
+public class ChatSessionRepository : AbstractRepository, IChatSessionRepository
 { 
     public async Task<List<ChatSessionDto>> GetAllChatSessions(string userId)
     {

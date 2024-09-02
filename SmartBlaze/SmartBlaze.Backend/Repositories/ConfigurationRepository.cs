@@ -4,7 +4,7 @@ using SmartBlaze.Backend.Dtos;
 
 namespace SmartBlaze.Backend.Repositories;
 
-public class ConfigurationRepository : AbstractRepository
+public class ConfigurationRepository : AbstractRepository, IConfigurationRepository
 {
     public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration(string chatbotName, string userId)
     {
@@ -27,24 +27,6 @@ public class ConfigurationRepository : AbstractRepository
 
         return chatbotDefaultConfiguration;
     }
-    
-    /*public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration()
-    {
-        var chatbotDefaultConfigurationDocuments = await AppwriteDatabase.ListDocuments(AppwriteDatabaseId,
-            ChatbotDefaultConfigurationCollectionId);
-        
-        var chatbotDefaultConfigurationDocument = chatbotDefaultConfigurationDocuments.Documents.Count > 0 
-            ? chatbotDefaultConfigurationDocuments.Documents.First() : null;
-
-        if (chatbotDefaultConfigurationDocument is null)
-        {
-            return null;
-        }
-        
-        var chatbotDefaultConfiguration = ConvertToChatbotDefaultConfiguration(chatbotDefaultConfigurationDocument);
-
-        return chatbotDefaultConfiguration;
-    }*/
     
     public async Task<ChatbotDefaultConfigurationDto?> GetSelectedChatbotDefaultConfiguration(string userId)
     {

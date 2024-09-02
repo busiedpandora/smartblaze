@@ -4,7 +4,7 @@ using SmartBlaze.Backend.Dtos;
 
 namespace SmartBlaze.Backend.Repositories;
 
-public class UserRepository : AbstractRepository
+public class UserRepository : AbstractRepository, IUserRepository
 {
     public async Task<UserDto?> GetUserByUsername(string username)
     {

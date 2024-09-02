@@ -4,12 +4,12 @@ using SmartBlaze.Backend.Repositories;
 
 namespace SmartBlaze.Backend.Services;
 
-public class ConfigurationService
+public class ConfigurationService : IConfigurationService
 {
-    private readonly ConfigurationRepository _configurationRepository;
+    private readonly IConfigurationRepository _configurationRepository;
     
 
-    public ConfigurationService(ConfigurationRepository configurationRepository)
+    public ConfigurationService(IConfigurationRepository configurationRepository)
     {
         _configurationRepository = configurationRepository;
     }
@@ -18,11 +18,6 @@ public class ConfigurationService
     {
         return await _configurationRepository.GetChatbotDefaultConfiguration(chatbotName, userId);
     }
-    
-    /*public async Task<ChatbotDefaultConfigurationDto?> GetChatbotDefaultConfiguration()
-    {
-        return await _configurationRepository.GetChatbotDefaultConfiguration();
-    }*/
     
     public async Task SaveChatbotDefaultConfiguration(ChatbotDefaultConfigurationDto chatbotDefaultConfigurationDto, string userId)
     {

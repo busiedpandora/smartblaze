@@ -3,7 +3,7 @@ using SmartBlaze.Backend.Models;
 
 namespace SmartBlaze.Backend.Services;
 
-public class ChatbotService
+public class ChatbotService : IChatbotService
 {
     private readonly HttpClient _httpClient;
     
@@ -25,12 +25,6 @@ public class ChatbotService
     public Chatbot? GetChatbotByName(string name)
     {
         return _chatbots.Find(c => c.Name == name);
-    }
-
-    public Chatbot GetChatbotSelected()
-    {
-        return _chatbots
-            .Find(c => c.GetDefaultConfiguration().Selected) ?? _chatbots.First();
     }
 
     public async Task<AssistantMessageInfoDto> GenerateTextInChatSession(Chatbot chatbot, TextGenerationRequestData textGenerationRequestData)

@@ -8,16 +8,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 
-builder.Services.AddSingleton<ChatSessionRepository>();
-builder.Services.AddSingleton<MessageRepository>();
-builder.Services.AddSingleton<ConfigurationRepository>();
-builder.Services.AddSingleton<UserRepository>();
+builder.Services.AddSingleton<IChatSessionRepository, ChatSessionRepository>();
+builder.Services.AddSingleton<IMessageRepository, MessageRepository>();
+builder.Services.AddSingleton<IConfigurationRepository, ConfigurationRepository>();
+builder.Services.AddSingleton<IUserRepository, UserRepository>();
 
-builder.Services.AddSingleton<ChatSessionService>();
-builder.Services.AddSingleton<MessageService>();
-builder.Services.AddSingleton<ChatbotService>();
-builder.Services.AddSingleton<ConfigurationService>();
-builder.Services.AddSingleton<UserService>();
+builder.Services.AddSingleton<IChatSessionService, ChatSessionService>();
+builder.Services.AddSingleton<IMessageService, MessageService>();
+builder.Services.AddSingleton<IChatbotService, ChatbotService>();
+builder.Services.AddSingleton<IConfigurationService, ConfigurationService>();
+builder.Services.AddSingleton<IUserService, UserService>();
 
 builder.Services.AddSingleton<IPasswordHasher<UserDto>, PasswordHasher<UserDto>>();
 

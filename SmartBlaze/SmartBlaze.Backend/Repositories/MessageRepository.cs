@@ -4,7 +4,7 @@ using SmartBlaze.Backend.Dtos;
 
 namespace SmartBlaze.Backend.Repositories;
 
-public class MessageRepository : AbstractRepository
+public class MessageRepository : AbstractRepository, IMessageRepository
 {
      public async Task<List<MessageDto>> GetMessagesFromChatSession(string chatSessionId)
      {

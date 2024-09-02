@@ -5,12 +5,12 @@ using SmartBlaze.Backend.Repositories;
 
 namespace SmartBlaze.Backend.Services;
 
-public class UserService
+public class UserService : IUserService
 {
-    private readonly UserRepository _userRepository;
+    private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher<UserDto> _passwordHasher;
 
-    public UserService(UserRepository userRepository, IPasswordHasher<UserDto> passwordHasher)
+    public UserService(IUserRepository userRepository, IPasswordHasher<UserDto> passwordHasher)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;

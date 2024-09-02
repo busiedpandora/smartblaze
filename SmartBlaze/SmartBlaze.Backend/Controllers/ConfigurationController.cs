@@ -8,13 +8,13 @@ namespace SmartBlaze.Backend.Controllers;
 [Route("configuration")]
 public class ConfigurationController : ControllerBase
 {
-    private readonly ConfigurationService _configurationService;
-    private readonly ChatbotService _chatbotService;
-    private readonly ChatSessionService _chatSessionService;
+    private readonly IConfigurationService _configurationService;
+    private readonly IChatbotService _chatbotService;
+    private readonly IChatSessionService _chatSessionService;
 
 
-    public ConfigurationController(ConfigurationService configurationService, ChatbotService chatbotService,
-        ChatSessionService chatSessionService)
+    public ConfigurationController(IConfigurationService configurationService, IChatbotService chatbotService,
+        IChatSessionService chatSessionService)
     {
         _configurationService = configurationService;
         _chatbotService = chatbotService;

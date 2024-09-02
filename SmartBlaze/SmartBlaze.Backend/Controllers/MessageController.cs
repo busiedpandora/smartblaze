@@ -11,13 +11,13 @@ namespace SmartBlaze.Backend.Controllers;
 [Route("chat-session/{id}")]
 public class MessageController : ControllerBase
 {
-    private readonly ChatSessionService _chatSessionService;
-    private readonly MessageService _messageService;
-    private readonly ChatbotService _chatbotService;
+    private readonly IChatSessionService _chatSessionService;
+    private readonly IMessageService _messageService;
+    private readonly IChatbotService _chatbotService;
 
 
-    public MessageController(ChatSessionService chatSessionService, MessageService messageService, 
-        ChatbotService chatbotService)
+    public MessageController(IChatSessionService chatSessionService, IMessageService messageService, 
+        IChatbotService chatbotService)
     {
         _chatSessionService = chatSessionService;
         _messageService = messageService;
@@ -38,7 +38,7 @@ public class MessageController : ControllerBase
 
             var messages = await _messageService.GetMessagesFromChatSession(chatSessionDto);
 
-            return messages;
+            return Ok(messages);
         }
         catch (Exception e)
         {

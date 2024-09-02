@@ -9,13 +9,13 @@ namespace SmartBlaze.Backend.Controllers;
 [Route("chat-sessions")]
 public class ChatSessionController : ControllerBase
 {
-    private readonly ChatSessionService _chatSessionService;
-    private readonly ConfigurationService _configurationService;
-    private readonly ChatbotService _chatbotService;
+    private readonly IChatSessionService _chatSessionService;
+    private readonly IConfigurationService _configurationService;
+    private readonly IChatbotService _chatbotService;
 
 
-    public ChatSessionController(ChatSessionService chatSessionService, ConfigurationService configurationService,
-        ChatbotService chatbotService)
+    public ChatSessionController(IChatSessionService chatSessionService, IConfigurationService configurationService,
+        IChatbotService chatbotService)
     {
         _chatSessionService = chatSessionService;
         _configurationService = configurationService;
@@ -41,19 +41,6 @@ public class ChatSessionController : ControllerBase
             return StatusCode(500, $"Request Error: {e.Message}");
         }
     }
-
-    /*[HttpGet("{id}")]
-    public async Task<ActionResult<ChatSessionDto>> GetChatSession(string id)
-    {
-        var chatSessionDto = await _chatSessionService.GetChatSessionById(id);
-
-        if (chatSessionDto is null)
-        {
-            return NotFound($"Chat session with id {id} not found");
-        }
-
-        return Ok(chatSessionDto);
-    }*/
     
     [HttpPost("{userId}/new")]
     public async Task<ActionResult<ChatSessionDto>> AddNewChatSession(string userId, [FromBody] ChatSessionDto chatSessionDto)

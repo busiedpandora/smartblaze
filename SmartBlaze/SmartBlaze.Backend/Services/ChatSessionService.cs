@@ -4,11 +4,11 @@ using SmartBlaze.Backend.Repositories;
 
 namespace SmartBlaze.Backend.Services;
 
-public class ChatSessionService
+public class ChatSessionService : IChatSessionService
 {
-    private readonly ChatSessionRepository _chatSessionRepository;
+    private readonly IChatSessionRepository _chatSessionRepository;
     
-    public ChatSessionService(ChatSessionRepository chatSessionRepository)
+    public ChatSessionService(IChatSessionRepository chatSessionRepository)
     {
         _chatSessionRepository = chatSessionRepository;
     }

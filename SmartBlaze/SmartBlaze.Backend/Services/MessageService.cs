@@ -4,12 +4,12 @@ using SmartBlaze.Backend.Repositories;
 
 namespace SmartBlaze.Backend.Services;
 
-public class MessageService
+public class MessageService : IMessageService
 {
-    private readonly MessageRepository _messageRepository;
+    private readonly IMessageRepository _messageRepository;
 
 
-    public MessageService(MessageRepository messageRepository)
+    public MessageService(IMessageRepository messageRepository)
     {
         _messageRepository = messageRepository;
     }

@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-var backendUrl = builder.Configuration["BackendUrl"] ?? throw new Exception("BackendUrl is not set");
+var backendUrl = builder.Configuration["BackendUrlHTTPS"] ?? throw new Exception("BackendUrl is not set");
 
 builder.Services.AddHttpClient("_httpClient", client =>
 {

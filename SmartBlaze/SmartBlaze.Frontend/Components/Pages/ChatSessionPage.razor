@@ -1,0 +1,159 @@
+@page "/"
+@using SmartBlaze.Frontend.Components.Layout
+
+@rendermode InteractiveServer
+
+@inject ChatSessionStateService _chatSessionStateService
+@inject SettingsService _settingsService
+@inject IJSRuntime _jsRuntime
+@inject UserStateService _userStateService
+
+<PageTitle>SmartBlaze</PageTitle>
+
+<div id="pageRow">
+    @if (_chatSessionStateService.CurrentChatSession is not null)
+    {
+        <div class="row align-items-center h-100">
+            <div class="col-3">
+                <div class="d-flex justify-content-start align-items-center ms-3">
+                    
+                </div>
+                </div>
+                <div class="col-6">
+                    <div class="d-flex justify-content-center align-items-center">
+                        @if (!_chatSessionStateService.IsChatSessionBeingSelected)
+                        {
+                            <div>
+                                <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2"/>
+                            </div>
+                            <div>
+                                <span id="pageTitle" class="user-select-none">
+                                    @_chatSessionStateService.CurrentChatSession.Title
+                                </span>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="d-flex justify-content-end align-items-center me-3">
+                        <div>
+                            <NavLink class="edit-icon" href=@("/chat/" + _chatSessionStateService.CurrentChatSession.Id)>
+                                <img src="icons/pen-fill.svg" width="20" height="20" alt="edit icon" class="me-2"/>
+                            </NavLink>
+                        </div>
+                        <div class="ms-3">
+                            <img src="icons/trash3-fill.svg" width="20" height="20" alt="delete icon" class="me-2 delete-icon"
+                                 @onclick="OnDeleteChatSessionClicked"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+
+        <div id="conversationContainer" @ref="_conversationContainer">
+            @if (_chatSessionStateService.CurrentChatSessionMessages is not null 
+                 && !_chatSessionStateService.IsChatSessionBeingSelected)
+            {
+                @if (_chatSessionStateService.CurrentChatSessionConfiguration is not null
+                     && _chatSessionStateService.CurrentGenerationType == "text"
+                     && _settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptSystemInstruction == true
+                     && !string.IsNullOrEmpty(_chatSessionStateService.CurrentChatSessionConfiguration.SystemInstruction))
+                {
+                    <div class="d-flex">
+                        <img src="icons/gear-wide.svg" width="25" height="25" alt="system icon" title="system"/>
+
+                        <div class="ps-3 pe-3 pb-5 pt-1">
+                            <pre class="mb-0">@_chatSessionStateService.CurrentChatSessionConfiguration.SystemInstruction</pre>
+                        </div>
+                    </div>
+                }
+
+                @foreach (var message in _chatSessionStateService.CurrentChatSessionMessages)
+                {
+                    <Message message="message" />
+                }
+
+                @if (_chatSessionStateService.IsGeneratingResponse)
+                {
+                    <div class="d-flex">
+                        <div>
+                            <img src="icons/robot.svg" width="28" height="28" alt="assistant icon" title="assistant"/>
+                        </div>
+                        <div class="ps-3 pe-3 pb-5 pt-1">
+                            <span class="text-secondary">I'm elaborating message...</span>
+                        </div>
+                    </div>
+                }
+            }
+            @if (_chatSessionStateService.ChatSessions?.Count == 0)
+            {
+                <div class="alert alert-light" role="alert">
+                    <h4>Start a new conversation by clicking on '
+                        <span>
+                            <img src="icons/plus-circle-fill.svg" width="20" height="20" alt="new chat icon" class="mb-1"/>
+                            New chat
+                        </span> '</h4>
+                </div>
+            }
+        </div>
+
+        <div>
+            <InputBox/>
+        </div>
+
+
+@code {
+    private bool _applicationStarted = false;
+
+    private bool _scrollToBottom = false;
+
+    private ElementReference _conversationContainer;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (!_applicationStarted)
+        {
+            _applicationStarted = true;
+            
+            _chatSessionStateService.RefreshView += ReloadComponentState;
+            _settingsService.RefreshView += ReloadComponentState;
+            _chatSessionStateService.ScrollToBottom += ScrollToBottom;
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await _jsRuntime.InvokeVoidAsync("highlightAllCodeBlocks");
+
+        if (_scrollToBottom)
+        {
+            await _jsRuntime.InvokeVoidAsync("scrollToBottom", _conversationContainer);
+            _scrollToBottom = false;
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async void OnDeleteChatSessionClicked()
+    {
+        var chatSession = _chatSessionStateService.CurrentChatSession;
+
+        if (chatSession is not null)
+        {
+            await _chatSessionStateService.DeleteChatSession(chatSession);
+        }
+    }
+
+    private void ScrollToBottom()
+    {
+        _scrollToBottom = true;
+    }
+
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}

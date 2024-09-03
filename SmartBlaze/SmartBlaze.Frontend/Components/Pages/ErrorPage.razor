@@ -1,0 +1,20 @@
+@page "/error"
+
+@inject RedirectionService _redirectionService
+
+<PageTitle>Error</PageTitle>
+
+<div id="pageRow">
+    <span id="pageTitle">
+        
+    </span>
+</div>
+
+<div id="errorPageContainer">
+    <h2 class="text-danger">@_redirectionService.ErrorTitle</h2>
+    <p class="text-danger">@_redirectionService.ErrorMessage</p>
+</div>
+
+@code {
+    
+}

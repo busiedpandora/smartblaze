@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartBlaze.Frontend", "SmartBlaze.Frontend\SmartBlaze.Frontend.csproj", "{6A45A232-7082-4A54-BA7B-449BA1732558}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartBlaze.Backend.Tests", "SmartBlaze.Backend.Tests\SmartBlaze.Backend.Tests.csproj", "{88730A1C-881B-4A91-AE73-7C14702D806F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartBlaze.Backend", "SmartBlaze.Backend\SmartBlaze.Backend.csproj", "{C1EDAE2A-D8A0-471C-B376-78E4AC5EB8BF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6A45A232-7082-4A54-BA7B-449BA1732558}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A45A232-7082-4A54-BA7B-449BA1732558}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A45A232-7082-4A54-BA7B-449BA1732558}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A45A232-7082-4A54-BA7B-449BA1732558}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88730A1C-881B-4A91-AE73-7C14702D806F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88730A1C-881B-4A91-AE73-7C14702D806F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88730A1C-881B-4A91-AE73-7C14702D806F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88730A1C-881B-4A91-AE73-7C14702D806F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1EDAE2A-D8A0-471C-B376-78E4AC5EB8BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1EDAE2A-D8A0-471C-B376-78E4AC5EB8BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1EDAE2A-D8A0-471C-B376-78E4AC5EB8BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1EDAE2A-D8A0-471C-B376-78E4AC5EB8BF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

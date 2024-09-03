@@ -1,0 +1,45 @@
+@rendermode InteractiveServer
+
+@inject SettingsService _settingsService
+
+<div id="settingsMenusContainer" class="row">
+    <div class="col">
+        <div class="d-flex align-items-center">
+            <div>
+                <img src="icons/robot.svg" width="25" height="25" alt="assistant icon"/>
+            </div>
+            <div class="ms-2">
+                <span class="@(_settingsService.SettingsMenuSelected == "chatbot" ? "settingsMenuTitle text-primary" : "settingsMenuTitle")"
+                      @onclick="OnChatbotSettingsClicked">
+                    Chatbot
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="d-flex align-items-center">
+            <div>
+                <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon"/>
+            </div>
+            <div class="ms-2">
+                <span class="@(_settingsService.SettingsMenuSelected == "chat" ? "settingsMenuTitle text-primary" : "settingsMenuTitle")"
+                      @onclick="OnChatSettingsClicked">
+                    Chat
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private void OnChatbotSettingsClicked()
+    {
+        _settingsService.OpenChatbotSettings();
+    }
+
+    private void OnChatSettingsClicked()
+    {
+        _settingsService.OpenChatSessionDefaultSettings();
+    }
+}

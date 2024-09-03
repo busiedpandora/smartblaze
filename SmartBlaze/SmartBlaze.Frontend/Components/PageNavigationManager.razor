@@ -1,0 +1,73 @@
+@rendermode InteractiveServer
+
+@inject NavigationManager _navigationManager
+@inject RedirectionService _redirectionService
+@inject ChatSessionStateService _chatSessionStateService
+@inject SettingsService _settingsService
+@inject UserStateService _userStateService
+
+@code {
+    private bool _applicationStarted = false;
+    
+    protected override Task OnInitializedAsync()
+    {
+        if (!_applicationStarted)
+        {
+            _chatSessionStateService.RefreshView += ReloadComponentState;
+            _chatSessionStateService.NavigateToPage += UpdatePageUrl;
+            _chatSessionStateService.NavigateToErrorPage += UpdateErrorInfo;
+            
+            _settingsService.RefreshView += ReloadComponentState;
+            _settingsService.NavigateToPage += UpdatePageUrl;
+            _settingsService.NavigateToErrorPage += UpdateErrorInfo;
+
+            _userStateService.RefreshView += ReloadComponentState;
+            _userStateService.NavigateToPage += UpdatePageUrl;
+            _userStateService.NavigateToErrorPage += UpdateErrorInfo;
+        }
+        
+        return base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_applicationStarted)
+        {
+            _applicationStarted = true;
+        }
+        
+        if (_navigationManager.Uri.EndsWith("/error"))
+        {
+            return;
+        }
+
+        if (!_navigationManager.Uri.EndsWith(_redirectionService.Url))
+        {
+            _navigationManager.NavigateTo(_redirectionService.Url);
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+    
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+    
+    private void UpdateErrorInfo(string errorTitle, string errorMessage)
+    {
+        _redirectionService.Url = "/error";
+        _redirectionService.ErrorTitle = errorTitle;
+        _redirectionService.ErrorMessage = errorMessage;
+    }
+
+    private void UpdatePageUrl(string url)
+    {
+        if (_redirectionService.Url == "/error")
+        {
+            return;
+        }
+
+        _redirectionService.Url = url;
+    }
+}

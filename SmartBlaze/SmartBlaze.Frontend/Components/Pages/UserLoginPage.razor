@@ -1,0 +1,96 @@
+@page "/login"
+@using SmartBlaze.Frontend.Models
+
+@rendermode InteractiveServer
+
+@inject UserStateService _userStateService
+@inject SettingsService _settingsService
+@inject ChatSessionStateService _chatSessionStateService
+
+<PageTitle>Login - SmartBlaze</PageTitle>
+
+<div id="pageRow">
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="col-auto">
+            <span id="pageTitle">
+                Login
+            </span>
+        </div>
+    </div>
+</div>
+
+<div id="userLoginContainer">
+    <EditForm Model="_userLogin" OnSubmit="OnLoginClicked" autocomplete="off">
+        <div class="mb-4">
+            <label for="username" class="form-label">Username</label>
+            <div class="col-4">
+                <InputText id="username" @bind-Value="_userLogin.Username" class="form-control">
+                </InputText>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="password" class="form-label">Password</label>
+            <div class="col-4">
+                <InputText id="password" @bind-Value="_userLogin.Password" class="form-control" type="password">
+                </InputText>
+            </div>
+        </div>
+
+        @if (_userStateService.AuthError != string.Empty)
+        {
+            <div class="mb-4 error">
+                <span>@_userStateService.AuthError</span>
+            </div>
+        }
+
+        <div class="mt-5">
+            <a type="button" class="btn btn-primary" href="/welcome">
+                Back
+            </a>
+            <button class="btn btn-primary ms-2" type="submit" value="Submit">
+                Login
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+
+@code {
+    private UserLogin _userLogin = new();
+    
+    
+    protected override Task OnInitializedAsync()
+    {
+        _userStateService.RefreshView += ReloadComponentState;
+
+        _userStateService.AuthError = "";
+        
+        return base.OnInitializedAsync();
+    }
+    
+    private async void OnLoginClicked()
+    {
+        _userLogin.Username = _userLogin.Username.Trim();
+        _userLogin.Password = _userLogin.Password.Trim();
+
+        if (_userLogin.Username == string.Empty 
+            || _userLogin.Password == string.Empty)
+        {
+            return;
+        }
+        
+        await _userStateService.Login(_userLogin);
+
+        if (_userStateService.UserLogged is not null)
+        {
+            await _settingsService.SetUpConfiguration();
+            await _chatSessionStateService.LoadChatSessions();
+        }
+    }
+    
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}

@@ -1,0 +1,40 @@
+textarea {
+    width: 100%;
+    height: 100px;
+    overflow-y: auto;
+    resize: none;
+}
+
+#sendButton {
+    width: 60px;
+    height: 80px;
+}
+
+.file-input-container {
+    width: 65px;
+    height: 65px;
+}
+
+.button-double-image {
+    position: relative;
+}
+
+.right-image {
+    opacity: 80%;
+}
+
+.left-image {
+    position: absolute;
+    left: -1px;
+    bottom: 9px;
+}
+
+#fileInputContainer {
+    max-height: 100px;
+    overflow-y: auto;
+    margin-top: 5px;
+}
+
+.generation-type-select {
+    background-color: #f8f9fa;
+}

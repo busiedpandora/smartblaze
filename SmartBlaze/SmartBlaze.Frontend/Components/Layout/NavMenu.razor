@@ -1,0 +1,176 @@
+﻿@using SmartBlaze.Frontend.Dtos
+@rendermode InteractiveServer
+
+@inject NavigationManager _navigationManager
+@inject ChatSessionStateService _chatSessionStateService
+@inject RedirectionService _redirectionService
+@inject SettingsService _settingsService
+@inject UserStateService _userStateService
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand">SmartBlaze</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
+
+<div id="chatList" class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+        @if (_chatSessionStateService.AreChatSessionsLoadingOnStartup)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link">
+                    Loading chat sessions...
+                </NavLink>
+            </div>
+        }
+        else
+        {
+            @if (_chatSessionStateService.ChatSessions is not null)
+            {
+                @foreach (var chatSession in _chatSessionStateService.ChatSessions)
+                {
+                    @if (chatSession.Title is not null)
+                    {
+                        <div class="nav-item px-3">
+                            <NavLink class="@(chatSession.Selected ? "nav-link active" : "nav-link")" 
+                                     @onclick="() => OnChatClicked(chatSession)">
+                                <div class="d-flex col-12 justify-content-between">
+                                    <div>
+                                        <img src="icons/chat-dots-fill.svg" width="20" height="20" alt="chat icon" class="me-2" data-bs-toggle="dropdown"/>
+                                        @if (chatSession.Title.Length > 15)
+                                        {
+                                            <span class="user-select-none chat-session-title">
+                                                @(chatSession.Title.Substring(0, 15) + "...")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="user-select-none chat-session-title">@chatSession.Title</span>
+                                        }
+                                    </div>
+                                </div>
+                            </NavLink>
+                        </div>
+                    }
+                }
+            }
+        }
+    </nav>
+</div>
+
+<div id="navbarBottomContainer" class="border-top border-1 border-white">
+    @if (_userStateService.UserLogged is not null)
+    {
+        <div class="nav-item px-3">
+            <NavLink class="nav-link user-select-none"
+                     @onclick="() => OnNewChatClicked()">
+                <img src="icons/plus-circle-fill.svg" width="20" height="20" alt="new chat icon" class="me-2"/>
+                <span class="nav-item-bottom">New chat</span>
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="@(_settingsService.SettingsPageOpen ? "nav-link user-select-none active" : "nav-link user-select-none")"
+                     @onclick="() => OnSettingsClicked()">
+                <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon" class="me-2"/>
+                <span class="nav-item-bottom">Settings</span>
+            </NavLink>
+        </div>
+        <div id="userNavItem" class="nav-item ps-3">
+            <div class="row align-items-center h-100 username-container">
+                <div class="col">
+                    <div class="d-flex">
+                        <div>
+                            <img src="icons/person-fill.svg" width="25" alt="user icon" title="user" class="me-2"/>
+                        </div>
+                        <div>
+                            @if (_userStateService.UserLogged is not null)
+                            {
+                                @if (_userStateService.UserLogged.Username?.Length > 10)
+                                {
+                                    <span class="username user-select-none nav-item-bottom">
+                                        @_userStateService.UserLogged.Username.Substring(0, 10)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="username user-select-none nav-item-bottom">
+                                        @_userStateService.UserLogged.Username
+                                    </span>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex justify-content-end">
+                        <div class="logout-icon" @onclick="OnLogoutClicked">
+                            <img src="icons/box-arrow-left.svg" width="28" alt="logout icon" title="logout"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    }
+</div>
+
+@code
+{
+    private bool _applicationStarted = false;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (!_applicationStarted)
+        {
+            _applicationStarted = true;
+            
+            _chatSessionStateService.RefreshView += ReloadComponentState;
+            _settingsService.RefreshView += ReloadComponentState;
+        }
+        
+        await base.OnInitializedAsync();
+    }
+    
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async void OnChatClicked(ChatSessionDto chatSession)
+    {
+        if (_settingsService.SettingsPageOpen)
+        {
+            _settingsService.CloseSettings();
+        }
+        
+        await _chatSessionStateService.SelectChatSession(chatSession);
+    }
+
+    private async void OnNewChatClicked()
+    {
+        if (_settingsService.SettingsPageOpen)
+        {
+            _settingsService.CloseSettings();
+        }
+        
+        await _chatSessionStateService.CreateNewChatSession();
+    }
+
+    private void OnLogoutClicked()
+    {
+        _chatSessionStateService.Logout();
+        
+        _settingsService.Logout();
+        
+        _userStateService.Logout();
+    }
+
+    private void OnSettingsClicked()
+    {
+        _chatSessionStateService.DeselectCurrentChatSession();
+        
+        _settingsService.OpenChatbotSettings();
+    }
+}

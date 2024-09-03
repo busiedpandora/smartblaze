@@ -1,0 +1,481 @@
+@using System.Text
+@using System.Text.RegularExpressions
+@using iText.Kernel.Pdf
+@using iText.Kernel.Pdf.Canvas.Parser
+@using SmartBlaze.Frontend.Dtos
+@using Xceed.Words.NET
+@rendermode InteractiveServer
+
+@inject ChatSessionStateService _chatSessionStateService
+@inject SettingsService _settingsService
+@inject IJSRuntime _jsRuntime
+
+
+@if(_chatSessionStateService.CurrentChatSession is not null && _chatSessionStateService.CanUserInteract())
+{
+    <div class="d-flex justify-content-center">
+        <div class="col-8">
+            
+            @if (!_imageUrlInputActive && !_imageFileInputActive && !_textFileInputActive)
+            {
+                <div class="row col-11 ms-1">
+                    
+                    @if (_settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptUrlImageInput == true)
+                    {
+                            <div class="col-auto px-1">
+                                <button class="btn btn-light button-double-image" data-bs-toggle="tooltip" data-bs-title="Insert image URL"
+                                        @onclick="ShowImageUrlInput">
+                                    <img src="icons/image-fill.svg" alt="image url icon" class="right-image"/>
+                                    <img src="icons/link.svg" alt="image file icon" class="left-image"/>
+                                </button>
+                            </div>
+                    }
+                    @if (_settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptBase64ImageInput == true)
+                    {
+                            <div class="col-auto px-1">
+                                <button class="btn btn-light button-double-image" data-bs-toggle="tooltip" data-bs-title="Attach image file"
+                                        @onclick="ShowImageFileInput">
+                                    <img src="icons/image.svg" alt="image file icon" class="right-image"/>
+                                    <img src="icons/paperclip.svg" alt="image file icon" class="left-image"/>
+                                </button>
+                            </div>
+                    }
+                    @if (_settingsService.ChatbotModelSelectedInCurrentChatSession?.AcceptTextFileInput == true)
+                    {
+                        <div class="col-auto px-1">
+                            <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-title="Attach file"
+                                    @onclick="ShowTextFileInput">
+                                <img src="icons/paperclip.svg" alt="text file icon"/>
+                            </button>
+                        </div>
+                    }
+                    <div class="col-auto px-1 ms-auto">
+                        <InputSelect class="form-select generation-type-select"
+                                     Value="_chatSessionStateService.CurrentGenerationType" 
+                                     ValueExpression="() => _chatSessionStateService.CurrentGenerationType" 
+                                     TValue="string"
+                                     ValueChanged="(string type) => OnGenerationTypeSelected(type)">
+                            <option value="text">Text Generation</option>
+                            @if (_settingsService.ChatbotSelectedInCurrentChatSession?.SupportImageGeneration == true)
+                            {
+                                <option value="image">Image Generation</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+            }
+            
+            @if (_imageUrlInputActive)
+            {
+                <div class="row">
+                    <div class="col-10 px-1">
+                        <InputText @bind-Value="_imageUrl" class="form-control" placeholder="Insert image URL"></InputText>
+                    </div>
+                    <div class="col-auto ps-0 pe-1">
+                        <button class="btn btn-light" @onclick="LoadImageUrl">
+                            Add
+                        </button>
+                    </div>
+                    <div class="col-auto px-0">
+                        <button class="btn btn-light" @onclick="HideImageUrlInput">
+                            Undo
+                        </button>
+                    </div>
+                </div>
+            }
+            
+            @if (_imageFileInputActive)
+            {
+                <div class="row">
+                    <div class="col-10 px-1">
+                        <InputFile OnChange="LoadImageFile" multiple class="form-control" 
+                                   accept="image/png, image/jpeg, image/webp">
+                        </InputFile>
+                    </div>
+                    <div class="col-auto px-0">
+                        <button class="btn btn-light" @onclick="HideImageFileInput">
+                            Undo
+                        </button>
+                    </div>
+                </div>
+            }
+
+            @if (_textFileInputActive)
+            {
+            <div class="row">
+                <div class="col-10 px-1">
+                    <InputFile OnChange="LoadTextFile" multiple class="form-control"
+                               accept="text/*, .pdf, .docx, .md, .yaml, .yml, .sql, .java, .c, .cpp, .cs, .h, .hpp, .py, .js, .ts, .ejs, .php, .rb, .go, .rs, .sh, .bat, .ini, .cfg, .toml, .csproj, .sln, .vbproj, .fsproj, .gradle, .make, .cmake, .gitignore, .dockerfile, .env, .properties, .plist, .asm, .vb, .lua, .r, .jl, .swift, .dart, .razor">
+                    </InputFile>
+                </div>
+                <div class="col-auto px-0">
+                    <button class="btn btn-light" @onclick="HideTextFileInput">
+                        Undo
+                    </button>
+                </div>
+            </div>
+            }
+
+            <div class="row align-items-center">
+                <div class="col px-1">
+                    <textarea @ref="_textarea" class="form-control border-3" rows="3" @onkeydown="HandleKeyPressed" 
+                        placeholder="Type your text here">
+                    </textarea>
+                </div>
+                <div class="col-1 px-0">
+                    @if (_chatSessionStateService.CanUserInteract())
+                    {
+                        <button id="sendButton" class="btn btn-light d-flex align-items-center justify-content-center"
+                                @onclick="OnSendMessageClicked">
+                            <img src="icons/send-fill.svg" alt="send icon" height="20">
+                        </button>
+                    }
+                </div>
+            </div>
+            
+            <div>
+                <div id="fileInputContainer" class="row row-cols-4 align-items-start justify-content-start">
+                    @{
+                        var index = 0;
+                    }
+                    
+                    @foreach (var fileInput in _fileInputs)
+                    {
+                        var current = index;
+                        <div class="col-auto py-1">
+                            <div class="d-flex align-items-center">
+                                @if (fileInput.ContentType.StartsWith("image"))
+                                {
+                                    @if (fileInput.Data is not null)
+                                    {
+                                        @if (fileInput.Data.StartsWith("http"))
+                                        {
+                                            <div>
+                                                <img src="@fileInput.Data" alt="user image" width="100" class="img-thumbnail"
+                                                     title="@fileInput.Name"/>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div>
+                                                <img src="data:@fileInput.ContentType;base64, @fileInput.Data" alt="user image" width="100"
+                                                     class="img-thumbnail" title="@fileInput.Name"/>
+                                            </div>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="border border-3 rounded-3 px-2 py-3 file-input-container" title="@fileInput.Name">
+                                        <div class="d-flex justify-content-center mb-1">
+                                            <img src="icons/file-earmark-text.svg" width="16" alt="file icon"/>
+                                        </div>
+                                        <div class="d-flex justify-content-center">
+                                            <span class="file-name">
+                                                @if (fileInput.Name?.Length > 8)
+                                                {
+                                                    @(fileInput.Name.Substring(0, 7).Replace(" ", "") + "..")
+                                                }
+                                                else
+                                                {
+                                                    @fileInput.Name?.Replace(" ", "")
+                                                }
+                                            </span>
+                                        </div>
+                                    </div>
+                                }
+                                <div>
+                                    <button type="button" class="btn-close" aria-label="Close"
+                                            @onclick="() => RemoveInputImage(current)">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        ++index;
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _applicationStarted = false;
+    
+    private ElementReference _textarea;
+
+    private bool _imageUrlInputActive = false;
+    private bool _imageFileInputActive = false;
+    private bool _textFileInputActive = false;
+    
+    private string _imageUrl = "";
+
+    private List<MediaDto> _fileInputs = new();
+    
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (!_applicationStarted)
+        {
+            _applicationStarted = true;
+            
+            _chatSessionStateService.RefreshView += ReloadComponentState;
+            _settingsService.RefreshView += ReloadComponentState;
+        }
+        
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await _jsRuntime.InvokeVoidAsync("initializeTooltips");
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async void OnSendMessageClicked()
+    {
+        string text = await _jsRuntime.InvokeAsync<string>("getTextareaValue", _textarea);
+        text = text.Trim();
+
+        if (text == string.Empty)
+        {
+            return;
+        }
+
+        var chatSessionConfiguration = _chatSessionStateService.CurrentChatSessionConfiguration;
+        
+        if (_chatSessionStateService.CanUserInteract() && chatSessionConfiguration is not null)
+        {
+
+            var chatbot = _settingsService.GetChatbot(chatSessionConfiguration.ChatbotName ?? "");
+
+            if (chatbot is null)
+            {
+                return;
+            }
+        
+            await _jsRuntime.InvokeVoidAsync("setTextareaValue", _textarea, string.Empty);
+
+            var imageInputs = _fileInputs;
+            _fileInputs = new();
+
+            if (_chatSessionStateService.CurrentGenerationType == "text")
+            {
+                await _chatSessionStateService.RequestNewAssistantTextMessage(text, imageInputs);
+            }
+            else if (_chatSessionStateService.CurrentGenerationType == "image")
+            {
+                await _chatSessionStateService.RequestNewAssistantImageMessage(text);
+            }
+        }
+    }
+
+    private void HandleKeyPressed(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            OnSendMessageClicked();
+        }
+    }
+    
+    private async void ShowImageUrlInput()
+    {
+        await _jsRuntime.InvokeVoidAsync("deactivateTooltips");
+        _imageUrlInputActive = true;
+        ReloadComponentState();
+    }
+    
+    private void HideImageUrlInput()
+    {
+        _imageUrlInputActive = false;
+        ReloadComponentState();
+    }
+
+    private void LoadImageUrl()
+    {
+        _imageUrl = _imageUrl.Trim();
+        _imageUrl = Regex.Split(_imageUrl, @"\s+")[0];
+
+        if (_imageUrl != string.Empty)
+        {
+            _fileInputs.Add(new MediaDto
+            {
+                Data = _imageUrl,
+                ContentType = "image"
+            });
+
+            _imageUrl = "";
+            _imageUrlInputActive = false;
+        }
+    }
+
+    private async void ShowImageFileInput()
+    {
+        await _jsRuntime.InvokeVoidAsync("deactivateTooltips");
+        _imageFileInputActive = true;
+        ReloadComponentState();
+    }
+
+    private void HideImageFileInput()
+    {
+        _imageFileInputActive = false;
+        ReloadComponentState();
+    }
+
+    private async void LoadImageFile(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles())
+        {
+            if (file.Size < 512000L && file.ContentType.StartsWith("image"))
+            {
+                var memoryStream = new MemoryStream();
+                await file.OpenReadStream().CopyToAsync(memoryStream);
+                var fileBytes = memoryStream.ToArray();
+                var base64String = Convert.ToBase64String(fileBytes);
+
+                if (base64String.Length < 999999)
+                {
+                    _fileInputs.Add(new MediaDto
+                    {
+                        Name = file.Name,
+                        Data = base64String,
+                        ContentType = file.ContentType
+                    });
+                }
+            }
+        }
+        
+        HideImageFileInput();
+    }
+
+    private void RemoveInputImage(int index)
+    {
+        if (index < _fileInputs.Count)
+        {
+            _fileInputs.RemoveAt(index);
+            ReloadComponentState();
+        }
+    }
+    
+    private async void ShowTextFileInput()
+    {
+        await _jsRuntime.InvokeVoidAsync("deactivateTooltips");
+        _textFileInputActive = true;
+        ReloadComponentState();
+    }
+
+    private void HideTextFileInput()
+    {
+        _textFileInputActive = false;
+        ReloadComponentState();
+    }
+
+    private async void LoadTextFile(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles())
+        {
+            var contentType = file.ContentType;
+            
+            if (file.Size < 512000L && !contentType.StartsWith("image"))
+            {
+                using (var memoryStream = new MemoryStream())
+                {
+                    await file.OpenReadStream().CopyToAsync(memoryStream);
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+                    string fileContent;
+                    
+                    if (contentType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                    {
+                        contentType = "text/plain";
+
+                        fileContent = ExtractTextFromDocxFile(memoryStream);
+                    }
+                    else if (contentType == "application/pdf")
+                    {
+                        contentType = "text/plain";
+
+                        fileContent = ExtractTextFromPdfFile(memoryStream);
+                    }
+                    else
+                    {
+                        if (contentType == "")
+                        {
+                            var i = file.Name.LastIndexOf(".");
+                            if (i != -1 && i < file.Name.Length - 1)
+                            {
+                                contentType = "text/" + file.Name.Substring(i + 1);
+                            }
+                        }
+                        
+                        var reader = new StreamReader(memoryStream);
+                        fileContent = await reader.ReadToEndAsync();
+                    }
+
+                    if (fileContent != string.Empty && fileContent.Length < 999999)
+                    {
+                        _fileInputs.Add(new MediaDto
+                        {
+                            Name = file.Name,
+                            Data = fileContent,
+                            ContentType = contentType
+                        });
+                    }
+                }
+            }
+        }
+        
+        HideTextFileInput();
+    }
+
+    private string ExtractTextFromDocxFile(MemoryStream memoryStream)
+    {
+        var document = DocX.Load(memoryStream);
+        
+        return document.Text;
+    }
+
+    private string ExtractTextFromPdfFile(MemoryStream memoryStream)
+    {
+        var pdfReader = new PdfReader(memoryStream);
+        var pdfDocument = new PdfDocument(pdfReader);
+                        
+        var text = new StringBuilder();
+        for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+        {
+            var page = pdfDocument.GetPage(i);
+            text.Append(PdfTextExtractor.GetTextFromPage(page));
+        }
+
+        return text.ToString();
+    }
+
+    private void OnGenerationTypeSelected(string type)
+    {
+        switch (type)
+        {
+            case "text":
+                SwitchToTextGeneration();
+                break;
+            case "image":
+                SwitchToImageGeneration();
+                break;
+        }
+    }
+
+    private void SwitchToTextGeneration()
+    {
+        _chatSessionStateService.SwitchToTextGeneration();
+    }
+
+    private void SwitchToImageGeneration()
+    {
+        _chatSessionStateService.SwitchToImageGeneration();
+    }
+    
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}

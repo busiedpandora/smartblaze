@@ -1,0 +1,97 @@
+@page "/register"
+@using SmartBlaze.Frontend.Models
+
+@rendermode InteractiveServer
+
+@inject UserStateService _userStateService
+@inject SettingsService _settingsService
+@inject ChatSessionStateService _chatSessionStateService
+
+<PageTitle>Register - SmartBlaze</PageTitle>
+
+<div id="pageRow">
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="col-auto">
+            <span id="pageTitle">
+                Register
+            </span>
+        </div>
+    </div>
+</div>
+
+<div id="userRegisterContainer">
+    <EditForm Model="_userRegister" OnSubmit="OnRegisterClicked" autocomplete="off">
+        <div class="mb-4">
+            <label for="username" class="form-label">Username</label>
+            <div class="col-4">
+                <InputText id="username" @bind-Value="_userRegister.Username" class="form-control">
+                </InputText>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="password" class="form-label">Password</label>
+            <div class="col-4">
+                <InputText id="password" @bind-Value="_userRegister.Password" class="form-control" type="password">
+                </InputText>
+            </div>
+        </div>
+
+        @if (_userStateService.AuthError != string.Empty)
+        {
+            <div class="mb-4 error">
+                <span>@_userStateService.AuthError</span>
+            </div>
+        }
+
+        <div class="mt-5">
+            <a type="button" class="btn btn-primary" href="/welcome">
+                Back
+            </a>
+            <button class="btn btn-primary ms-2" type="submit" value="Submit">
+                Register
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+
+
+@code {
+    private UserRegister _userRegister = new();
+
+
+    protected override Task OnInitializedAsync()
+    {
+        _userStateService.RefreshView += ReloadComponentState;
+        
+        _userStateService.AuthError = "";
+        
+        return base.OnInitializedAsync();
+    }
+
+    private async void OnRegisterClicked()
+    {
+        _userRegister.Username = _userRegister.Username.Trim();
+        _userRegister.Password = _userRegister.Password.Trim();
+
+        if (_userRegister.Username == string.Empty 
+            || _userRegister.Password == string.Empty)
+        {
+            return;
+        }
+        
+        await _userStateService.Register(_userRegister);
+        
+        if (_userStateService.UserLogged is not null)
+        {
+            await _settingsService.SetUpConfiguration();
+            await _chatSessionStateService.LoadChatSessions();
+        }
+    }
+    
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}

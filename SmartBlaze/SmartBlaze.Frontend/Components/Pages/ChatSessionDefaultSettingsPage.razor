@@ -1,0 +1,160 @@
+@page "/settings/chat"
+@using SmartBlaze.Frontend.Models
+@using SmartBlaze.Frontend.Components.Layout
+@using SmartBlaze.Frontend.Dtos
+
+@rendermode InteractiveServer
+
+@inject SettingsService _settingsService
+@inject ChatSessionStateService _chatSessionStateService
+@inject RedirectionService _redirectionService
+
+<PageTitle>Chat default settings - SmartBlaze</PageTitle>
+
+<div id="pageRow">
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="col-auto pe-0">
+            <img src="icons/gear-fill.svg" width="21" height="21" alt="settings icon"/>
+        </div>
+        <div class="col-auto">
+            <span id="pageTitle">
+                Settings
+            </span>
+        </div>
+    </div>
+</div>
+
+<div id="settingsPagesContainer">
+    
+    <SettingsMenu/>
+
+    <EditForm Model="_chatSessionDefaultSettings" OnSubmit="@OnSaveClicked" autocomplete="off">
+        <div class="alert alert-primary col-6" role="alert">
+            The settings below will be applied to newly created chat sessions.
+        </div>
+        
+        @if (_textGenerationChatbotModel?.AcceptSystemInstruction == true)
+        {
+            <div class="mb-4">
+                <label for="systemInstruction" class="form-label">System instruction (For Text Generation)</label>
+                <div class="col-6">
+                    <InputTextArea id="systemInstruction" class="form-control" @bind-Value="_chatSessionDefaultSettings.SystemInstruction"></InputTextArea>
+                </div>
+            </div>
+        }
+
+        @if (_textGenerationChatbotModel?.AcceptTextStream == true)
+        {
+            <div class="mb-4">
+                <label for="textStream" class="form-label">Text stream (For Text Generation)</label>
+                <InputCheckbox id="textStream" class="form-check" @bind-Value="_chatSessionDefaultSettings.TextStream"></InputCheckbox>
+            </div>
+        }
+
+        @if (_imageGenerationChatbotModel?.AcceptImageSize == true)
+        {
+            <div class="mb-4">
+                <label for="imageSize" class="form-label">Image Resolution (For Image Generation)</label>
+                <div class="col-2">
+                    <InputSelect id="imageSize" class="form-select" @bind-Value="_chatSessionDefaultSettings.ImageSize">
+                        @foreach (var imageSize in _imageGenerationChatbotModel.ImageSizeSupport)
+                        {
+                            <option value="@imageSize">@imageSize</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+        }
+
+        @if (_imageGenerationChatbotModel?.AcceptMultipleImagesGeneration == true)
+        {
+            <div class="mb-4">
+                <label for="imagesToGenerate" class="form-label">Images to generate (For Image Generation)</label>
+                <div class="col-2">
+                    <InputNumber id="imagesToGenerate" Step="1" class="form-control"
+                                 Min="1" Max="@_imageGenerationChatbotModel.MaxImagesGenerated"
+                                 @bind-Value="_chatSessionDefaultSettings.ImagesToGenerate">
+                    </InputNumber>
+                </div>
+            </div>
+        }
+
+        <div class="mt-5">
+            <button class="btn btn-primary" type="button" @onclick="() => OnCancelClicked()">
+                Cancel
+            </button>
+
+            <button class="btn btn-primary ms-2" type="submit" value="Submit">
+                Save
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private bool _applicationStarted = false;
+    
+    private ChatbotDto? _selectedChatbot;
+    private ChatbotModelDto? _textGenerationChatbotModel;
+    private ChatbotModelDto? _imageGenerationChatbotModel;
+    
+    private ChatSessionDefaultSettings _chatSessionDefaultSettings = new();
+
+    
+    protected override Task OnInitializedAsync()
+    {
+        if (!_applicationStarted)
+        {
+            _applicationStarted = true;
+            
+            _settingsService.RefreshView += ReloadComponentState;
+            _chatSessionStateService.RefreshView += ReloadComponentState;
+        }
+
+        if (_settingsService.ChatbotDefaultConfigurationSelected is not null)
+        {
+            var chatbotName = _settingsService.ChatbotDefaultConfigurationSelected?.ChatbotName;
+            _selectedChatbot = _settingsService.GetChatbot(chatbotName);
+        
+            var textGenerationChatbotModelName = _settingsService.ChatbotDefaultConfigurationSelected?.TextGenerationChatbotModel;
+            _textGenerationChatbotModel = _settingsService.GetTextGenerationChatbotModel(_selectedChatbot, textGenerationChatbotModelName);
+
+            var imageGenerationChatbotModelName = _settingsService.ChatbotDefaultConfigurationSelected?.ImageGenerationChatbotModel;
+            _imageGenerationChatbotModel = _settingsService.GetImageGenerationChatbotModel(_selectedChatbot, imageGenerationChatbotModelName);
+        }
+
+        if (_settingsService.ChatSessionDefaultConfiguration is not null)
+        {
+            _chatSessionDefaultSettings.SystemInstruction = _settingsService.ChatSessionDefaultConfiguration.SystemInstruction ?? "";
+            _chatSessionDefaultSettings.TextStream = _settingsService.ChatSessionDefaultConfiguration.TextStream;
+            _chatSessionDefaultSettings.ImageSize = _settingsService.ChatSessionDefaultConfiguration.ImageSize ?? "";
+            _chatSessionDefaultSettings.ImagesToGenerate = _settingsService.ChatSessionDefaultConfiguration.ImagesToGenerate;
+        }
+        
+        return base.OnInitializedAsync();
+    }
+    
+    private async void OnSaveClicked()
+    {
+        await _settingsService.SaveChatSessionDefaultSettings(_chatSessionDefaultSettings);
+    }
+    
+    private async void OnCancelClicked()
+    {
+        _settingsService.CloseSettings();
+        
+        if (_chatSessionStateService.ChatSessions?.Count > 0)
+        {
+            await _chatSessionStateService.SelectChatSession(_chatSessionStateService.ChatSessions.ElementAt(0));
+        }
+        else
+        {
+            _redirectionService.Url = "/";
+        }
+    }
+    
+    private void ReloadComponentState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+}

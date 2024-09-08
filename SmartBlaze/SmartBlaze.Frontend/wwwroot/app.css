@@ -112,6 +112,18 @@ pre .quoted-text {
     font-size: .895em;
 }
 
+pre .double-star-text {
+    color: black;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+pre .hash-text {
+    color: black;
+    font-weight: bolder;
+    font-size: 24px;
+}
+
 .file-name {
     font-size: 14px;
 }

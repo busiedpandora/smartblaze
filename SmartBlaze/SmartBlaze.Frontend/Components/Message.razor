@@ -73,11 +73,15 @@
         @{
         var encodedText = HttpUtility.HtmlEncode(message.Text ?? "");
 
-        var quotesRegex = new Regex(@"[`'´]([^`\r\n\t]+?)[`'´]");
+        var quotesRegex = new Regex(@"([`'´])([^`\r\n\t]+?)([`'´])");
+        var doubleStarRegex = new Regex(@"\*\*([^`\r\n\t]+?)\*\*");
         var codeRegex = new Regex(@"```(.*)((?:(?!```)[\s\S])*)```");
 
         var processedText = quotesRegex.Replace(encodedText,
-        "<span class=\"quoted-text\">`$1`</span>");
+        "<span class=\"quoted-text\">$1$2$3</span>");
+
+        processedText = doubleStarRegex.Replace(processedText, "<b>$1</b>");
+        
         processedText = codeRegex.Replace(processedText,
         match =>
         {

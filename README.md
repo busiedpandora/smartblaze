@@ -1,6 +1,9 @@
 # SmartBlaze
 
-SmartBlaze is an application designed to interact with AI models like OpenAI's ChatGPT and Google's Gemini, developed as thesis project at the university. The project is inspired by Chatbox (https://github.com/Bin-Huang/chatbox).
+**SmartBlaze** is an application designed to integrate with AI models such as OpenAI's ChatGPT and Google's Gemini. It was developed as part of the university thesis project, drawing inspiration from Chatbox (https://github.com/Bin-Huang/chatbox).
+The application is built primarily using the C# programming language, with Blazor and ASP.NET Core frameworks forming the core of its architecture.
+
+![SmartBlaze](images/smartblaze.png)
 
 ## Features and Capabilities
 
@@ -13,3 +16,5 @@ SmartBlaze is an application designed to interact with AI models like OpenAI's C
 - **Image analysis** by the chatbot with the ability to add images for processing (image vision).
 - **File upload** support, allowing the chatbot to access and analyze the contents of various types of files.
 - **Cloud-based chat and configuration storage**, enabling you to resume conversations across multiple devices.
+
+To use SmartBlaze, you'll need your own API key to interact with the chatbot models. You can obtain an API key from the AI model provider (OpenAI and Google).

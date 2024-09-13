@@ -5,6 +5,10 @@ The application is built primarily using the C# programming language, with Blazo
 
 ![SmartBlaze](images/smartblaze.png)
 
+
+![SmartBlaze](images/smartblaze2.png)
+
+
 ## Features and Capabilities
 
 - **Interactive and smooth user interface** to manage multiple conversations with chatbots.
